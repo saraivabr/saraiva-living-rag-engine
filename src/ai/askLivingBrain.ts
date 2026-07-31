@@ -1,4 +1,4 @@
-import { buildLivingRagContext } from './ai/livingRagEngine.js';
+import { buildLivingRagContext } from './livingRagEngine.js';
 
 export async function askLivingBrain(userQuestion: string): Promise<string> {
   const ragContext = await buildLivingRagContext(userQuestion);

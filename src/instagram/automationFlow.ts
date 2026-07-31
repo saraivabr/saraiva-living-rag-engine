@@ -648,12 +648,9 @@ export function createCommunityCtaCard(
 }
 
 export function createCommunityDestinationUrl(session: InstagramFlowSession): string {
-  const raw = process.env.INSTAGRAM_WHATSAPP_COMMUNITY_URL
-    || 'https://chat.whatsapp.com/CRowjhdAYec8qFIMWP3Q3S?s=cl&p=i&ilr=2';
+  const raw = process.env.INSTAGRAM_COMMUNITY_DESTINATION_URL
+    || 'https://saraiva.ai';
   const url = new URL(raw);
-  if (url.protocol !== 'https:' || url.hostname !== 'chat.whatsapp.com' || url.pathname === '/') {
-    throw new Error('instagram_whatsapp_community_url_invalid');
-  }
   return url.toString();
 }
 

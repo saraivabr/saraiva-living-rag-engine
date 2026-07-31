@@ -1720,10 +1720,13 @@ async function handleInstagramTrackedRedirect(
       ),
     });
   }
-  return redirect(createCommunityDestinationUrl({
+  const destinationUrl = new URL(createCommunityDestinationUrl({
     ...(context?.instagramFlow || tracking.session),
     path: intent === 'ter' ? 'ready' : 'build',
   }));
+  destinationUrl.searchParams.set('correlationId', correlationId);
+  destinationUrl.searchParams.set('intent', intent);
+  return redirect(destinationUrl.toString());
 }
 
 interface InstagramTrackingRecord {

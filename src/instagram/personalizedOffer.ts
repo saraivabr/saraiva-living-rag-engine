@@ -204,9 +204,9 @@ export function buildSaraivaAudioScript(session: InstagramFlowSession): string {
       ? describeReadyObjective(session)
       : session.qualification?.buildGoal || describeBuildLevel(session)));
   if (session.path === 'ready') {
-    return `${name}, se você quer ${objective}, continuar num processo lento é um ralo de dinheiro.${verified} No Laboratório de Agentes no WhatsApp, eu compartilho as estruturas brutas de IA pra você copiar, adaptar e colocar pra rodar hoje. Clica no botão aqui embaixo e pega o acesso. Faz sentido pra você?`;
+    return `${name}, se você quer ${objective}, continuar num processo lento é um ralo de dinheiro.${verified} No Laboratório Saraiva, eu compartilho as estruturas brutas de IA pra você copiar, adaptar e colocar pra rodar hoje. Clica no botão aqui embaixo e entra direto na plataforma. Faz sentido pra você?`;
   }
-  return `${name}, você quer ${objective}. Ficar parado na teoria só vai te fazer perder tempo e dinheiro.${verified} No Laboratório de Agentes no WhatsApp, eu mostro os bastidores da construção real pra você adaptar e colocar pra rodar imediatamente. Clica no botão aqui embaixo e pega o acesso. Faz sentido pra você?`;
+  return `${name}, você quer ${objective}. Ficar parado na teoria só vai te fazer perder tempo e dinheiro.${verified} No Laboratório Saraiva, eu mostro os bastidores da construção real pra você adaptar e colocar pra rodar imediatamente. Clica no botão aqui embaixo e entra direto na plataforma. Faz sentido pra você?`;
 }
 
 function asSentenceContinuation(value: string): string {
