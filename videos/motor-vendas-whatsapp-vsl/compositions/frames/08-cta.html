@@ -1,0 +1,631 @@
+<template>
+  <div id="root" data-composition-id="08-cta" data-width="1920" data-height="1080" data-duration="11.819">
+    <div
+      class="clip 08-cta-background"
+      data-start="0"
+      data-duration="11.819"
+      data-track-index="0"
+    >
+      <img
+        class="08-cta-background-image"
+        src="capture/assets/checkout-compare-hero.png"
+        alt=""
+      />
+      <div class="08-cta-background-field"></div>
+    </div>
+
+    <div class="08-cta-topbar">
+      <div class="08-cta-topbar-label">
+        <span class="08-cta-topbar-index">08</span>
+        <span>CONTROLE HUMANO</span>
+      </div>
+      <div class="08-cta-topbar-rule"></div>
+      <div class="08-cta-topbar-counter">08 / 08</div>
+    </div>
+
+    <main class="08-cta-stage">
+      <section id="08-cta-transparency" class="08-cta-state 08-cta-transparency">
+        <div class="08-cta-statement-line" id="08-cta-statement-line-one">NÃO PROMETE</div>
+        <div class="08-cta-statement-line 08-cta-statement-line-accent" id="08-cta-statement-line-two">
+          VENDA AUTOMÁTICA
+        </div>
+        <div class="08-cta-trust-note" id="08-cta-trust-note">
+          <span class="08-cta-trust-mark"></span>
+          TRANSPARÊNCIA PRIMEIRO
+        </div>
+      </section>
+
+      <section id="08-cta-control" class="08-cta-state 08-cta-control">
+        <div class="08-cta-control-icon-shell" aria-hidden="true">
+          <svg
+            id="08-cta-review-icon"
+            class="08-cta-control-icon"
+            viewBox="0 0 120 120"
+            fill="none"
+          >
+            <rect x="29" y="20" width="62" height="80" rx="8"></rect>
+            <path d="M43 43H76"></path>
+            <path d="M43 58H68"></path>
+            <path d="M44 78L52 86L79 66"></path>
+          </svg>
+          <svg
+            id="08-cta-conversation-icon"
+            class="08-cta-control-icon"
+            viewBox="0 0 120 120"
+            fill="none"
+          >
+            <path d="M21 27H86C93 27 99 33 99 40V76C99 83 93 89 86 89H57L37 103V89H21C14 89 9 83 9 76V40C9 33 14 27 21 27Z"></path>
+            <path d="M30 51H78"></path>
+            <path d="M30 66H65"></path>
+          </svg>
+        </div>
+        <div class="08-cta-control-copy">
+          <div class="08-cta-control-kicker" id="08-cta-control-kicker">REVISÃO</div>
+          <div class="08-cta-control-text-wrap">
+            <span id="08-cta-control-text" class="08-cta-control-text"></span>
+          </div>
+          <div class="08-cta-control-rule">
+            <span id="08-cta-control-progress" class="08-cta-control-progress"></span>
+          </div>
+        </div>
+      </section>
+
+      <section id="08-cta-decision" class="08-cta-state 08-cta-decision">
+        <div class="08-cta-decision-kicker">VOCÊ ESCOLHE A PORTA DE ENTRADA</div>
+        <div class="08-cta-question">
+          <span class="08-cta-choice">PROMPT</span>
+          <span class="08-cta-or">OU</span>
+          <span class="08-cta-choice 08-cta-choice-accent">MOTOR DE VENDAS?</span>
+        </div>
+        <button id="08-cta-button" class="08-cta-button" type="button">
+          <span>ESCOLHER COMO ENTRAR</span>
+          <svg class="08-cta-button-arrow" viewBox="0 0 48 48" fill="none" aria-hidden="true">
+            <path d="M10 24H37"></path>
+            <path d="M27 14L37 24L27 34"></path>
+          </svg>
+        </button>
+        <div id="08-cta-confirmation" class="08-cta-confirmation">
+          <span class="08-cta-confirmation-mark">✓</span>
+          LOJA.SARAIVA.AI
+        </div>
+      </section>
+    </main>
+
+    <div id="08-cta-ripple-one" class="08-cta-ripple"></div>
+    <div id="08-cta-ripple-two" class="08-cta-ripple 08-cta-ripple-two"></div>
+
+    <svg
+      id="08-cta-cursor"
+      class="08-cta-cursor"
+      viewBox="0 0 78 92"
+      fill="none"
+      aria-hidden="true"
+    >
+      <path
+        d="M8 7L65 60L39 64L27 85L8 7Z"
+        fill="#FFFFFF"
+        stroke="#0D4E2B"
+        stroke-width="4"
+        stroke-linejoin="round"
+      ></path>
+    </svg>
+  </div>
+
+  <style>
+    #root {
+      position: relative;
+      width: 1920px;
+      height: 1080px;
+      overflow: hidden;
+      container-type: size;
+      color: #ffffff;
+      isolation: isolate;
+    }
+
+    [class~="08-cta-background"] {
+      position: absolute;
+      inset: 0;
+      overflow: hidden;
+      background: #0d4e2b;
+      z-index: 0;
+    }
+
+    [class~="08-cta-background-image"] {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      opacity: 0.26;
+    }
+
+    [class~="08-cta-background-field"] {
+      position: absolute;
+      inset: 0;
+      background: #0b1713;
+      opacity: 0.54;
+    }
+
+    [class~="08-cta-topbar"] {
+      position: absolute;
+      z-index: 5;
+      top: 60px;
+      left: 96px;
+      right: 96px;
+      height: 54px;
+      display: grid;
+      grid-template-columns: auto 1fr auto;
+      align-items: center;
+      gap: 30px;
+      color: #b7f3d2;
+      font-size: 24px;
+      font-weight: 500;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+    }
+
+    [class~="08-cta-topbar-label"] {
+      display: flex;
+      align-items: center;
+      gap: 18px;
+      white-space: nowrap;
+    }
+
+    [class~="08-cta-topbar-index"] {
+      display: grid;
+      width: 54px;
+      height: 54px;
+      place-items: center;
+      border: 2px solid #60e49c;
+      border-radius: 50%;
+      color: #ffffff;
+      letter-spacing: 0;
+    }
+
+    [class~="08-cta-topbar-rule"] {
+      height: 2px;
+      background: #60e49c;
+    }
+
+    [class~="08-cta-topbar-counter"] {
+      color: #60e49c;
+      white-space: nowrap;
+    }
+
+    [class~="08-cta-stage"] {
+      position: absolute;
+      z-index: 3;
+      top: 150px;
+      left: 96px;
+      right: 96px;
+      height: 650px;
+    }
+
+    [class~="08-cta-state"] {
+      position: absolute;
+      inset: 0;
+      display: grid;
+      place-items: center;
+      transform-origin: 50% 50%;
+    }
+
+    [class~="08-cta-transparency"] {
+      align-content: center;
+      justify-items: center;
+      gap: 2px;
+      padding-bottom: 28px;
+    }
+
+    [class~="08-cta-statement-line"] {
+      max-width: 1498px;
+      color: #ffffff;
+      font-size: 116px;
+      font-weight: 500;
+      line-height: 0.94;
+      letter-spacing: -0.025em;
+      text-align: center;
+      white-space: nowrap;
+    }
+
+    [class~="08-cta-statement-line-accent"] {
+      color: #ffffff;
+    }
+
+    [class~="08-cta-trust-note"] {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      margin-top: 34px;
+      color: #b7f3d2;
+      font-size: 24px;
+      font-weight: 500;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+    }
+
+    [class~="08-cta-trust-mark"] {
+      width: 52px;
+      height: 2px;
+      background: #60e49c;
+    }
+
+    [class~="08-cta-control"] {
+      grid-template-columns: 188px minmax(0, 1100px);
+      justify-content: center;
+      align-content: center;
+      gap: 54px;
+      opacity: 0;
+    }
+
+    [class~="08-cta-control-icon-shell"] {
+      position: relative;
+      width: 168px;
+      height: 168px;
+      border: 2.5px solid #60e49c;
+      border-radius: 8px;
+      background: #0d4e2b;
+    }
+
+    [class~="08-cta-control-icon"] {
+      position: absolute;
+      inset: 24px;
+      width: 120px;
+      height: 120px;
+      stroke: #ffffff;
+      stroke-width: 5;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    [id="08-cta-conversation-icon"] {
+      opacity: 0;
+    }
+
+    [class~="08-cta-control-copy"] {
+      min-width: 0;
+    }
+
+    [class~="08-cta-control-kicker"],
+    [class~="08-cta-decision-kicker"] {
+      margin-bottom: 22px;
+      color: #60e49c;
+      font-size: 24px;
+      font-weight: 500;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+    }
+
+    [class~="08-cta-control-text-wrap"] {
+      display: inline-flex;
+      align-items: baseline;
+      min-width: 1100px;
+      white-space: nowrap;
+    }
+
+    [class~="08-cta-control-text"] {
+      color: #ffffff;
+      font-size: 82px;
+      font-weight: 500;
+      line-height: 0.98;
+      letter-spacing: -0.02em;
+    }
+
+    [class~="08-cta-control-rule"] {
+      width: 100%;
+      height: 2px;
+      margin-top: 36px;
+      background: #157b43;
+    }
+
+    [class~="08-cta-control-progress"] {
+      display: block;
+      width: 50%;
+      height: 2px;
+      background: #60e49c;
+      transform-origin: 0 50%;
+    }
+
+    [class~="08-cta-decision"] {
+      align-content: center;
+      justify-items: center;
+      padding-bottom: 10px;
+      opacity: 0;
+    }
+
+    [class~="08-cta-decision-kicker"] {
+      margin-bottom: 26px;
+    }
+
+    [class~="08-cta-question"] {
+      display: flex;
+      align-items: baseline;
+      justify-content: center;
+      gap: 30px;
+      color: #ffffff;
+      font-size: 86px;
+      font-weight: 500;
+      line-height: 0.96;
+      letter-spacing: -0.025em;
+      white-space: nowrap;
+    }
+
+    [class~="08-cta-choice-accent"] {
+      color: #60e49c;
+    }
+
+    [class~="08-cta-or"] {
+      color: #b7f3d2;
+      font-size: 24px;
+      letter-spacing: 0.16em;
+    }
+
+    [class~="08-cta-button"] {
+      display: flex;
+      width: 620px;
+      height: 108px;
+      margin-top: 54px;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 40px;
+      border: 2.5px solid #60e49c;
+      border-radius: 8px;
+      background: #ffffff;
+      color: #0d4e2b;
+      font: inherit;
+      font-size: 27px;
+      font-weight: 500;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      transform-origin: 50% 50%;
+    }
+
+    [class~="08-cta-button-arrow"] {
+      width: 48px;
+      height: 48px;
+      stroke: currentColor;
+      stroke-width: 3;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    [class~="08-cta-confirmation"] {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      height: 44px;
+      margin-top: 24px;
+      color: #b7f3d2;
+      font-size: 25px;
+      font-weight: 500;
+      letter-spacing: 0.18em;
+      opacity: 0;
+    }
+
+    [class~="08-cta-confirmation-mark"] {
+      display: grid;
+      width: 34px;
+      height: 34px;
+      place-items: center;
+      border: 2px solid #60e49c;
+      border-radius: 50%;
+      color: #60e49c;
+      font-size: 20px;
+      letter-spacing: 0;
+    }
+
+    [class~="08-cta-cursor"] {
+      position: absolute;
+      z-index: 10;
+      top: 0;
+      left: 0;
+      width: 78px;
+      height: 92px;
+      pointer-events: none;
+      transform-origin: 0 0;
+      opacity: 0;
+    }
+
+    [class~="08-cta-ripple"] {
+      position: absolute;
+      z-index: 8;
+      left: 997px;
+      top: 666px;
+      width: 76px;
+      height: 76px;
+      border: 2px solid #60e49c;
+      border-radius: 50%;
+      opacity: 0;
+      pointer-events: none;
+      transform-origin: 50% 50%;
+    }
+
+    [class~="08-cta-ripple-two"] {
+      border-color: #ffffff;
+    }
+  </style>
+
+  <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/gsap.min.js"></script>
+  <script>
+    (() => {
+      const root = document.querySelector('[data-composition-id="08-cta"]');
+      const q = (id) => document.getElementById(id);
+      const transparency = q("08-cta-transparency");
+      const lineOne = q("08-cta-statement-line-one");
+      const lineTwo = q("08-cta-statement-line-two");
+      const trustNote = q("08-cta-trust-note");
+      const control = q("08-cta-control");
+      const controlText = q("08-cta-control-text");
+      const controlKicker = q("08-cta-control-kicker");
+      const reviewIcon = q("08-cta-review-icon");
+      const conversationIcon = q("08-cta-conversation-icon");
+      const controlProgress = q("08-cta-control-progress");
+      const decision = q("08-cta-decision");
+      const button = q("08-cta-button");
+      const confirmation = q("08-cta-confirmation");
+      const cursor = q("08-cta-cursor");
+      const rippleOne = q("08-cta-ripple-one");
+      const rippleTwo = q("08-cta-ripple-two");
+
+      const tl = gsap.timeline({ paused: true });
+
+      tl.fromTo(
+        lineOne,
+        { opacity: 0, y: 26 },
+        { opacity: 1, y: 0, duration: 0.48, ease: "power3.out" },
+        0.08
+      );
+      tl.fromTo(
+        lineTwo,
+        { opacity: 0, y: 30 },
+        { opacity: 1, y: 0, duration: 0.52, ease: "power3.out" },
+        0.55
+      );
+      tl.to(
+        lineTwo,
+        { color: "#60E49C", duration: 0.24, ease: "power1.out" },
+        1.26
+      );
+      tl.fromTo(
+        trustNote,
+        { opacity: 0, y: 16 },
+        { opacity: 1, y: 0, duration: 0.42, ease: "power3.out" },
+        2.34
+      );
+
+      tl.to(
+        transparency,
+        { scale: 0.72, opacity: 0, duration: 0.42, ease: "power2.in" },
+        3.28
+      );
+      tl.fromTo(
+        control,
+        { scale: 0.72, opacity: 0 },
+        { scale: 1, opacity: 1, duration: 0.58, ease: "back.out(1.6)" },
+        3.48
+      );
+
+      const controlStates = [
+        {
+          t: 0,
+          text: "VOCÊ REVISA O PRIMEIRO CONTATO",
+          kicker: "REVISÃO",
+          icon: "review"
+        },
+        {
+          t: 1.35,
+          text: "VOCÊ CONDUZ A CONVERSA",
+          kicker: "CONVERSA",
+          icon: "conversation"
+        }
+      ];
+      const controlDriver = { t: 0 };
+      let activeControlState = "";
+
+      tl.to(
+        controlDriver,
+        {
+          t: 2.34,
+          duration: 2.34,
+          ease: "none",
+          onUpdate: () => {
+            let state = controlStates[0];
+            for (let index = controlStates.length - 1; index >= 0; index -= 1) {
+              if (controlDriver.t >= controlStates[index].t) {
+                state = controlStates[index];
+                break;
+              }
+            }
+            if (activeControlState !== state.icon) {
+              activeControlState = state.icon;
+              controlText.textContent = state.text;
+              controlKicker.textContent = state.kicker;
+              reviewIcon.style.opacity = state.icon === "review" ? "1" : "0";
+              conversationIcon.style.opacity = state.icon === "conversation" ? "1" : "0";
+              controlProgress.style.width = state.icon === "review" ? "50%" : "100%";
+            }
+          }
+        },
+        3.5
+      );
+
+      tl.to(
+        control,
+        { scale: 0.72, opacity: 0, duration: 0.42, ease: "power2.in" },
+        5.98
+      );
+      tl.fromTo(
+        decision,
+        { scale: 0.72, opacity: 0 },
+        { scale: 1, opacity: 1, duration: 0.62, ease: "back.out(1.6)" },
+        6.18
+      );
+      tl.fromTo(
+        button,
+        { opacity: 0, y: 28 },
+        { opacity: 1, y: 0, duration: 0.48, ease: "power3.out" },
+        6.88
+      );
+
+      tl.set(cursor, { x: 1960, y: 490, scale: 1, opacity: 1 }, 9.3);
+      tl.to(
+        cursor,
+        { x: 1035, y: 704, duration: 0.78, ease: "power3.out" },
+        9.3
+      );
+      tl.to(
+        [button, cursor],
+        { scale: 0.93, duration: 0.11, ease: "power1.in" },
+        10.08
+      );
+      tl.to(
+        button,
+        {
+          backgroundColor: "#60E49C",
+          borderColor: "#60E49C",
+          color: "#0D4E2B",
+          duration: 0.11,
+          ease: "power1.in"
+        },
+        10.08
+      );
+      tl.to(
+        [button, cursor],
+        { scale: 1, duration: 0.48, ease: "back.out(1.9)" },
+        10.23
+      );
+      tl.fromTo(
+        rippleOne,
+        { scale: 0, opacity: 1 },
+        {
+          scale: 2.4,
+          opacity: 0,
+          duration: 0.7,
+          ease: "power3.out",
+          immediateRender: false
+        },
+        10.19
+      );
+      tl.fromTo(
+        rippleTwo,
+        { scale: 0, opacity: 0.8 },
+        {
+          scale: 2.15,
+          opacity: 0,
+          duration: 0.68,
+          ease: "power3.out",
+          immediateRender: false
+        },
+        10.29
+      );
+      tl.fromTo(
+        confirmation,
+        { opacity: 0, y: 10 },
+        { opacity: 1, y: 0, duration: 0.42, ease: "power3.out" },
+        10.55
+      );
+
+      window.__timelines = window.__timelines || {};
+      window.__timelines["08-cta"] = tl;
+    })();
+  </script>
+</template>

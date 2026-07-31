@@ -1,0 +1,38 @@
+{
+  "name": "respondedor-instagram",
+  "version": "1.0.0",
+  "description": "Responde comentários do Instagram automaticamente usando IA (Claude) + Graph API da Meta",
+  "type": "module",
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "dev": "tsx watch src/index.ts",
+    "demo:prospeccao": "npm run build && node scripts/serve-prospeccao.mjs",
+    "once": "tsx src/index.ts --once",
+    "ops:instagram": "node scripts/check-instagram-ops.mjs",
+    "ops:instagram:media": "node scripts/check-instagram-ops.mjs --check-media",
+    "schedule:instagram": "node scripts/schedule-instagram-batch.mjs",
+    "backfill:media-context": "tsx src/backfillMediaContext.ts",
+    "seed": "node dist/seed.js",
+    "typecheck": "tsc --noEmit",
+    "test": "tsx --test tests/**/*.test.ts"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.39.0",
+    "@aws-sdk/client-bedrock-runtime": "^3.1087.0",
+    "@aws-sdk/client-cloudfront": "^3.1075.0",
+    "@aws-sdk/client-dynamodb": "^3.1070.0",
+    "@aws-sdk/client-s3": "^3.1075.0",
+    "@aws-sdk/client-secrets-manager": "^3.1096.0",
+    "@aws-sdk/client-sqs": "^3.1100.0",
+    "@aws-sdk/client-ssm": "^3.1070.0",
+    "@aws-sdk/s3-request-presigner": "^3.1082.0",
+    "@ffmpeg-installer/linux-x64": "^4.1.0",
+    "dotenv": "^16.4.7"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.2",
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.2"
+  }
+}

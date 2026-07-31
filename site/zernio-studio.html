@@ -1,0 +1,393 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Zernio Flow Studio — Gestão de Automação Instagram</title>
+    <meta
+      name="description"
+      content="Painel de controle estilo ManyChat para automação de Instagram + Zernio. Gerencie fluxos, triggers, gate de follow e catálogo de conteúdos."
+    />
+    <meta name="theme-color" content="#0d1017" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body class="zernio-app">
+    <div class="app-layout">
+      <!-- Sidebar Navigation Style ManyChat -->
+      <aside class="sidebar">
+        <div class="brand">
+          <div class="brand-logo">
+            <svg viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <rect width="32" height="32" rx="8" fill="url(#brand-grad)" />
+              <path d="M10 10H22L12 22H22" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+              <defs>
+                <linearGradient id="brand-grad" x1="0" y1="0" x2="32" y2="32" gradientUnits="userSpaceOnUse">
+                  <stop stop-color="#0066FF" />
+                  <stop offset="1" stop-color="#8B5CF6" />
+                </linearGradient>
+              </defs>
+            </svg>
+          </div>
+          <div class="brand-text">
+            <span class="brand-title">Zernio Studio</span>
+            <span class="brand-subtitle">Instagram Automation</span>
+          </div>
+        </div>
+
+        <nav class="nav-menu">
+          <button class="nav-item active" data-tab="builder">
+            <span class="nav-icon">⚡</span>
+            <span>Flow Builder</span>
+          </button>
+          <button class="nav-item" data-tab="triggers">
+            <span class="nav-icon">🎯</span>
+            <span>Triggers & Entradas</span>
+          </button>
+          <button class="nav-item" data-tab="followgate">
+            <span class="nav-icon">🔒</span>
+            <span>Follow Gate</span>
+          </button>
+          <button class="nav-item" data-tab="catalog">
+            <span class="nav-icon">📦</span>
+            <span>Catálogo</span>
+          </button>
+          <button class="nav-item" data-tab="analytics">
+            <span class="nav-icon">📊</span>
+            <span>Métricas & Journal</span>
+          </button>
+        </nav>
+
+        <div class="account-status-card">
+          <div class="account-info">
+            <span class="status-dot online"></span>
+            <div>
+              <strong>@saraiva.ai</strong>
+              <small>Zernio: 6a1205a6...e855</small>
+            </div>
+          </div>
+          <span class="badge live">LIVE</span>
+        </div>
+      </aside>
+
+      <!-- Main Content Area -->
+      <main class="main-content">
+        <header class="top-header">
+          <div class="header-title">
+            <h1 id="pageTitle">Visual Flow Builder</h1>
+            <p id="pageSubtitle">Desenhe e gerencie a jornada conversacional determinística do Instagram</p>
+          </div>
+          <div class="header-actions">
+            <div class="status-pill">
+              <span class="pulse-green"></span> Runtime: AWS Lambda Active
+            </div>
+            <button class="btn primary" id="saveFlowBtn">Salvar Alterações</button>
+          </div>
+        </header>
+
+        <!-- Tab 1: Visual Flow Builder (Estilo ManyChat) -->
+        <section id="tab-builder" class="tab-content active">
+          <div class="builder-toolbar">
+            <div class="tools-group">
+              <button class="tool-btn" id="addTriggerBtn">＋ Adicionar Entrada</button>
+              <button class="tool-btn" id="addCheckBtn">🔒 Checar Follow</button>
+              <button class="tool-btn" id="addContentBtn">📦 Entregar Conteúdo</button>
+              <button class="tool-btn" id="addAudioBtn">🎙️ Áudio ElevenLabs</button>
+            </div>
+            <div class="zoom-controls">
+              <button class="icon-btn">🔍-</button>
+              <span>100%</span>
+              <button class="icon-btn">🔍+</button>
+            </div>
+          </div>
+
+          <div class="canvas-container">
+            <div class="flow-canvas" id="flowCanvas">
+              <!-- Node 1: Entry Trigger -->
+              <div class="flow-node trigger-node" style="top: 80px; left: 80px;">
+                <div class="node-header">
+                  <span class="node-type">TRIGGER DE ENTRADA</span>
+                  <span class="node-icon">💬</span>
+                </div>
+                <div class="node-body">
+                  <strong>Comentário / DM / Story</strong>
+                  <p>Mídia ID: <code>18299164084305199</code></p>
+                  <div class="keyword-tags">
+                    <span class="tag">PROMPT</span>
+                    <span class="tag">MAPA</span>
+                    <span class="tag">SARAIVA</span>
+                  </div>
+                </div>
+                <div class="node-output-handle" data-target="node-follow-gate"></div>
+              </div>
+
+              <!-- Connection Line (Visual SVG) -->
+              <svg class="canvas-svg">
+                <path d="M 320 140 C 400 140, 400 140, 480 140" stroke="#3B82F6" stroke-width="3" fill="none" marker-end="url(#arrow)"/>
+                <path d="M 720 110 C 800 110, 800 90, 880 90" stroke="#10B981" stroke-width="3" fill="none"/>
+                <path d="M 720 170 C 800 170, 800 250, 880 250" stroke="#EF4444" stroke-width="3" fill="none"/>
+                <defs>
+                  <marker id="arrow" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+                    <path d="M 0 0 L 10 5 L 0 10 z" fill="#3B82F6"/>
+                  </marker>
+                </defs>
+              </svg>
+
+              <!-- Node 2: Follow Gate -->
+              <div class="flow-node gate-node" id="node-follow-gate" style="top: 80px; left: 480px;">
+                <div class="node-header">
+                  <span class="node-type">GATE DE FOLLOW</span>
+                  <span class="node-icon">🔒</span>
+                </div>
+                <div class="node-body">
+                  <strong>Verificar isFollower</strong>
+                  <small>Checagem oficial API Zernio</small>
+                  <div class="gate-branches">
+                    <div class="branch yes">✓ Seguidor (following)</div>
+                    <div class="branch no">✕ Não Seguidor (not_following)</div>
+                    <div class="branch unknown">? Desconhecido (unknown)</div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Node 3: Deliver Content -->
+              <div class="flow-node content-node" style="top: 40px; left: 880px;">
+                <div class="node-header">
+                  <span class="node-type">ENTREGA DE CONTEÚDO</span>
+                  <span class="node-icon">✅</span>
+                </div>
+                <div class="node-body">
+                  <strong>Entregar Estrutura Solicitada</strong>
+                  <p>Copy: "Pronto. Aqui está a estrutura..."</p>
+                  <span class="badge-success">Catálogo Ativo</span>
+                </div>
+              </div>
+
+              <!-- Node 4: Ask Follow -->
+              <div class="flow-node action-node" style="top: 220px; left: 880px;">
+                <div class="node-header">
+                  <span class="node-type">PEDIR FOLLOW</span>
+                  <span class="node-icon">📩</span>
+                </div>
+                <div class="node-body">
+                  <p>"Esse conteúdo é exclusivo... Segue o @saraiva.ai"</p>
+                  <div class="btn-preview">
+                    <span>Botão: JÁ SEGUI</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Tab 2: Triggers & Entradas -->
+        <section id="tab-triggers" class="tab-content">
+          <div class="card-grid">
+            <div class="panel-card">
+              <h3>Gatilhos Autorizados (Instagram)</h3>
+              <p>Eventos oficiais Zernio configurados para disparo automático.</p>
+
+              <div class="triggers-list">
+                <div class="trigger-item">
+                  <div class="trigger-meta">
+                    <span class="icon">💬</span>
+                    <div>
+                      <strong>Comentário nos Posts / Reels</strong>
+                      <small>Palavra-chave: SARAIVA, PROMPT, MAPA</small>
+                    </div>
+                  </div>
+                  <input type="checkbox" checked disabled />
+                </div>
+
+                <div class="trigger-item">
+                  <div class="trigger-meta">
+                    <span class="icon">📸</span>
+                    <div>
+                      <strong>Resposta a Story</strong>
+                      <small>metadata.storyReply detectado</small>
+                    </div>
+                  </div>
+                  <input type="checkbox" checked />
+                </div>
+
+                <div class="trigger-item">
+                  <div class="trigger-meta">
+                    <span class="icon">⚡</span>
+                    <div>
+                      <strong>Ice Breakers (Mensagens Iniciais)</strong>
+                      <small>QUERO UMA ESTRUTURA, QUERO APRENDER</small>
+                    </div>
+                  </div>
+                  <input type="checkbox" checked />
+                </div>
+              </div>
+            </div>
+
+            <div class="panel-card warning-card">
+              <h3>🚫 Regra de Limitação de API</h3>
+              <p>
+                O disparo de <code>Novo Seguidor → DM Automática</code> <strong>NÃO</strong> é permitido pela API do Instagram/Meta.
+              </p>
+              <small>Todas as interações são iniciadas exclusivamente por ação direta do usuário no Instagram.</small>
+            </div>
+          </div>
+        </section>
+
+        <!-- Tab 3: Follow Gate Details -->
+        <section id="tab-followgate" class="tab-content">
+          <div class="panel-card">
+            <h3>Configuração do Gate de Follow</h3>
+            <p>Gerencie as cópias e comportamentos de checagem do status de seguidor.</p>
+
+            <div class="form-grid">
+              <div class="form-group">
+                <label>Copy quando NÃO SEGUE (not_following):</label>
+                <textarea rows="3">Esse conteúdo é exclusivo para quem acompanha o meu trabalho. Segue o @saraiva.ai e toca abaixo para liberar.</textarea>
+              </div>
+
+              <div class="form-group">
+                <label>Botão de Confirmação:</label>
+                <input type="text" value="JÁ SEGUI" readonly />
+                <small>Payload estrito: <code>FLOW:SARAIVA:FOLLOW_CONFIRMED</code></small>
+              </div>
+
+              <div class="form-group">
+                <label>Copy quando STATUS ESTIVER INDISPONÍVEL (unknown):</label>
+                <textarea rows="3">Não consegui confirmar ainda. Segue o @saraiva.ai e toca abaixo para eu verificar novamente.</textarea>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Tab 4: Catalog -->
+        <section id="tab-catalog" class="tab-content">
+          <div class="panel-card">
+            <div class="card-header">
+              <h3>Catálogo Determinístico de Conteúdos</h3>
+              <button class="btn secondary">＋ Novo Conteúdo</button>
+            </div>
+            <p>Apenas itens deste catálogo são entregues. URLs externas via webhook são recusadas.</p>
+
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>ID</th>
+                  <th>Título</th>
+                  <th>Keywords</th>
+                  <th>Requer Follow</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><code>PROMPT</code></td>
+                  <td>Prompt de Automação</td>
+                  <td>prompt, comando, instrucao</td>
+                  <td><span class="badge yes">SIM</span></td>
+                  <td><span class="badge active">Ativo</span></td>
+                </tr>
+                <tr>
+                  <td><code>MAPA</code></td>
+                  <td>Mapa do Fluxo Conversacional</td>
+                  <td>mapa, fluxo, diagrama</td>
+                  <td><span class="badge yes">SIM</span></td>
+                  <td><span class="badge active">Ativo</span></td>
+                </tr>
+                <tr>
+                  <td><code>AULA</code></td>
+                  <td>Aula Prática de IA</td>
+                  <td>aula, video, workshop</td>
+                  <td><span class="badge yes">SIM</span></td>
+                  <td><span class="badge active">Ativo</span></td>
+                </tr>
+                <tr>
+                  <td><code>COMUNIDADE</code></td>
+                  <td>Comunidade Saraiva WhatsApp</td>
+                  <td>comunidade, grupo, vip</td>
+                  <td><span class="badge no">NÃO</span></td>
+                  <td><span class="badge active">Ativo</span></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <!-- Tab 5: Analytics & Journal -->
+        <section id="tab-analytics" class="tab-content">
+          <div class="stats-grid">
+            <div class="stat-card">
+              <span class="stat-label">Conteúdos Solicitados</span>
+              <strong class="stat-value">1,482</strong>
+            </div>
+            <div class="stat-card">
+              <span class="stat-label">Follows Confirmados</span>
+              <strong class="stat-value">1,120</strong>
+              <small class="stat-sub">+75.5% conversão</small>
+            </div>
+            <div class="stat-card">
+              <span class="stat-label">Conteúdos Entregues</span>
+              <strong class="stat-value">1,118</strong>
+            </div>
+            <div class="stat-card">
+              <span class="stat-label">Cliques na Comunidade</span>
+              <strong class="stat-value">845</strong>
+            </div>
+          </div>
+
+          <div class="panel-card" style="margin-top: 24px;">
+            <h3>Zernio Automation Journal (Live Feed)</h3>
+            <div class="journal-feed">
+              <div class="journal-item">
+                <span class="time">15:28:40</span>
+                <span class="event-tag delivered">content_delivered</span>
+                <span>Conteúdo [PROMPT] entregue com sucesso para @usuario_test</span>
+              </div>
+              <div class="journal-item">
+                <span class="time">15:27:12</span>
+                <span class="event-tag confirmed">follow_confirmed</span>
+                <span>Follow confirmado via Zernio API (isFollower=true)</span>
+              </div>
+              <div class="journal-item">
+                <span class="time">15:26:05</span>
+                <span class="event-tag requested">content_requested</span>
+                <span>Novo comentário detectado no Reel #18299164084305199</span>
+              </div>
+            </div>
+          </div>
+        </section>
+      </main>
+    </div>
+
+    <script>
+      // Simple tab switching logic
+      document.querySelectorAll('.nav-item').forEach(btn => {
+        btn.addEventListener('click', () => {
+          document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
+          document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+
+          btn.classList.add('active');
+          const tabId = btn.getAttribute('data-tab');
+          document.getElementById(`tab-${tabId}`).classList.add('active');
+
+          const titles = {
+            builder: ['Visual Flow Builder', 'Desenhe e gerencie a jornada conversacional determinística do Instagram'],
+            triggers: ['Triggers & Entradas', 'Gerencie quais palavras-chave e eventos iniciam os fluxos'],
+            followgate: ['Follow Gate & Regras', 'Configure como o sistema exige o follow antes da entrega'],
+            catalog: ['Catálogo de Conteúdos', 'Gerencie as ofertas e materiais liberados após o follow'],
+            analytics: ['Métricas & Journal', 'Acompanhe o funil de conversão e registros do Zernio em tempo real']
+          };
+
+          if (titles[tabId]) {
+            document.getElementById('pageTitle').textContent = titles[tabId][0];
+            document.getElementById('pageSubtitle').textContent = titles[tabId][1];
+          }
+        });
+      });
+    </script>
+  </body>
+</html>

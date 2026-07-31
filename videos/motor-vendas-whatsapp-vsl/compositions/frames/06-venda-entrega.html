@@ -1,0 +1,507 @@
+<template>
+  <div id="root" data-composition-id="06-venda-entrega" data-width="1920" data-height="1080" data-duration="9.231">
+    <div
+      class="clip 06-venda-entrega-ground"
+      data-start="0"
+      data-duration="9.231"
+      data-track-index="0"
+    >
+      <div class="06-venda-entrega-ground-color"></div>
+      <img
+        class="06-venda-entrega-background-image"
+        src="capture/assets/visual-conceitual-da-conversa-avanando-p.webp"
+        alt=""
+      />
+    </div>
+
+    <div
+      class="clip 06-venda-entrega-stage"
+      data-start="0"
+      data-duration="9.231"
+      data-track-index="1"
+    >
+      <header class="06-venda-entrega-topbar">
+        <span>ROTA COMERCIAL</span>
+        <span>06 / ENTREGA</span>
+      </header>
+
+      <h1 class="06-venda-entrega-headline">
+        <span>A CONVERSA AVANÇOU.</span>
+        <span class="06-venda-entrega-headline-accent">E AGORA?</span>
+      </h1>
+
+      <svg
+        class="06-venda-entrega-route"
+        viewBox="0 0 1920 1080"
+        preserveAspectRatio="none"
+        aria-hidden="true"
+      >
+        <path
+          id="06-venda-entrega-route-01"
+          class="06-venda-entrega-route-segment"
+          d="M 96 430 H 175"
+        />
+        <path
+          id="06-venda-entrega-route-02"
+          class="06-venda-entrega-route-segment"
+          d="M 595 430 H 720"
+        />
+        <path
+          id="06-venda-entrega-route-03"
+          class="06-venda-entrega-route-segment"
+          d="M 1200 430 H 1325"
+        />
+        <path
+          id="06-venda-entrega-route-04"
+          class="06-venda-entrega-route-segment"
+          d="M 1805 430 H 1834 V 678 H 1805"
+        />
+        <path
+          id="06-venda-entrega-route-05"
+          class="06-venda-entrega-route-segment"
+          d="M 1325 678 H 1200"
+        />
+        <path
+          id="06-venda-entrega-route-06"
+          class="06-venda-entrega-route-segment"
+          d="M 720 678 H 595"
+        />
+        <path
+          id="06-venda-entrega-route-07"
+          class="06-venda-entrega-route-segment 06-venda-entrega-route-terminal"
+          d="M 115 678 H 84 V 820 H 706"
+        />
+      </svg>
+
+      <div class="06-venda-entrega-card-field">
+        <article
+          class="06-venda-entrega-card 06-venda-entrega-card-light"
+          data-target-x="-605"
+          data-target-y="-110"
+        >
+          <div class="06-venda-entrega-card-number">01</div>
+          <div class="06-venda-entrega-card-rule"></div>
+          <div class="06-venda-entrega-card-title">PREÇO</div>
+        </article>
+
+        <article
+          class="06-venda-entrega-card 06-venda-entrega-card-dark"
+          data-target-x="0"
+          data-target-y="-110"
+        >
+          <div class="06-venda-entrega-card-number">02</div>
+          <div class="06-venda-entrega-card-rule"></div>
+          <div class="06-venda-entrega-card-title">PROPOSTA</div>
+        </article>
+
+        <article
+          class="06-venda-entrega-card 06-venda-entrega-card-light"
+          data-target-x="605"
+          data-target-y="-110"
+        >
+          <div class="06-venda-entrega-card-number">03</div>
+          <div class="06-venda-entrega-card-rule"></div>
+          <div class="06-venda-entrega-card-title">CONTRATO</div>
+        </article>
+
+        <article
+          class="06-venda-entrega-card 06-venda-entrega-card-dark"
+          data-target-x="605"
+          data-target-y="138"
+        >
+          <div class="06-venda-entrega-card-number">04</div>
+          <div class="06-venda-entrega-card-rule"></div>
+          <div class="06-venda-entrega-card-title">PAGAMENTO</div>
+        </article>
+
+        <article
+          class="06-venda-entrega-card 06-venda-entrega-card-light"
+          data-target-x="0"
+          data-target-y="138"
+        >
+          <div class="06-venda-entrega-card-number">05</div>
+          <div class="06-venda-entrega-card-rule"></div>
+          <div class="06-venda-entrega-card-title">CRIAÇÃO</div>
+        </article>
+
+        <article
+          class="06-venda-entrega-card 06-venda-entrega-card-dark"
+          data-target-x="-605"
+          data-target-y="138"
+        >
+          <div class="06-venda-entrega-card-number">06</div>
+          <div class="06-venda-entrega-card-rule"></div>
+          <div class="06-venda-entrega-card-title">ENTREGA</div>
+        </article>
+      </div>
+
+      <div class="06-venda-entrega-payoff">
+        <div class="06-venda-entrega-check">
+          <svg viewBox="0 0 48 48" aria-hidden="true">
+            <path
+              id="06-venda-entrega-check-path"
+              d="M 10 25 L 20 35 L 39 14"
+            />
+          </svg>
+        </div>
+        <span>PROJETO ENTREGUE</span>
+      </div>
+    </div>
+  </div>
+
+  <style>
+    #root {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      container-type: size;
+    }
+
+    #root * {
+      box-sizing: border-box;
+    }
+
+    [class~="06-venda-entrega-ground"],
+    [class~="06-venda-entrega-stage"] {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+    }
+
+    [class~="06-venda-entrega-ground-color"] {
+      position: absolute;
+      inset: 0;
+      background: #0d4e2b;
+    }
+
+    [class~="06-venda-entrega-background-image"] {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      object-position: center center;
+      opacity: 0.56;
+      filter: brightness(0.62) saturate(0.72);
+      will-change: transform;
+    }
+
+    [class~="06-venda-entrega-stage"] {
+      color: #ffffff;
+      font-family: sans-serif;
+    }
+
+    [class~="06-venda-entrega-topbar"] {
+      position: absolute;
+      z-index: 6;
+      top: 48px;
+      left: 96px;
+      right: 96px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding-bottom: 17px;
+      border-bottom: 2px solid #60e49c;
+      color: #ffffff;
+      font-family: monospace;
+      font-size: 24px;
+      font-weight: 500;
+      letter-spacing: 0.16em;
+      line-height: 1;
+      text-transform: uppercase;
+    }
+
+    [class~="06-venda-entrega-headline"] {
+      position: absolute;
+      z-index: 6;
+      top: 120px;
+      left: 96px;
+      width: 1120px;
+      margin: 0;
+      color: #ffffff;
+      font-size: 78px;
+      font-weight: 500;
+      letter-spacing: -0.02em;
+      line-height: 0.94;
+    }
+
+    [class~="06-venda-entrega-headline"] > span {
+      display: block;
+    }
+
+    [class~="06-venda-entrega-headline-accent"] {
+      color: #60e49c;
+    }
+
+    [class~="06-venda-entrega-route"] {
+      position: absolute;
+      z-index: 2;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      overflow: visible;
+      pointer-events: none;
+    }
+
+    [class~="06-venda-entrega-route-segment"] {
+      fill: none;
+      stroke: #60e49c;
+      stroke-width: 7px;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    [class~="06-venda-entrega-route-terminal"] {
+      stroke: #ffffff;
+    }
+
+    [class~="06-venda-entrega-card-field"] {
+      position: absolute;
+      z-index: 3;
+      inset: 0;
+    }
+
+    [class~="06-venda-entrega-card"] {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 480px;
+      height: 155px;
+      padding: 20px 24px 19px;
+      border: 2.5px solid;
+      border-radius: 8px;
+      overflow: hidden;
+      will-change: transform, opacity;
+    }
+
+    [class~="06-venda-entrega-card-light"] {
+      background: #ffffff;
+      border-color: #116336;
+      color: #0d4e2b;
+    }
+
+    [class~="06-venda-entrega-card-dark"] {
+      background: #116336;
+      border-color: #60e49c;
+      color: #ffffff;
+    }
+
+    [class~="06-venda-entrega-card-number"] {
+      font-family: monospace;
+      font-size: 20px;
+      font-weight: 500;
+      letter-spacing: 0.14em;
+      line-height: 1;
+    }
+
+    [class~="06-venda-entrega-card-rule"] {
+      width: 100%;
+      height: 2px;
+      margin: 15px 0 15px;
+      background: currentColor;
+    }
+
+    [class~="06-venda-entrega-card-title"] {
+      font-size: 42px;
+      font-weight: 500;
+      letter-spacing: -0.01em;
+      line-height: 0.96;
+      white-space: nowrap;
+    }
+
+    [class~="06-venda-entrega-payoff"] {
+      position: absolute;
+      z-index: 7;
+      top: 777px;
+      left: 706px;
+      width: 650px;
+      height: 86px;
+      display: flex;
+      align-items: center;
+      gap: 24px;
+      padding: 12px 28px 12px 14px;
+      border: 2.5px solid #116336;
+      border-radius: 8px;
+      background: #ffffff;
+      color: #0d4e2b;
+      will-change: transform, opacity;
+    }
+
+    [class~="06-venda-entrega-check"] {
+      width: 58px;
+      height: 58px;
+      flex: 0 0 58px;
+      display: grid;
+      place-items: center;
+      border-radius: 8px;
+      background: #116336;
+    }
+
+    [class~="06-venda-entrega-check"] svg {
+      width: 44px;
+      height: 44px;
+    }
+
+    [class~="06-venda-entrega-check"] path {
+      fill: none;
+      stroke: #60e49c;
+      stroke-width: 6px;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    [class~="06-venda-entrega-payoff"] > span {
+      font-size: 42px;
+      font-weight: 500;
+      letter-spacing: -0.01em;
+      line-height: 1;
+      white-space: nowrap;
+    }
+  </style>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+  <script>
+    (() => {
+      const root = document.querySelector(
+        '[data-composition-id="06-venda-entrega"]'
+      );
+      const image = root.querySelector(
+        '[class~="06-venda-entrega-background-image"]'
+      );
+      const topbar = root.querySelector(
+        '[class~="06-venda-entrega-topbar"]'
+      );
+      const headline = root.querySelector(
+        '[class~="06-venda-entrega-headline"]'
+      );
+      const cards = Array.from(
+        root.querySelectorAll('[class~="06-venda-entrega-card"]')
+      );
+      const routeSegments = Array.from(
+        root.querySelectorAll('[class~="06-venda-entrega-route-segment"]')
+      );
+      const payoff = root.querySelector(
+        '[class~="06-venda-entrega-payoff"]'
+      );
+      const checkPath = root.querySelector(
+        '#\\30 6-venda-entrega-check-path'
+      );
+
+      routeSegments.forEach((path) => {
+        const length = path.getTotalLength();
+        path.style.strokeDasharray = `${length}`;
+        path.style.strokeDashoffset = `${length}`;
+      });
+
+      const checkLength = checkPath.getTotalLength();
+      checkPath.style.strokeDasharray = `${checkLength}`;
+      checkPath.style.strokeDashoffset = `${checkLength}`;
+
+      const timeline = gsap.timeline({ paused: true });
+      window.__timelines = window.__timelines || {};
+      window.__timelines["06-venda-entrega"] = timeline;
+
+      timeline.fromTo(
+        image,
+        { scale: 1.045 },
+        { scale: 1, duration: 8.661, ease: "none" },
+        0
+      );
+      timeline.fromTo(
+        topbar,
+        { y: -18, opacity: 0.001 },
+        { y: 0, opacity: 1, duration: 0.48, ease: "power2.out" },
+        0.05
+      );
+      timeline.fromTo(
+        headline,
+        { y: 26, opacity: 0.001 },
+        { y: 0, opacity: 1, duration: 0.66, ease: "power3.out" },
+        0.12
+      );
+      timeline.to(
+        routeSegments[0],
+        { strokeDashoffset: 0, duration: 0.55, ease: "power2.out" },
+        1.05
+      );
+
+      const cardStarts = [1.92, 2.58, 3.24, 3.9, 4.56, 5.22];
+      const routeStarts = [null, 2.82, 3.48, 4.14, 4.8, 5.46];
+
+      cards.forEach((card, index) => {
+        const targetX = Number(card.dataset.targetX);
+        const targetY = Number(card.dataset.targetY);
+        timeline.fromTo(
+          card,
+          {
+            xPercent: -50,
+            yPercent: -50,
+            x: targetX * 0.28,
+            y: targetY * 0.28,
+            scale: 0.72,
+            opacity: 0.001
+          },
+          {
+            xPercent: -50,
+            yPercent: -50,
+            x: targetX,
+            y: targetY,
+            scale: 1,
+            opacity: 1,
+            duration: 0.74,
+            ease: "power3.out"
+          },
+          cardStarts[index]
+        );
+
+        if (index > 0) {
+          timeline.to(
+            routeSegments[index],
+            {
+              strokeDashoffset: 0,
+              duration: index === 3 ? 0.64 : 0.48,
+              ease: "power2.out"
+            },
+            routeStarts[index]
+          );
+        }
+      });
+
+      timeline.to(
+        routeSegments[6],
+        { strokeDashoffset: 0, duration: 0.74, ease: "power2.out" },
+        5.92
+      );
+      timeline.fromTo(
+        payoff,
+        { y: 20, scale: 0.94, opacity: 0.001 },
+        {
+          y: 0,
+          scale: 1,
+          opacity: 1,
+          duration: 0.72,
+          ease: "power3.out"
+        },
+        6.5
+      );
+      timeline.to(
+        checkPath,
+        { strokeDashoffset: 0, duration: 0.48, ease: "power2.out" },
+        6.86
+      );
+      timeline.to(
+        routeSegments,
+        { strokeWidth: 9, duration: 0.34, ease: "power1.out" },
+        7.35
+      );
+      timeline.to(
+        routeSegments,
+        { strokeWidth: 7, duration: 0.46, ease: "power1.out" },
+        7.69
+      );
+    })();
+  </script>
+</template>

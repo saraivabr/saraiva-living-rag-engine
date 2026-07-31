@@ -1,0 +1,248 @@
+{
+  "framework": "SaraivaOS",
+  "version": "1.0.0",
+  "createdAt": "2026-07-29T03:26:55.845Z",
+  "updatedAt": "2026-07-31T18:39:39.497Z",
+  "project": {
+    "id": "project-20260729032655-97f781c2",
+    "name": "Motor de Vendas Saraiva.ai",
+    "root": "/Users/saraiva/_Projetos/respondedorinstagram",
+    "objective": "Publicar VSL e validar funil automático até pagamento e entrega"
+  },
+  "cycle": {
+    "currentStage": "validacao",
+    "completedStages": []
+  },
+  "navigation": {
+    "currentRoute": "Instagram Reel sites -> Zernio -> ElevenLabs -> WhatsApp",
+    "nextArtifact": "proof da primeira jornada real nova",
+    "blocker": ""
+  },
+  "identity": {
+    "business": "",
+    "offer": "",
+    "audience": "",
+    "objective": "Publicar VSL e validar funil automático até pagamento e entrega"
+  },
+  "evidenceSummary": {
+    "observed": 22,
+    "provided": 1,
+    "inferred": 0,
+    "hypothesis": 0,
+    "unknown": 0
+  },
+  "methods": {
+    "active": [
+      "Zernio",
+      "CloudWatch",
+      "DynamoDB",
+      "ElevenLabs"
+    ],
+    "considered": []
+  },
+  "actions": [
+    {
+      "id": "action-20260729034419-7d351178",
+      "title": "Acompanhar os primeiros dados do novo Reel e do checkout",
+      "owner": "SaraivaOS",
+      "deadline": "",
+      "metric": "visitas na loja, cobrancas iniciadas, Pix confirmados e prompts gerados",
+      "status": "pending",
+      "createdAt": "2026-07-29T03:44:19.148Z"
+    },
+    {
+      "id": "action-20260729141052-f50faae7",
+      "title": "Medir a conversao da oferta unica Sistema Cliente Pronto",
+      "owner": "SaraivaOS",
+      "deadline": "",
+      "metric": "visitas, checkouts iniciados, Pix confirmados e dossies gerados",
+      "status": "pending",
+      "createdAt": "2026-07-29T14:10:52.128Z"
+    },
+    {
+      "id": "action-20260729170716-6211a9ac",
+      "title": "Construir prototipo Manifest V3 da Fase 0 com painel lateral e envio assistido no WhatsApp Web",
+      "owner": "SaraivaOS",
+      "deadline": "2026-08-05",
+      "metric": "10 negocios testados, 9 dossies corretos e zero envio duplicado ou sem clique",
+      "status": "pending",
+      "createdAt": "2026-07-29T17:07:16.730Z"
+    },
+    {
+      "id": "action-20260729172219-be8483b4",
+      "title": "Instalar o prototipo em perfil controlado e enviar para numero proprio",
+      "owner": "SaraivaOS",
+      "deadline": "2026-07-30",
+      "metric": "zero duplicidade, destinatario correto e status reconciliado",
+      "status": "pending",
+      "createdAt": "2026-07-29T17:22:19.464Z"
+    },
+    {
+      "id": "action-20260729192906-9ca60be4",
+      "title": "Medir primeira venda da Extensao Cliente Pronto no novo funil",
+      "owner": "SaraivaOS",
+      "deadline": "2026-07-31",
+      "metric": "visitas, checkouts iniciados, Pix confirmados, downloads e primeiro cliente gerado",
+      "status": "pending",
+      "createdAt": "2026-07-29T19:29:06.364Z"
+    },
+    {
+      "id": "action-20260730211857-7371c17e",
+      "title": "Executar proof pack real em staging sem ativação pública",
+      "owner": "Saraiva",
+      "deadline": "",
+      "metric": "1 jornada allowlisted por ramo com IDs Meta, MP3, webhook Woovi e estado de acesso reconciliados",
+      "status": "pending",
+      "createdAt": "2026-07-30T21:18:57.241Z"
+    },
+    {
+      "id": "action-20260731183933-e6808b55",
+      "title": "Validar a primeira jornada real nova do Reel de sites até a abertura do convite",
+      "owner": "SaraivaOS",
+      "deadline": "2026-08-01",
+      "metric": "comment_received, private_reply, site_creation_confirmed, audio_sent, community_cta_sent, whatsapp_community_opened separados",
+      "status": "pending",
+      "createdAt": "2026-07-31T18:39:33.372Z"
+    }
+  ],
+  "experiments": [
+    {
+      "id": "exp-20260729170721-750e63e9",
+      "name": "Extensao Chrome Cliente Pronto - Fase 0",
+      "hypothesis": "Cinco vendedores de sites conseguirao transformar um negocio escolhido em dossie e mensagem enviada com menos atrito usando o painel lateral.",
+      "metric": "usuarios que concluem o fluxo e preferem a extensao ao processo atual",
+      "baseline": "nao medido",
+      "target": "4 de 5 concluem; 3 de 5 preferem; zero envio indevido",
+      "status": "active",
+      "createdAt": "2026-07-29T17:07:21.482Z",
+      "result": null
+    }
+  ],
+  "artifacts": [
+    {
+      "id": "artifact-20260729034412-9a0ed934",
+      "path": "videos/motor-vendas-whatsapp-vsl/renders/video-elevenlabs-saraiva-final.mp4",
+      "type": "video",
+      "proof": "sha256:d7c72b8dc9b01ea9be59f9655888214b2bcab8a93bf31e363c608ce0bc31c658",
+      "createdAt": "2026-07-29T03:44:12.761Z"
+    },
+    {
+      "id": "artifact-20260729034412-836c16b7",
+      "path": "videos/motor-vendas-whatsapp-vsl/POST_CAPTION.md",
+      "type": "copy",
+      "proof": "caption published with R, R,90 and loja.saraiva.ai",
+      "createdAt": "2026-07-29T03:44:12.791Z"
+    },
+    {
+      "id": "artifact-20260729034427-24d84c45",
+      "path": "videos/motor-vendas-whatsapp-vsl/POST_CAPTION.md",
+      "type": "copy",
+      "proof": "caption published with R$99, R$49,90 and loja.saraiva.ai",
+      "createdAt": "2026-07-29T03:44:27.095Z"
+    },
+    {
+      "id": "artifact-20260729141051-3dfa86a5",
+      "path": "storefront/app/page.tsx",
+      "type": "site",
+      "proof": "Sites v13 commit 0e119c9c3c8ae3567864c9ffc4012861f7953913 em producao",
+      "createdAt": "2026-07-29T14:10:51.990Z"
+    },
+    {
+      "id": "artifact-20260729141052-c0a54c0e",
+      "path": "src/automation/sitePromptAutomation.ts",
+      "type": "system",
+      "proof": "gera diagnostico, 3 abordagens, oferta, proposta, contrato-base, prompt e checklist",
+      "createdAt": "2026-07-29T14:10:52.036Z"
+    },
+    {
+      "id": "artifact-20260729170706-f4393afe",
+      "path": "docs/plano-extensao-chrome-cliente-pronto.md",
+      "type": "blueprint",
+      "proof": "arquivo inspecionado com 400 linhas, arquitetura, roadmap, riscos, fontes e experimento",
+      "createdAt": "2026-07-29T17:07:06.162Z"
+    },
+    {
+      "id": "artifact-20260729172219-293f9f25",
+      "path": "chrome-extension/output/cliente-pronto-chrome-v0.1.0.zip",
+      "type": "chrome-extension",
+      "proof": "sha256:8ace2f5a0a2760dd13372c9e3558735dba22ee5beb834988e5567166561019d8",
+      "createdAt": "2026-07-29T17:22:19.425Z"
+    },
+    {
+      "id": "artifact-20260729172417-16cf7506",
+      "path": "chrome-extension/output/cliente-pronto-chrome-v0.1.0.zip",
+      "type": "chrome-extension-final",
+      "proof": "sha256:492083bed927a976b3607d5fbae7bdad456b258a3abecbd7daab0c7aee4447ff",
+      "createdAt": "2026-07-29T17:24:17.624Z"
+    },
+    {
+      "id": "artifact-20260729192906-5df6e498",
+      "path": "chrome-extension/output/cliente-pronto-chrome-v0.1.0.zip",
+      "type": "chrome-extension-commercial",
+      "proof": "sha256:454ac97e7b48beb67e59ff9790638326cd929a1fd94495bc932a0505ba91c405; download pago comparado byte a byte",
+      "createdAt": "2026-07-29T19:29:06.224Z"
+    },
+    {
+      "id": "artifact-20260729192906-fc4c6442",
+      "path": "storefront/app/page.tsx",
+      "type": "storefront",
+      "proof": "Sites v19 commit 4608b5fa39dc65c3b3d34ee7f32af629bf37981b em producao no loja.saraiva.ai",
+      "createdAt": "2026-07-29T19:29:06.291Z"
+    },
+    {
+      "id": "artifact-20260729194738-1bc0e00e",
+      "path": "storefront/app/page.tsx",
+      "type": "storefront",
+      "proof": "Sites v20 commit 3f33347e3cbee70ae1e0c1e9c9f2c807ecfb7427 em producao no loja.saraiva.ai",
+      "createdAt": "2026-07-29T19:47:38.916Z"
+    },
+    {
+      "id": "artifact-20260729194738-dac4afe2",
+      "path": "chrome-extension/output/cliente-pronto-chrome-v0.1.0.zip",
+      "type": "chrome-extension-commercial",
+      "proof": "sha256:12dad1ca1335e990e166100b268ac460c92fffb9f110310d93b82e8e3d382be1; pacote pago verificado byte a byte",
+      "createdAt": "2026-07-29T19:47:38.951Z"
+    },
+    {
+      "id": "artifact-20260730211852-012211fe",
+      "path": "/Users/saraiva/_Projetos/respondedorinstagram/docs/sexyflow-staging-proof.md",
+      "type": "proof-plan",
+      "proof": "Fluxograma, razão observável, gates, proof pack, rollback e bloqueio explícito de produção.",
+      "createdAt": "2026-07-30T21:18:52.175Z"
+    },
+    {
+      "id": "artifact-20260731183933-5b382f38",
+      "path": "docs/automation-runs/2026-07-31T18-38Z-sites-live.md",
+      "type": "proof-pack",
+      "proof": "Lambda v19; code hash PUk8Z8Dhlq5VFyzZRKjtjLXRF2YQ6zQrBk7auhQ9ZHk=; 147/147 testes; HTTP 403/200",
+      "createdAt": "2026-07-31T18:39:33.335Z"
+    }
+  ],
+  "sessions": [],
+  "learnings": [
+    {
+      "id": "learning-20260729034419-ba9cf5cd",
+      "statement": "A API Woovi rejeita travessao no campo comment como emoji; usar comentario ASCII para cobrancas.",
+      "evidence": "erro real woovi_charge_failed_400 em 2026-07-29 e reteste HTTP 200",
+      "createdAt": "2026-07-29T03:44:19.175Z"
+    },
+    {
+      "id": "learning-20260729141052-b14a2025",
+      "statement": "Uma oferta low-ticket fica clara quando define a unidade de entrega: uma empresa entra e um dossie completo sai; o PDF deve aparecer apenas como bonus.",
+      "evidence": "site publico e checkout R,90 validados em producao",
+      "createdAt": "2026-07-29T14:10:52.083Z"
+    },
+    {
+      "id": "learning-20260729141100-4e803547",
+      "statement": "Uma oferta low-ticket fica clara quando define a unidade de entrega: uma empresa entra e um dossie completo sai; o PDF deve aparecer apenas como bonus.",
+      "evidence": "site publico e checkout de R$19,90 validados em producao",
+      "createdAt": "2026-07-29T14:11:00.298Z"
+    },
+    {
+      "id": "learning-20260729194738-a671cc7c",
+      "statement": "Para a oferta low-ticket atual, a unidade de valor mais compreensivel e uma rodada de 10 prospeccoes completas, com extensao e processo comercial, por um unico pagamento.",
+      "evidence": "site, checkout, backend, painel e entrega alinhados em producao",
+      "createdAt": "2026-07-29T19:47:38.998Z"
+    }
+  ]
+}

@@ -1,0 +1,8 @@
+node_modules
+dist
+.env
+.env.*
+lambda.zip
+brain_report.json
+*.log
+.DS_Store

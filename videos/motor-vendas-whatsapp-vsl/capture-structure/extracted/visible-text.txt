@@ -1,0 +1,56 @@
+[strong] Saraiva.ai
+[small] COMPRA ÚNICA
+[a] ← Comparar os planos
+[span] ESTRUTURA ATUAL • SEM MENSALIDADE
+[h1] Comece com um negócio real e saia com o prompt pronto para criar o site.
+[p] Você informa uma empresa. A estrutura pesquisa os dados públicos, organiza o contexto e prepara o projeto para ser executado no modo Work do ChatGPT com @Sites.
+[span] pagamento único
+[span] via Pix pela Woovi
+[button] Ativar estrutura de captação por R$99
+[small] Você será encaminhado à Woovi. O acesso é liberado depois da confirmação do Pix.
+[span] ENTRADA
+[strong] Empresa ou link do Google Maps
+[span] PROCESSAMENTO
+[strong] Apify + briefing personalizado
+[span] SAÍDA
+[strong] Prompt para Work + @Sites
+[span] O QUE VOCÊ RECEBE
+[h2] Uma estrutura prática para ir da empresa encontrada ao projeto preparado.
+[h3] BUSCA ORIENTADA
+[p] Você parte de um negócio real do Google Maps, não de uma ideia genérica.
+[h3] DADOS ORGANIZADOS
+[p] O Apify reúne informações públicas que ajudam a entender o contexto da empresa.
+[h3] BRIEFING PERSONALIZADO
+[p] O negócio encontrado é transformado em matéria-prima para o projeto.
+[h3] PROMPT COMPLETO
+[p] Você recebe o prompt para usar no modo Work do ChatGPT com @Sites.
+[h3] MÉTODO COMERCIAL
+[p] A apostila orienta abordagem, preço, proposta, contrato, pagamento e entrega.
+[h3] ARQUIVOS PARA USAR
+[p] Você pode copiar o prompt, baixar o .txt e acessar o PDF de apoio.
+[span] É PARA VOCÊ SE…
+[li] você quer vender sites para negócios locais;
+[li] já usa ou pretende usar ChatGPT e @Sites;
+[li] quer reduzir o tempo de pesquisa e preparação;
+[li] prefere pagar uma vez e ficar com a versão atual.
+[span] O QUE ESTA COMPRA NÃO INCLUI
+[li] atualizações futuras do sistema;
+[li] conexão automática do seu WhatsApp nesta versão;
+[li] disparo em massa ou envio sem sua revisão;
+[li] garantia de clientes, contratos ou faturamento.
+[span] DEPOIS DO PIX
+[h2] Você não fica procurando onde está o produto.
+[p] A própria jornada confirma o pagamento, libera a ferramenta e conduz até o material.
+[strong] A Woovi confirma o Pix
+[p] A página acompanha o estado do pedido automaticamente.
+[strong] O acesso é aberto
+[p] Você entra na ferramenta de briefing e recebe o PDF de apoio.
+[strong] Você informa o negócio
+[p] Use o link do Maps para maior precisão ou nome + região.
+[strong] O prompt é preparado
+[p] Copie ou baixe e continue no Work do ChatGPT com @Sites.
+[span] PRONTO PARA USAR A ESTRUTURA ATUAL?
+[h2] Pagamento único. Sem mensalidade. Sem atualização futura incluída.
+[button] Ativar estrutura de captação por R$99
+[p] Precisa de suporte com a compra? Fale com @saraiva.ai e informe o identificador do pedido.
+[a] Privacidade

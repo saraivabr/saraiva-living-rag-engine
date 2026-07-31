@@ -1,0 +1,779 @@
+<template>
+  <style>
+    #root {
+      position: relative;
+      width: 1920px;
+      height: 1080px;
+      overflow: hidden;
+      container-type: size;
+      color: #0b1713;
+      font-family: sans-serif;
+    }
+
+    [id="f05-work-sites-ground"] {
+      position: absolute;
+      inset: 0;
+      background: #ffffff;
+    }
+
+    [id="f05-work-sites-frame"] {
+      position: absolute;
+      inset: 0;
+      overflow: hidden;
+    }
+
+    [id="f05-work-sites-topbar"] {
+      position: absolute;
+      top: 4.2cqh;
+      left: 5cqw;
+      right: 5cqw;
+      height: 5.2cqh;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 2px solid #116336;
+      color: #116336;
+      font-family: monospace;
+      font-size: 26px;
+      font-weight: 500;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+    }
+
+    [id="f05-work-sites-counter"] {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 62px;
+      height: 44px;
+      border: 2px solid #116336;
+      border-radius: 6px;
+      letter-spacing: 0.08em;
+    }
+
+    [id="f05-work-sites-stage"] {
+      position: absolute;
+      top: 12.4cqh;
+      left: 5cqw;
+      width: 90cqw;
+      height: 67.8cqh;
+      overflow: hidden;
+      border: 2.5px solid #116336;
+      border-radius: 8px;
+      background: #ffffff;
+    }
+
+    [id="f05-work-sites-rail"] {
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      left: 0;
+      width: 37.5%;
+      background: #116336;
+    }
+
+    [id="f05-work-sites-rail-rule"] {
+      position: absolute;
+      top: 5.2cqh;
+      left: 4.1cqw;
+      width: 7.4cqw;
+      height: 2px;
+      background: #60e49c;
+      transform-origin: 0 50%;
+    }
+
+    [id="f05-work-sites-rail-index"] {
+      position: absolute;
+      top: 3.4cqh;
+      right: 2.1cqw;
+      color: #60e49c;
+      font-family: monospace;
+      font-size: 22px;
+      font-weight: 500;
+      letter-spacing: 0.16em;
+    }
+
+    [id="f05-work-sites-brief-card"] {
+      position: absolute;
+      top: 12.1cqh;
+      left: 3.6cqw;
+      width: 26.2cqw;
+      height: 26.8cqh;
+      padding: 3.1cqh 2.2cqw;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      border: 2.5px solid #60e49c;
+      border-radius: 8px;
+      background: #116336;
+      color: #ffffff;
+      transform-origin: 50% 50%;
+    }
+
+    [id="f05-work-sites-brief-kicker"] {
+      font-family: monospace;
+      font-size: 22px;
+      font-weight: 500;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      color: #60e49c;
+    }
+
+    [id="f05-work-sites-brief-title"] {
+      max-width: 20cqw;
+      font-size: 3.5cqw;
+      font-weight: 500;
+      line-height: 0.96;
+      letter-spacing: -0.01em;
+      text-transform: uppercase;
+    }
+
+    [id="f05-work-sites-brief-footer"] {
+      padding-top: 1.8cqh;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-top: 2px solid #60e49c;
+      color: #ffffff;
+      font-family: monospace;
+      font-size: 20px;
+      font-weight: 500;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+    }
+
+    [id="f05-work-sites-attachment-dot"] {
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      background: #60e49c;
+    }
+
+    [id="f05-work-sites-composer"] {
+      position: absolute;
+      top: 4.1cqh;
+      right: 3.4cqw;
+      width: 50.8cqw;
+      height: 56.8cqh;
+      border: 2.5px solid #116336;
+      border-radius: 8px;
+      background: #ffffff;
+      overflow: hidden;
+    }
+
+    [id="f05-work-sites-modebar"] {
+      height: 8.3cqh;
+      padding: 0 2cqw;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 2px solid #116336;
+    }
+
+    [id="f05-work-sites-mode"] {
+      display: inline-flex;
+      align-items: center;
+      min-height: 48px;
+      padding: 0 22px;
+      border: 2px solid #116336;
+      border-radius: 6px;
+      background: #60e49c;
+      color: #0d4e2b;
+      font-family: monospace;
+      font-size: 23px;
+      font-weight: 500;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+    }
+
+    [id="f05-work-sites-mode-mark"] {
+      width: 20px;
+      height: 20px;
+      margin-right: 14px;
+      border: 2px solid #0d4e2b;
+      border-radius: 50%;
+      background: #0d4e2b;
+    }
+
+    [id="f05-work-sites-tool-label"] {
+      color: #116336;
+      font-family: monospace;
+      font-size: 20px;
+      font-weight: 500;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+    }
+
+    [id="f05-work-sites-prompt"] {
+      position: absolute;
+      top: 11.2cqh;
+      left: 2cqw;
+      right: 2cqw;
+      bottom: 2.4cqh;
+      padding: 2.4cqh 2cqw;
+      border: 2px solid #116336;
+      border-radius: 8px;
+      background: #ffffff;
+    }
+
+    [id="f05-work-sites-tool-line"] {
+      min-height: 5.6cqh;
+      display: flex;
+      align-items: baseline;
+      color: #116336;
+      font-family: monospace;
+      font-size: 2.05cqw;
+      font-weight: 500;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      white-space: pre;
+    }
+
+    [id="f05-work-sites-tool-text"] {
+      min-width: 10ch;
+      white-space: pre;
+    }
+
+    [id="f05-work-sites-cursor"] {
+      display: inline-block;
+      width: 15px;
+      height: 36px;
+      margin-left: 7px;
+      background: #116336;
+      vertical-align: -5px;
+    }
+
+    [id="f05-work-sites-prompt-lines"] {
+      margin-top: 1.4cqh;
+      border-top: 2px solid #116336;
+    }
+
+    [id^="f05-work-sites-prompt-line-"] {
+      min-height: 6.2cqh;
+      display: flex;
+      align-items: center;
+      border-bottom: 2px solid #116336;
+      color: #0b1713;
+      font-size: 1.56cqw;
+      font-weight: 400;
+      line-height: 1.2;
+      letter-spacing: -0.01em;
+    }
+
+    [id^="f05-work-sites-prompt-line-"]::before {
+      content: "";
+      width: 12px;
+      height: 12px;
+      margin-right: 18px;
+      border-radius: 50%;
+      background: #60e49c;
+      flex: 0 0 auto;
+    }
+
+    [id="f05-work-sites-submit-wrap"] {
+      position: absolute;
+      right: 1.8cqw;
+      bottom: 2.3cqh;
+      width: 9.2cqw;
+      height: 6.2cqh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transform-origin: 50% 50%;
+    }
+
+    [id="f05-work-sites-submit"] {
+      position: relative;
+      z-index: 2;
+      width: 100%;
+      height: 100%;
+      border: 2px solid #116336;
+      border-radius: 6px;
+      background: #116336;
+      color: #ffffff;
+      font-family: monospace;
+      font-size: 20px;
+      font-weight: 500;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      transform-origin: 50% 50%;
+    }
+
+    [id="f05-work-sites-status-strip"] {
+      position: absolute;
+      left: 2cqw;
+      bottom: 2.3cqh;
+      width: 26cqw;
+      height: 6.2cqh;
+      display: flex;
+      align-items: center;
+      padding: 0 1.4cqw;
+      border: 2px solid #116336;
+      border-radius: 6px;
+      background: #ffffff;
+      overflow: hidden;
+    }
+
+    [id="f05-work-sites-status-dot"] {
+      width: 16px;
+      height: 16px;
+      margin-right: 16px;
+      border-radius: 50%;
+      background: #60e49c;
+      flex: 0 0 auto;
+    }
+
+    [id="f05-work-sites-status-text"] {
+      color: #116336;
+      font-family: monospace;
+      font-size: 20px;
+      font-weight: 500;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      white-space: nowrap;
+    }
+
+    [id="f05-work-sites-result"] {
+      position: absolute;
+      top: 3.1cqh;
+      left: 14.1cqw;
+      width: 61.8cqw;
+      height: 56.2cqh;
+      padding: 1.6cqh 1.4cqw 2cqh;
+      border: 2.5px solid #116336;
+      border-radius: 8px;
+      background: #ffffff;
+      transform-origin: 50% 70%;
+    }
+
+    [id="f05-work-sites-result-head"] {
+      height: 5.4cqh;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 2px solid #116336;
+      color: #116336;
+      font-family: monospace;
+      font-size: 20px;
+      font-weight: 500;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+    }
+
+    [id="f05-work-sites-preview"] {
+      position: absolute;
+      top: 8.2cqh;
+      left: 1.4cqw;
+      width: 59cqw;
+      height: 44.9cqh;
+      object-fit: contain;
+      object-position: center;
+      background: #ffffff;
+    }
+
+    [id="f05-work-sites-seal"] {
+      position: absolute;
+      left: 24.3cqw;
+      bottom: 2.7cqh;
+      min-width: 42cqw;
+      height: 7.2cqh;
+      padding: 0 2.1cqw;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border: 2.5px solid #60e49c;
+      border-radius: 8px;
+      background: #116336;
+      color: #ffffff;
+      font-family: monospace;
+      font-size: 24px;
+      font-weight: 500;
+      letter-spacing: 0.14em;
+      text-align: center;
+      text-transform: uppercase;
+      transform-origin: 50% 50%;
+    }
+
+    [id="f05-work-sites-seal"]::before {
+      content: "";
+      width: 18px;
+      height: 18px;
+      margin-right: 18px;
+      border-radius: 50%;
+      background: #60e49c;
+    }
+  </style>
+
+  <div
+    id="root"
+    data-composition-id="05-work-sites"
+    data-duration="9.567"
+    data-width="1920"
+    data-height="1080"
+  >
+    <div
+      id="f05-work-sites-ground"
+      class="clip"
+      data-start="0"
+      data-duration="9.567"
+      data-track-index="0"
+    ></div>
+
+    <div
+      id="f05-work-sites-frame"
+      class="clip"
+      data-start="0"
+      data-duration="9.567"
+      data-track-index="1"
+    >
+      <div id="f05-work-sites-topbar">
+        <span>PRODUÇÃO ASSISTIDA / @SITES</span>
+        <span id="f05-work-sites-counter">05</span>
+      </div>
+
+      <div id="f05-work-sites-stage">
+        <div id="f05-work-sites-rail">
+          <div id="f05-work-sites-rail-rule"></div>
+          <div id="f05-work-sites-rail-index">INPUT / 01</div>
+
+          <div id="f05-work-sites-brief-card">
+            <div id="f05-work-sites-brief-kicker">BRIEFING</div>
+            <div id="f05-work-sites-brief-title">BRIEFING PERSONALIZADO</div>
+            <div id="f05-work-sites-brief-footer">
+              <span>PRONTO PARA USAR</span>
+              <span id="f05-work-sites-attachment-dot"></span>
+            </div>
+          </div>
+        </div>
+
+        <div id="f05-work-sites-composer">
+          <div id="f05-work-sites-modebar">
+            <div id="f05-work-sites-mode">
+              <span id="f05-work-sites-mode-mark"></span>
+              <span>MODO WORK</span>
+            </div>
+            <div id="f05-work-sites-tool-label">PROMPT / SITE</div>
+          </div>
+
+          <div id="f05-work-sites-prompt">
+            <div id="f05-work-sites-tool-line">
+              <span id="f05-work-sites-tool-text"></span>
+              <span id="f05-work-sites-cursor"></span>
+            </div>
+
+            <div id="f05-work-sites-prompt-lines">
+              <div id="f05-work-sites-prompt-line-1"></div>
+              <div id="f05-work-sites-prompt-line-2"></div>
+              <div id="f05-work-sites-prompt-line-3"></div>
+            </div>
+
+            <div id="f05-work-sites-status-strip">
+              <span id="f05-work-sites-status-dot"></span>
+              <span id="f05-work-sites-status-text">PRONTO</span>
+            </div>
+
+            <div id="f05-work-sites-submit-wrap">
+              <button id="f05-work-sites-submit" type="button">CRIAR</button>
+            </div>
+          </div>
+        </div>
+
+        <div id="f05-work-sites-result">
+          <div id="f05-work-sites-result-head">
+            <span>PRÉVIA GERADA</span>
+            <span>WORK / SITES</span>
+          </div>
+          <img
+            id="f05-work-sites-preview"
+            src="capture/assets/og-image.png"
+            alt=""
+          />
+        </div>
+
+        <div id="f05-work-sites-seal">SEM COMEÇAR DO ZERO</div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/gsap.min.js"></script>
+  <script>
+    (() => {
+      const duration = 9.067;
+      const timeline = gsap.timeline({ paused: true });
+
+      window.__timelines = window.__timelines || {};
+      window.__timelines["05-work-sites"] = timeline;
+
+      const toolText = document.getElementById("f05-work-sites-tool-text");
+      const cursor = document.getElementById("f05-work-sites-cursor");
+      const promptLine1 = document.getElementById("f05-work-sites-prompt-line-1");
+      const promptLine2 = document.getElementById("f05-work-sites-prompt-line-2");
+      const promptLine3 = document.getElementById("f05-work-sites-prompt-line-3");
+      const statusText = document.getElementById("f05-work-sites-status-text");
+
+      const textSequence = [
+        { t: 0, text: "", color: "#116336" },
+        { t: 2.35, text: "@", color: "#60E49C" },
+        { t: 2.5, text: "@S", color: "#60E49C" },
+        { t: 2.66, text: "@SI", color: "#60E49C" },
+        { t: 2.82, text: "@SIT", color: "#60E49C" },
+        { t: 2.98, text: "@SITE", color: "#60E49C" },
+        { t: 3.16, text: "@SITES", color: "#116336" },
+      ];
+
+      const promptSequence = [
+        {
+          t: 0,
+          lines: ["", "", ""],
+          status: "PRONTO",
+        },
+        {
+          t: 3.35,
+          lines: ["CRIE UM SITE DE VENDAS", "", ""],
+          status: "PROMPT 01 / 03",
+        },
+        {
+          t: 4.32,
+          lines: ["CRIE UM SITE DE VENDAS", "USE ESTA OFERTA E ESTE TOM", ""],
+          status: "PROMPT 02 / 03",
+        },
+        {
+          t: 5.22,
+          lines: [
+            "CRIE UM SITE DE VENDAS",
+            "USE ESTA OFERTA E ESTE TOM",
+            "ENTREGUE PRONTO PARA PUBLICAR",
+          ],
+          status: "PROMPT 03 / 03",
+        },
+        {
+          t: 6.28,
+          lines: [
+            "CRIE UM SITE DE VENDAS",
+            "USE ESTA OFERTA E ESTE TOM",
+            "ENTREGUE PRONTO PARA PUBLICAR",
+          ],
+          status: "ORGANIZANDO",
+        },
+        {
+          t: 6.78,
+          lines: [
+            "CRIE UM SITE DE VENDAS",
+            "USE ESTA OFERTA E ESTE TOM",
+            "ENTREGUE PRONTO PARA PUBLICAR",
+          ],
+          status: "CRIANDO",
+        },
+        {
+          t: 7.15,
+          lines: [
+            "CRIE UM SITE DE VENDAS",
+            "USE ESTA OFERTA E ESTE TOM",
+            "ENTREGUE PRONTO PARA PUBLICAR",
+          ],
+          status: "PRÉVIA PRONTA",
+        },
+      ];
+
+      function currentEntry(sequence, time) {
+        for (let index = sequence.length - 1; index >= 0; index -= 1) {
+          if (time >= sequence[index].t) return sequence[index];
+        }
+        return sequence[0];
+      }
+
+      const textDriver = { time: 0 };
+      timeline.to(
+        textDriver,
+        {
+          time: duration,
+          duration,
+          ease: "none",
+          onUpdate: () => {
+            const textEntry = currentEntry(textSequence, textDriver.time);
+            const promptEntry = currentEntry(promptSequence, textDriver.time);
+            const typing =
+              textDriver.time >= 2.35 && textDriver.time <= 3.25;
+            const blinkPhase = Math.sin(
+              (textDriver.time / duration) * Math.PI * 2 * 12,
+            );
+
+            toolText.textContent = textEntry.text;
+            cursor.style.background = textEntry.color;
+            cursor.style.opacity = typing || blinkPhase > 0 ? "1" : "0";
+            promptLine1.textContent = promptEntry.lines[0];
+            promptLine2.textContent = promptEntry.lines[1];
+            promptLine3.textContent = promptEntry.lines[2];
+            statusText.textContent = promptEntry.status;
+          },
+        },
+        0,
+      );
+
+      timeline.fromTo(
+        "#f05-work-sites-topbar",
+        { y: -24, opacity: 0 },
+        { y: 0, opacity: 1, duration: 0.42, ease: "power2.out" },
+        0.02,
+      );
+
+      timeline.fromTo(
+        "#f05-work-sites-stage",
+        { y: 46, opacity: 0 },
+        { y: 0, opacity: 1, duration: 0.48, ease: "power2.out" },
+        0.04,
+      );
+
+      timeline.fromTo(
+        "#f05-work-sites-rail-rule",
+        { scaleX: 0 },
+        { scaleX: 1, duration: 0.5, ease: "power2.out" },
+        0.18,
+      );
+
+      timeline.fromTo(
+        "#f05-work-sites-brief-card",
+        { x: -210, rotation: -2.5, opacity: 0 },
+        {
+          x: 0,
+          rotation: 0,
+          opacity: 1,
+          duration: 0.78,
+          ease: "back.out(1.6)",
+        },
+        0.18,
+      );
+
+      timeline.fromTo(
+        "#f05-work-sites-composer",
+        { x: 105, opacity: 0 },
+        { x: 0, opacity: 1, duration: 0.66, ease: "power2.out" },
+        0.54,
+      );
+
+      timeline.to(
+        "#f05-work-sites-brief-card",
+        {
+          x: 56,
+          y: 24,
+          scale: 0.92,
+          duration: 0.62,
+          ease: "power2.inOut",
+        },
+        1.34,
+      );
+
+      timeline.fromTo(
+        "#f05-work-sites-mode",
+        { y: -24, opacity: 0 },
+        {
+          y: 0,
+          opacity: 1,
+          duration: 0.46,
+          ease: "back.out(1.7)",
+        },
+        2.2,
+      );
+
+      timeline.fromTo(
+        "#f05-work-sites-tool-label",
+        { x: 28, opacity: 0 },
+        { x: 0, opacity: 1, duration: 0.38, ease: "power2.out" },
+        2.36,
+      );
+
+      timeline.fromTo(
+        "#f05-work-sites-prompt-line-1",
+        { x: 32, opacity: 0 },
+        { x: 0, opacity: 1, duration: 0.36, ease: "power2.out" },
+        3.34,
+      );
+
+      timeline.fromTo(
+        "#f05-work-sites-prompt-line-2",
+        { x: 32, opacity: 0 },
+        { x: 0, opacity: 1, duration: 0.36, ease: "power2.out" },
+        4.31,
+      );
+
+      timeline.fromTo(
+        "#f05-work-sites-prompt-line-3",
+        { x: 32, opacity: 0 },
+        { x: 0, opacity: 1, duration: 0.36, ease: "power2.out" },
+        5.21,
+      );
+
+      timeline.to(
+        "#f05-work-sites-submit",
+        {
+          scale: 0.92,
+          backgroundColor: "#0D4E2B",
+          duration: 0.18,
+          ease: "power1.in",
+        },
+        6.0,
+      );
+
+      timeline.to(
+        "#f05-work-sites-submit",
+        {
+          scale: 1,
+          backgroundColor: "#116336",
+          duration: 0.56,
+          ease: "back.out(2)",
+        },
+        6.18,
+      );
+
+      timeline.fromTo(
+        "#f05-work-sites-status-strip",
+        { scaleX: 0.72, opacity: 0 },
+        {
+          scaleX: 1,
+          opacity: 1,
+          duration: 0.42,
+          ease: "power2.out",
+        },
+        6.22,
+      );
+
+      timeline.fromTo(
+        "#f05-work-sites-result",
+        { y: 78, scale: 0.94, opacity: 0 },
+        {
+          y: 0,
+          scale: 1,
+          opacity: 1,
+          duration: 0.72,
+          ease: "back.out(1.45)",
+        },
+        6.94,
+      );
+
+      timeline.fromTo(
+        "#f05-work-sites-preview",
+        { scale: 0.975, opacity: 0 },
+        {
+          scale: 1,
+          opacity: 1,
+          duration: 0.58,
+          ease: "power2.out",
+        },
+        7.18,
+      );
+
+      timeline.fromTo(
+        "#f05-work-sites-seal",
+        { y: 54, scale: 0.92, opacity: 0 },
+        {
+          y: 0,
+          scale: 1,
+          opacity: 1,
+          duration: 0.62,
+          ease: "back.out(1.8)",
+        },
+        8.0,
+      );
+    })();
+  </script>
+</template>

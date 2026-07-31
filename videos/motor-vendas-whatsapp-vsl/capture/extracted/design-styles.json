@@ -1,0 +1,352 @@
+{
+  "typography": [
+    {
+      "role": "heading",
+      "fontFamily": "Geist",
+      "fontSize": "142.4px",
+      "fontWeight": "400",
+      "lineHeight": "116.768px",
+      "letterSpacing": "-12.816px",
+      "color": "#07110E",
+      "sampleText": "Porém, você quer apenas criar um site…ou ter um motor de ven"
+    },
+    {
+      "role": "heading-2",
+      "fontFamily": "Geist",
+      "fontSize": "91.2px",
+      "fontWeight": "400",
+      "lineHeight": "87.552px",
+      "letterSpacing": "-6.84px",
+      "color": "#FFFFFF",
+      "sampleText": "O prompt cria o site. O motor coloca oportunidades reais den"
+    },
+    {
+      "role": "display",
+      "fontFamily": "Geist",
+      "fontSize": "64px",
+      "fontWeight": "400",
+      "lineHeight": "62.72px",
+      "letterSpacing": "-4.16px",
+      "color": "#07110E",
+      "sampleText": "O prompt pra criar o site tá aqui:"
+    },
+    {
+      "role": "heading-3",
+      "fontFamily": "Geist",
+      "fontSize": "28px",
+      "fontWeight": "400",
+      "lineHeight": "30.24px",
+      "letterSpacing": "-1.4px",
+      "color": "#FFFFFF",
+      "sampleText": "Você abre o Maps e começa a procurar no escuro."
+    },
+    {
+      "role": "heading-3",
+      "fontFamily": "Geist",
+      "fontSize": "20.8px",
+      "fontWeight": "400",
+      "lineHeight": "31.2px",
+      "letterSpacing": "-0.832px",
+      "color": "#0B1713",
+      "sampleText": "Você conecta o WhatsApp"
+    },
+    {
+      "role": "body",
+      "fontFamily": "Geist",
+      "fontSize": "18.88px",
+      "fontWeight": "400",
+      "lineHeight": "32.096px",
+      "letterSpacing": "normal",
+      "color": "#56635C",
+      "sampleText": "Porque saber criar um site não coloca clientes na sua frente"
+    },
+    {
+      "role": "link",
+      "fontFamily": "Geist",
+      "fontSize": "14.08px",
+      "fontWeight": "400",
+      "lineHeight": "21.12px",
+      "letterSpacing": "normal",
+      "color": "#5F6B65",
+      "sampleText": "Como funciona"
+    },
+    {
+      "role": "body-small",
+      "fontFamily": "Geist Mono",
+      "fontSize": "10.24px",
+      "fontWeight": "800",
+      "lineHeight": "normal",
+      "letterSpacing": "1.024px",
+      "color": "#78867F",
+      "sampleText": "USE NO MODO WORK DO CHATGPT"
+    }
+  ],
+  "spacing": {
+    "observed": [
+      5,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12,
+      13,
+      14,
+      15,
+      18,
+      19,
+      20,
+      22,
+      23
+    ],
+    "baseUnit": 4
+  },
+  "radius": [
+    "9px",
+    "10px",
+    "12px",
+    "13px"
+  ],
+  "shadows": [
+    {
+      "value": "rgb(25, 200, 107) 3px 0px 0px 0px inset",
+      "count": 1
+    },
+    {
+      "value": "rgb(25, 200, 107) 0px 4px 0px 0px inset",
+      "count": 1
+    },
+    {
+      "value": "rgba(17, 111, 58, 0.14) 0px 28px 70px 0px",
+      "count": 1
+    }
+  ],
+  "buttons": [
+    {
+      "label": "Copiar prompt",
+      "background": "#19C86B",
+      "backgroundImage": "",
+      "backdropFilter": "",
+      "color": "#06110B",
+      "padding": "0px 15px",
+      "borderRadius": "10px",
+      "border": "0px none rgb(6, 17, 11)",
+      "boxShadow": "none",
+      "fontSize": "12px",
+      "fontWeight": "900",
+      "height": "46px"
+    },
+    {
+      "label": "⌁",
+      "background": "#173326",
+      "backgroundImage": "",
+      "backdropFilter": "",
+      "color": "#19C86B",
+      "padding": "0px",
+      "borderRadius": "10px",
+      "border": "0px none rgb(25, 200, 107)",
+      "boxShadow": "none",
+      "fontSize": "16px",
+      "fontWeight": "400",
+      "height": "38px"
+    },
+    {
+      "label": "◌",
+      "background": "transparent",
+      "backgroundImage": "",
+      "backdropFilter": "",
+      "color": "#71857B",
+      "padding": "0px",
+      "borderRadius": "10px",
+      "border": "0px none rgb(113, 133, 123)",
+      "boxShadow": "none",
+      "fontSize": "16px",
+      "fontWeight": "400",
+      "height": "38px"
+    },
+    {
+      "label": "Editar",
+      "background": "#13221B",
+      "backgroundImage": "",
+      "backdropFilter": "",
+      "color": "#A9B9B0",
+      "padding": "0px 14px",
+      "borderRadius": "9px",
+      "border": "1px solid rgb(48, 68, 58)",
+      "boxShadow": "none",
+      "fontSize": "10.4px",
+      "fontWeight": "750",
+      "height": "38px"
+    },
+    {
+      "label": "✓ Aprovar primeiro contato",
+      "background": "#19C86B",
+      "backgroundImage": "",
+      "backdropFilter": "",
+      "color": "#06110B",
+      "padding": "0px 14px",
+      "borderRadius": "9px",
+      "border": "1px solid rgb(25, 200, 107)",
+      "boxShadow": "none",
+      "fontSize": "10.4px",
+      "fontWeight": "750",
+      "height": "38px"
+    }
+  ],
+  "cards": [
+    {
+      "label": "card",
+      "background": "#0D1A15",
+      "backgroundImage": "",
+      "backdropFilter": "",
+      "color": "#FFFFFF",
+      "padding": "38px",
+      "borderRadius": "20px",
+      "border": "1px solid rgb(40, 58, 50)",
+      "boxShadow": "none",
+      "fontSize": "16px",
+      "fontWeight": "400",
+      "height": "310px"
+    },
+    {
+      "label": "card",
+      "background": "transparent",
+      "backgroundImage": "linear-gradient(135deg, rgb(16, 38, 28), rgb(21, 53, 38))",
+      "backdropFilter": "",
+      "color": "#FFFFFF",
+      "padding": "38px",
+      "borderRadius": "20px",
+      "border": "1px solid rgba(25, 200, 107, 0.55)",
+      "boxShadow": "rgb(25, 200, 107) 0px 4px 0px 0px inset",
+      "fontSize": "16px",
+      "fontWeight": "400",
+      "height": "310px"
+    },
+    {
+      "label": "card",
+      "background": "transparent",
+      "backgroundImage": "",
+      "backdropFilter": "",
+      "color": "#0B1713",
+      "padding": "34px 30px 34px 0px",
+      "borderRadius": "0px",
+      "border": "",
+      "boxShadow": "none",
+      "fontSize": "16px",
+      "fontWeight": "400",
+      "height": "180px"
+    },
+    {
+      "label": "card",
+      "background": "#F7FBF8",
+      "backgroundImage": "",
+      "backdropFilter": "",
+      "color": "#0B1713",
+      "padding": "0px",
+      "borderRadius": "22px",
+      "border": "1px solid rgb(220, 233, 225)",
+      "boxShadow": "none",
+      "fontSize": "16px",
+      "fontWeight": "400",
+      "height": "716.656px"
+    }
+  ],
+  "nav": {
+    "label": "navigation",
+    "background": "#FFFFFF",
+    "backgroundImage": "",
+    "backdropFilter": "blur(18px)",
+    "color": "#0B1713",
+    "padding": "0px 96px",
+    "borderRadius": "0px",
+    "border": "",
+    "boxShadow": "none",
+    "fontSize": "16px",
+    "fontWeight": "400",
+    "height": "76px"
+  },
+  "chips": [
+    {
+      "label": "AGORA, A PERGUNTA QUE MU",
+      "background": "#EBFFF2",
+      "color": "#09713B",
+      "padding": "9px 14px",
+      "borderRadius": "999px",
+      "border": "1px solid rgb(198, 234, 212)",
+      "boxShadow": "none",
+      "fontSize": "10.88px",
+      "fontWeight": "900",
+      "height": "36.3125px"
+    },
+    {
+      "label": "PROMPT LIBERADO",
+      "background": "#19C86B",
+      "color": "#06110B",
+      "padding": "7px 10px",
+      "borderRadius": "999px",
+      "border": "0px solid rgb(6, 17, 11)",
+      "boxShadow": "none",
+      "fontSize": "10.24px",
+      "fontWeight": "800",
+      "height": "27px"
+    },
+    {
+      "label": "☎",
+      "background": "#19C86B",
+      "color": "#06120C",
+      "padding": "0px",
+      "borderRadius": "50%",
+      "border": "0px solid rgb(6, 18, 12)",
+      "boxShadow": "none",
+      "fontSize": "16px",
+      "fontWeight": "900",
+      "height": "40px"
+    },
+    {
+      "label": "WHATSAPP",
+      "background": "#143321",
+      "color": "#57DF94",
+      "padding": "6px 9px",
+      "borderRadius": "999px",
+      "border": "0px solid rgb(87, 223, 148)",
+      "boxShadow": "none",
+      "fontSize": "8.32px",
+      "fontWeight": "700",
+      "height": "22px"
+    }
+  ],
+  "statCells": [],
+  "tabs": [],
+  "backgrounds": [
+    {
+      "value": "linear-gradient(120deg, rgba(255, 255, 255, 0.99) 0%, rgba(255, 255, 255, 0.96) 44%, rgba(235, 255, 242, 0.88) 100%), radial-gradient(circle at 86% 10%, rgba(25, 200, 107, 0.23), rgba(0, 0, 0, 0) 30%)",
+      "area": 4315950
+    },
+    {
+      "value": "linear-gradient(rgba(25, 200, 107, 0.06) 1px, rgba(0, 0, 0, 0) 1px), linear-gradient(90deg, rgba(25, 200, 107, 0.06) 1px, rgba(0, 0, 0, 0) 1px)",
+      "area": 4315950
+    },
+    {
+      "value": "radial-gradient(circle at 100% 0px, rgba(25, 200, 107, 0.14), rgba(0, 0, 0, 0) 34%), none",
+      "area": 377244
+    },
+    {
+      "value": "linear-gradient(90deg, rgb(25, 200, 107), rgb(101, 229, 155), rgb(25, 200, 107))",
+      "area": 377244
+    },
+    {
+      "value": "radial-gradient(circle at 100% 0px, rgba(25, 200, 107, 0.08), rgba(0, 0, 0, 0) 36%), linear-gradient(135deg, rgb(14, 26, 21), rgb(16, 29, 24))",
+      "area": 278402
+    }
+  ],
+  "glass": [
+    {
+      "backdropFilter": "blur(18px)",
+      "background": "rgba(255, 255, 255, 0.93)",
+      "border": "",
+      "borderRadius": "0px",
+      "boxShadow": "",
+      "area": 145920
+    }
+  ]
+}

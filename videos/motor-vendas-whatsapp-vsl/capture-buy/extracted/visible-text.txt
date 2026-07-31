@@ -1,0 +1,57 @@
+[strong] Saraiva.ai
+[small] MOTOR DE VENDAS
+[a] ← Voltar ao site
+[span] ESCOLHA SUA PORTA DE ENTRADA
+[h1] Você não está comprando apenas um prompt.
+[p] Está adquirindo uma estrutura para encontrar negócios locais, transformar dados públicos em uma abordagem relevante e conduzir a oportunidade até a criação e entrega de um site.
+[span] Maps + Apify
+[span] WhatsApp como canal
+[span] Work + @Sites
+[span] Método comercial
+[span] QUAL FAZ SENTIDO PARA VOCÊ?
+[h2] A diferença está no tipo de acesso, não em uma promessa de resultado.
+[p] Os dois caminhos liberam a estrutura atual. O que muda é se você prefere uma compra única ou permanecer no ciclo de atualizações.
+[div] COMPRA ÚNICA
+[h3] Estrutura atual
+[p] Para quem quer começar com o mecanismo disponível agora e ficar com essa versão sem cobrança mensal.
+[span] uma vez
+[li] Busca de empresa com Maps + Apify
+[li] Briefing e prompt personalizado
+[li] Apostila prática de execução
+[li] Orientação sobre abordagem, preço, contrato e entrega
+[li] Acesso à versão adquirida
+[li] Não inclui futuras atualizações
+[a] Entender a compra de R$99
+[div] PARA ACOMPANHAR A EVOLUÇÃO
+[div] ASSINATURA
+[h3] Sistema em evolução
+[p] Para quem quer usar a estrutura atual e receber os novos módulos liberados enquanto mantiver a assinatura ativa.
+[strong] 49,90
+[span] por mês
+[li] Tudo o que está disponível na estrutura atual
+[li] Atualizações liberadas durante a assinatura
+[li] Evolução da operação conectada ao WhatsApp
+[li] Novas ferramentas de captação e organização
+[li] Autorização mensal via Pix Automático
+[li] Módulos sem data fixa de lançamento
+[a] Entender a assinatura de R$49,90
+[span] O QUE ACONTECE DEPOIS?
+[h2] Da escolha do plano ao primeiro prompt personalizado.
+[h3] Escolha seu plano
+[p] Decida entre ficar com a estrutura atual ou acompanhar a evolução do sistema.
+[h3] Conclua pela Woovi
+[p] A compra única usa Pix. A assinatura usa autorização de Pix Automático.
+[h3] Receba o acesso
+[p] Após a confirmação, a página de liberação abre automaticamente.
+[h3] Escolha uma empresa
+[p] Informe o link do Google Maps ou o nome e a região do negócio.
+[h3] Gere e use
+[p] O sistema pesquisa via Apify e prepara o prompt para Work + @Sites.
+[p] O sistema reduz pesquisa e organização. Você continua responsável pela revisão das mensagens, pela conversa, pelo fechamento e pela entrega.
+[span] AINDA EM DÚVIDA?
+[h2] Quer a versão de hoje para usar sem mensalidade?
+[a] Escolha a estrutura de R$99
+[h2] Quer acompanhar os próximos módulos enquanto estiver ativo?
+[a] Escolha R$49,90 por mês
+[p] Não há garantia de clientes, vendas ou faturamento. Resultados dependem da abordagem, da oferta, da execução e da entrega de cada usuário.
+[a] Privacidade

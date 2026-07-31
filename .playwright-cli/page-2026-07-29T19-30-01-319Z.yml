@@ -1,0 +1,55 @@
+- generic [ref=f2e1]:
+  - generic [ref=f2e2]:
+    - banner [ref=f2e3]:
+      - link "Saraiva AI" [ref=f2e4] [cursor=pointer]:
+        - /url: "#"
+        - generic [ref=f2e5]: S
+        - generic [ref=f2e6]: SARAIVA.AI
+      - generic [ref=f2e7]: Inteligência comercial ativa
+    - main [ref=f2e9]:
+      - text: ✓ ✓ ✓ ✓ ✓ ✓
+      - generic [ref=f2e79]:
+        - generic [ref=f2e80]:
+          - generic [ref=f2e81]:
+            - generic [ref=f2e82]: SM
+            - generic [ref=f2e83]:
+              - generic [ref=f2e84]: DOSSIÊ COMERCIAL CONCLUÍDO
+              - heading "Scarlett Makeup" [level=2] [ref=f2e86]
+              - paragraph [ref=f2e87]: Beleza e estética · Salvador, BA
+          - generic [ref=f2e88]:
+            - generic [ref=f2e89]:
+              - generic [ref=f2e90]: POTENCIAL DE VENDA
+              - strong [ref=f2e91]: 87/100
+            - generic [ref=f2e92]: ALTO
+        - navigation "Seções do dossiê" [ref=f2e94]:
+          - button "Visão geral" [ref=f2e95] [cursor=pointer]
+          - button "Abordagem" [ref=f2e96] [cursor=pointer]
+          - button "Oferta e valor" [ref=f2e97] [cursor=pointer]
+          - button "Plano de fechamento" [ref=f2e98] [cursor=pointer]
+        - generic [ref=f2e153]:
+          - article [ref=f2e154]:
+            - generic [ref=f2e155]:
+              - generic [ref=f2e156]: "01"
+              - text: PRIMEIRA MENSAGEM
+            - generic [ref=f2e157]:
+              - paragraph [ref=f2e158]: Oi! Encontrei a Scarlett Makeup enquanto pesquisava beleza e estética. A marca já transmite confiança, mas notei uma oportunidade de transformar mais visitas em pedidos pelo WhatsApp. Preparei uma ideia rápida para vocês. Posso te mostrar?
+              - generic [ref=f2e159]: Agora · Mensagem personalizada
+            - button "Copiar abordagem" [active] [ref=f2e160] [cursor=pointer]
+          - article [ref=f2e164]:
+            - generic [ref=f2e165]:
+              - generic [ref=f2e166]: "02"
+              - text: SE NÃO RESPONDER
+            - generic [ref=f2e167]:
+              - generic [ref=f2e168]:
+                - generic [ref=f2e169]: D+2
+                - paragraph [ref=f2e170]: Posso te enviar a ideia visual que montei para a Scarlett? Você avalia em 2 minutos.
+              - generic [ref=f2e171]:
+                - generic [ref=f2e172]: D+5
+                - paragraph [ref=f2e173]: Deixo a análise reservada por aqui. Se fizer sentido, te mostro sem compromisso.
+        - text: ✓ ✓ ✓ ✓
+        - generic [ref=f2e148]:
+          - generic [ref=f2e149]: Dados organizados e estratégia gerada com IA
+          - button "＋ Nova análise" [ref=f2e151] [cursor=pointer]
+  - status:
+    - generic: ✓
+    - paragraph: Abordagem copiada

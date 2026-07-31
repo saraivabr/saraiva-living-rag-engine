@@ -1,0 +1,63 @@
+- generic [active] [ref=e1]:
+  - generic [ref=e2]:
+    - banner [ref=e3]:
+      - link "Saraiva AI" [ref=e4] [cursor=pointer]:
+        - /url: "#"
+        - generic [ref=e5]: S
+        - generic [ref=e6]: SARAIVA.AI
+      - generic [ref=e7]: CLIENTE PRONTO
+      - generic [ref=e9]: Inteligência comercial ativa
+    - main [ref=e11]:
+      - generic [ref=e12]:
+        - generic [ref=e13]:
+          - generic [ref=e14]:
+            - generic [ref=e15]: "01"
+            - text: PROSPECÇÃO COM CONTEXTO
+          - heading [level=1] [ref=e16]:
+            - text: Cole uma empresa.
+            - emphasis [ref=e17]: Saia com a venda pronta.
+          - paragraph [ref=e18]: A IA pesquisa o negócio, encontra a oportunidade e transforma dados públicos em uma estratégia comercial completa.
+          - generic [ref=e19]:
+            - generic [ref=e24]:
+              - generic [ref=e25]: LINK DA EMPRESA
+              - textbox "LINK DA EMPRESA" [ref=e26]:
+                - /placeholder: Cole o Google Maps ou Instagram aqui
+            - button "Analisar empresa" [ref=e27] [cursor=pointer]
+          - generic [ref=e31]:
+            - generic [ref=e32]: ACEITA
+            - button "Google Maps" [ref=e33] [cursor=pointer]
+            - button "Instagram" [ref=e37] [cursor=pointer]
+            - button "Usar empresa de exemplo" [ref=e42] [cursor=pointer]
+        - complementary [ref=e43]:
+          - generic [ref=e44]:
+            - generic [ref=e45]: O QUE A IA ENTREGA
+            - generic [ref=e46]: EM TEMPO REAL
+          - list [ref=e48]:
+            - listitem [ref=e49]:
+              - generic [ref=e50]: "01"
+              - generic [ref=e51]:
+                - strong [ref=e52]: Diagnóstico da oportunidade
+                - paragraph [ref=e53]: Sinais públicos, gargalos e potencial comercial.
+              - generic [ref=e54]: ↗
+            - listitem [ref=e55]:
+              - generic [ref=e56]: "02"
+              - generic [ref=e57]:
+                - strong [ref=e58]: Estratégia de abordagem
+                - paragraph [ref=e59]: Mensagem personalizada e follow-up.
+              - generic [ref=e60]: ↗
+            - listitem [ref=e61]:
+              - generic [ref=e62]: "03"
+              - generic [ref=e63]:
+                - strong [ref=e64]: Oferta e investimento
+                - paragraph [ref=e65]: Escopo, ancoragem e valor recomendado.
+              - generic [ref=e66]: ↗
+            - listitem [ref=e67]:
+              - generic [ref=e68]: "04"
+              - generic [ref=e69]:
+                - strong [ref=e70]: Plano para fechar a venda
+                - paragraph [ref=e71]: Proposta e próximos passos executáveis.
+              - generic [ref=e72]: ↗
+      - text: ✓ ✓ ✓ ✓
+  - status:
+    - generic: ✓
+    - paragraph: Abordagem copiada

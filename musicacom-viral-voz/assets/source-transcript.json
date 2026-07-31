@@ -1,0 +1,632 @@
+[
+  {
+    "text": "O",
+    "start": 0.02,
+    "end": 0.06
+  },
+  {
+    "text": "mercado",
+    "start": 0.06,
+    "end": 0.48
+  },
+  {
+    "text": "da",
+    "start": 0.49,
+    "end": 0.6
+  },
+  {
+    "text": "música",
+    "start": 0.6,
+    "end": 1.04
+  },
+  {
+    "text": "está",
+    "start": 1.04,
+    "end": 1.35
+  },
+  {
+    "text": "super",
+    "start": 1.35,
+    "end": 1.66
+  },
+  {
+    "text": "aquecido,",
+    "start": 1.66,
+    "end": 2.24
+  },
+  {
+    "text": "e",
+    "start": 2.27,
+    "end": 2.31
+  },
+  {
+    "text": "essa",
+    "start": 2.31,
+    "end": 2.61
+  },
+  {
+    "text": "é",
+    "start": 2.61,
+    "end": 2.74
+  },
+  {
+    "text": "a",
+    "start": 2.74,
+    "end": 2.86
+  },
+  {
+    "text": "automação,",
+    "start": 2.86,
+    "end": 3.77
+  },
+  {
+    "text": "um",
+    "start": 3.77,
+    "end": 3.87
+  },
+  {
+    "text": "caça",
+    "start": 3.87,
+    "end": 4.08
+  },
+  {
+    "text": "cliente",
+    "start": 4.12,
+    "end": 4.47
+  },
+  {
+    "text": "para",
+    "start": 4.53,
+    "end": 4.6
+  },
+  {
+    "text": "vocês.",
+    "start": 4.6,
+    "end": 5.24
+  },
+  {
+    "text": "A",
+    "start": 5.26,
+    "end": 5.29
+  },
+  {
+    "text": "gente",
+    "start": 5.29,
+    "end": 5.58
+  },
+  {
+    "text": "faz",
+    "start": 5.58,
+    "end": 5.75
+  },
+  {
+    "text": "fatorar",
+    "start": 5.75,
+    "end": 6.14
+  },
+  {
+    "text": "até",
+    "start": 6.14,
+    "end": 6.37
+  },
+  {
+    "text": "mil",
+    "start": 6.37,
+    "end": 6.52
+  },
+  {
+    "text": "reais",
+    "start": 6.55,
+    "end": 6.83
+  },
+  {
+    "text": "por",
+    "start": 6.83,
+    "end": 6.98
+  },
+  {
+    "text": "dia.",
+    "start": 7.03,
+    "end": 7.26
+  },
+  {
+    "text": "Bora",
+    "start": 7.28,
+    "end": 7.52
+  },
+  {
+    "text": "ver",
+    "start": 7.52,
+    "end": 7.72
+  },
+  {
+    "text": "como",
+    "start": 7.72,
+    "end": 7.98
+  },
+  {
+    "text": "faz?",
+    "start": 7.98,
+    "end": 8.4
+  },
+  {
+    "text": "Chega",
+    "start": 8.4,
+    "end": 8.71
+  },
+  {
+    "text": "aí.",
+    "start": 8.71,
+    "end": 9.1
+  },
+  {
+    "text": "Vocês",
+    "start": 9.12,
+    "end": 9.41
+  },
+  {
+    "text": "vão",
+    "start": 9.41,
+    "end": 9.61
+  },
+  {
+    "text": "entrar",
+    "start": 9.61,
+    "end": 9.92
+  },
+  {
+    "text": "aqui,",
+    "start": 9.92,
+    "end": 10.21
+  },
+  {
+    "text": "no",
+    "start": 10.22,
+    "end": 10.31
+  },
+  {
+    "text": "app",
+    "start": 10.31,
+    "end": 10.46
+  },
+  {
+    "text": "Firestore.",
+    "start": 10.47,
+    "end": 11.13
+  },
+  {
+    "text": "Aqui",
+    "start": 11.16,
+    "end": 11.53
+  },
+  {
+    "text": "vocês",
+    "start": 11.53,
+    "end": 12.11
+  },
+  {
+    "text": "vão",
+    "start": 12.11,
+    "end": 12.5
+  },
+  {
+    "text": "entrar,",
+    "start": 12.51,
+    "end": 13.29
+  },
+  {
+    "text": "escolher",
+    "start": 13.41,
+    "end": 14.07
+  },
+  {
+    "text": "o",
+    "start": 14.07,
+    "end": 14.15
+  },
+  {
+    "text": "Google.",
+    "start": 14.18,
+    "end": 15.07
+  },
+  {
+    "text": "Olha,",
+    "start": 15.12,
+    "end": 15.43
+  },
+  {
+    "text": "eu",
+    "start": 15.43,
+    "end": 15.53
+  },
+  {
+    "text": "coloquei",
+    "start": 15.54,
+    "end": 15.96
+  },
+  {
+    "text": "aqui",
+    "start": 15.96,
+    "end": 16.18
+  },
+  {
+    "text": "a",
+    "start": 16.19,
+    "end": 16.24
+  },
+  {
+    "text": "loja",
+    "start": 16.24,
+    "end": 16.46
+  },
+  {
+    "text": "de",
+    "start": 16.46,
+    "end": 16.57
+  },
+  {
+    "text": "carros,",
+    "start": 16.57,
+    "end": 17
+  },
+  {
+    "text": "tá",
+    "start": 17,
+    "end": 17.15
+  },
+  {
+    "text": "vendo?",
+    "start": 17.16,
+    "end": 17.7
+  },
+  {
+    "text": "Vamos",
+    "start": 17.72,
+    "end": 18.22
+  },
+  {
+    "text": "ver",
+    "start": 18.22,
+    "end": 18.53
+  },
+  {
+    "text": "aqui",
+    "start": 18.53,
+    "end": 18.95
+  },
+  {
+    "text": "o",
+    "start": 18.95,
+    "end": 19.05
+  },
+  {
+    "text": "Runz.",
+    "start": 19.05,
+    "end": 19.8
+  },
+  {
+    "text": "Agora",
+    "start": 19.82,
+    "end": 20.26
+  },
+  {
+    "text": "a",
+    "start": 20.26,
+    "end": 20.35
+  },
+  {
+    "text": "gente",
+    "start": 20.35,
+    "end": 20.81
+  },
+  {
+    "text": "vai",
+    "start": 20.81,
+    "end": 21.08
+  },
+  {
+    "text": "pegar",
+    "start": 21.08,
+    "end": 21.54
+  },
+  {
+    "text": "a",
+    "start": 21.54,
+    "end": 21.63
+  },
+  {
+    "text": "Tecars.",
+    "start": 21.63,
+    "end": 22.24
+  },
+  {
+    "text": "Gotiago",
+    "start": 22.26,
+    "end": 23.09
+  },
+  {
+    "text": "Tecars",
+    "start": 23.09,
+    "end": 23.83
+  },
+  {
+    "text": "Imports,",
+    "start": 23.84,
+    "end": 24.83
+  },
+  {
+    "text": "que",
+    "start": 24.83,
+    "end": 24.96
+  },
+  {
+    "text": "está",
+    "start": 24.96,
+    "end": 25.18
+  },
+  {
+    "text": "estourado.",
+    "start": 25.18,
+    "end": 25.73
+  },
+  {
+    "text": "Coloquei",
+    "start": 25.76,
+    "end": 26.22
+  },
+  {
+    "text": "aqui",
+    "start": 26.22,
+    "end": 26.46
+  },
+  {
+    "text": "a",
+    "start": 26.46,
+    "end": 26.52
+  },
+  {
+    "text": "Tecars,",
+    "start": 26.52,
+    "end": 26.99
+  },
+  {
+    "text": "o",
+    "start": 26.99,
+    "end": 27.06
+  },
+  {
+    "text": "que",
+    "start": 27.06,
+    "end": 27.24
+  },
+  {
+    "text": "que",
+    "start": 27.24,
+    "end": 27.4
+  },
+  {
+    "text": "eu",
+    "start": 27.42,
+    "end": 27.53
+  },
+  {
+    "text": "fiz?",
+    "start": 27.54,
+    "end": 27.9
+  },
+  {
+    "text": "Vim",
+    "start": 27.9,
+    "end": 28.08
+  },
+  {
+    "text": "aqui",
+    "start": 28.08,
+    "end": 28.32
+  },
+  {
+    "text": "nessa",
+    "start": 28.32,
+    "end": 28.62
+  },
+  {
+    "text": "ferramenta,",
+    "start": 28.62,
+    "end": 29.34
+  },
+  {
+    "text": "que",
+    "start": 29.34,
+    "end": 29.51
+  },
+  {
+    "text": "chama",
+    "start": 29.53,
+    "end": 29.81
+  },
+  {
+    "text": "Música",
+    "start": 29.82,
+    "end": 30.21
+  },
+  {
+    "text": "com",
+    "start": 30.27,
+    "end": 30.42
+  },
+  {
+    "text": "Iá.",
+    "start": 30.42,
+    "end": 30.8
+  },
+  {
+    "text": "Coloquei",
+    "start": 30.86,
+    "end": 31.27
+  },
+  {
+    "text": "aqui",
+    "start": 31.28,
+    "end": 31.5
+  },
+  {
+    "text": "qualquer",
+    "start": 31.5,
+    "end": 31.9
+  },
+  {
+    "text": "música,",
+    "start": 31.95,
+    "end": 32.45
+  },
+  {
+    "text": "eu",
+    "start": 32.46,
+    "end": 32.57
+  },
+  {
+    "text": "quero",
+    "start": 32.57,
+    "end": 32.85
+  },
+  {
+    "text": "um",
+    "start": 32.85,
+    "end": 32.96
+  },
+  {
+    "text": "jingle.",
+    "start": 32.96,
+    "end": 33.54
+  },
+  {
+    "text": "Vamos",
+    "start": 33.56,
+    "end": 33.85
+  },
+  {
+    "text": "colocar",
+    "start": 33.85,
+    "end": 34.29
+  },
+  {
+    "text": "Continuar,",
+    "start": 34.29,
+    "end": 34.94
+  },
+  {
+    "text": "coloquei",
+    "start": 34.98,
+    "end": 35.45
+  },
+  {
+    "text": "aqui",
+    "start": 35.45,
+    "end": 35.7
+  },
+  {
+    "text": "a",
+    "start": 35.7,
+    "end": 35.72
+  },
+  {
+    "text": "loja",
+    "start": 35.81,
+    "end": 36
+  },
+  {
+    "text": "Tecars.",
+    "start": 36,
+    "end": 36.44
+  },
+  {
+    "text": "Colocar",
+    "start": 36.46,
+    "end": 36.83
+  },
+  {
+    "text": "aqui",
+    "start": 36.83,
+    "end": 37.04
+  },
+  {
+    "text": "que",
+    "start": 37.05,
+    "end": 37.22
+  },
+  {
+    "text": "eu",
+    "start": 37.22,
+    "end": 37.33
+  },
+  {
+    "text": "quero",
+    "start": 37.33,
+    "end": 37.61
+  },
+  {
+    "text": "alegria,",
+    "start": 37.61,
+    "end": 38.14
+  },
+  {
+    "text": "e",
+    "start": 38.14,
+    "end": 38.21
+  },
+  {
+    "text": "eu",
+    "start": 38.23,
+    "end": 38.38
+  },
+  {
+    "text": "quero",
+    "start": 38.38,
+    "end": 38.79
+  },
+  {
+    "text": "que",
+    "start": 38.79,
+    "end": 39.04
+  },
+  {
+    "text": "um",
+    "start": 39.04,
+    "end": 39.18
+  },
+  {
+    "text": "tape",
+    "start": 39.2,
+    "end": 39.53
+  },
+  {
+    "text": "brasileiro.",
+    "start": 39.53,
+    "end": 40.63
+  },
+  {
+    "text": "Vamos",
+    "start": 40.66,
+    "end": 41.09
+  },
+  {
+    "text": "colocar",
+    "start": 41.09,
+    "end": 41.7
+  },
+  {
+    "text": "aqui",
+    "start": 41.73,
+    "end": 42.09
+  },
+  {
+    "text": "masculina",
+    "start": 42.09,
+    "end": 42.82
+  },
+  {
+    "text": "e...",
+    "start": 42.91,
+    "end": 43.8
+  }
+]

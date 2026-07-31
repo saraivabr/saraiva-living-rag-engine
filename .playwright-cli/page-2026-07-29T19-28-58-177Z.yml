@@ -1,0 +1,44 @@
+- generic [active] [ref=f1e1]:
+  - generic [ref=f1e2]:
+    - banner [ref=f1e3]:
+      - link "Saraiva AI" [ref=f1e4] [cursor=pointer]:
+        - /url: "#"
+        - generic [ref=f1e5]: S
+        - generic [ref=f1e6]: SARAIVA.AI
+      - generic [ref=f1e9]: Inteligência comercial ativa
+    - main [ref=f1e11]:
+      - generic [ref=f1e73]:
+        - generic [ref=f1e74]:
+          - generic [ref=f1e75]: S
+          - generic [ref=f1e82]:
+            - generic [ref=f1e83]:
+              - generic [ref=f1e84]: "02"
+              - text: ANÁLISE EM CURSO
+            - heading "Identificando o negócio..." [level=2] [ref=f1e85]
+            - paragraph [ref=f1e86]: Validando a fonte e organizando as informações públicas.
+            - generic [ref=f1e89]:
+              - generic [ref=f1e90]: 12%
+              - generic [ref=f1e91]: Instagram detectado
+        - list [ref=f1e92]:
+          - listitem [ref=f1e93]:
+            - generic [ref=f1e94]: "01"
+            - text: Identificando o negócio
+          - listitem [ref=f1e96]:
+            - generic [ref=f1e97]: "02"
+            - text: Lendo presença digital
+          - listitem [ref=f1e99]:
+            - generic [ref=f1e100]: "03"
+            - text: Mapeando oportunidade
+          - listitem [ref=f1e102]:
+            - generic [ref=f1e103]: "04"
+            - text: Construindo a oferta
+          - listitem [ref=f1e105]:
+            - generic [ref=f1e106]: "05"
+            - text: Calculando investimento
+          - listitem [ref=f1e108]:
+            - generic [ref=f1e109]: "06"
+            - text: Criando abordagem
+      - text: ✓ ✓ ✓ ✓
+  - status:
+    - generic: ✓
+    - paragraph: Abordagem copiada

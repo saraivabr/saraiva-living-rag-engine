@@ -1,0 +1,426 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1080, height=1920" />
+    <title>musicacom.ia — Reel real</title>
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+    <style>
+      :root {
+        --pulse: #04e688;
+        --pulse-deep: #02db79;
+        --onyx: #151923;
+        --warm-white: #f8fbf9;
+        --mint: #a1f4d6;
+      }
+
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+
+      html,
+      body {
+        width: 1080px;
+        height: 1920px;
+        overflow: hidden;
+        background: var(--onyx);
+        font-family: "IBM Plex Mono", monospace;
+      }
+
+      #root {
+        position: relative;
+        width: 1080px;
+        height: 1920px;
+        overflow: hidden;
+        background: var(--onyx);
+      }
+
+      .clip {
+        visibility: hidden;
+      }
+
+      .full-video {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+      }
+
+      #base-video {
+        z-index: 0;
+      }
+
+      .broll {
+        z-index: 3;
+      }
+
+      #tool-closeup {
+        z-index: 2;
+        transform: scale(1.055);
+      }
+
+      .hook-card {
+        position: absolute;
+        top: 62px;
+        left: 54px;
+        right: 54px;
+        z-index: 6;
+        padding: 28px 32px 24px;
+        border: 2px solid rgba(4, 230, 136, 0.72);
+        border-left-width: 12px;
+        border-radius: 24px;
+        background: rgba(15, 19, 27, 0.91);
+        box-shadow: 0 24px 70px rgba(0, 0, 0, 0.35);
+      }
+
+      .hook-eyebrow,
+      .scene-kicker,
+      .real-badge,
+      .cta-kicker {
+        color: var(--mint);
+        font-size: 24px;
+        font-weight: 700;
+        letter-spacing: 0.13em;
+        text-transform: uppercase;
+      }
+
+      .hook-title {
+        margin-top: 8px;
+        color: var(--warm-white);
+        font-family: "Archivo Black", sans-serif;
+        font-size: 64px;
+        line-height: 0.98;
+        letter-spacing: -0.035em;
+        text-transform: uppercase;
+      }
+
+      .hook-title .money {
+        color: var(--pulse);
+      }
+
+      .hook-subtitle {
+        display: block;
+        margin-top: 8px;
+        color: var(--warm-white);
+        font-family: "Archivo Black", sans-serif;
+        font-size: 40px;
+        line-height: 1.05;
+        text-transform: uppercase;
+      }
+
+      .hook-proof {
+        margin-top: 14px;
+        color: var(--mint);
+        font-size: 22px;
+        font-weight: 600;
+      }
+
+      .scene-label {
+        position: absolute;
+        left: 58px;
+        right: 58px;
+        bottom: 174px;
+        z-index: 6;
+        padding: 28px 30px;
+        border-radius: 22px;
+        border: 1px solid rgba(161, 244, 214, 0.6);
+        background: rgba(13, 17, 23, 0.87);
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.42);
+      }
+
+      .scene-title {
+        margin-top: 8px;
+        color: var(--warm-white);
+        font-family: "Archivo Black", sans-serif;
+        font-size: 58px;
+        line-height: 1.02;
+        letter-spacing: -0.03em;
+        text-transform: uppercase;
+      }
+
+      .scene-title strong {
+        color: var(--pulse);
+      }
+
+      .real-badge {
+        position: absolute;
+        top: 70px;
+        left: 50%;
+        z-index: 6;
+        width: max-content;
+        max-width: 920px;
+        transform: translateX(-50%);
+        padding: 18px 24px;
+        border: 1px solid rgba(4, 230, 136, 0.8);
+        border-radius: 999px;
+        color: var(--warm-white);
+        background: rgba(15, 19, 27, 0.88);
+        box-shadow: 0 16px 44px rgba(0, 0, 0, 0.32);
+      }
+
+      .real-badge .dot {
+        display: inline-block;
+        width: 15px;
+        height: 15px;
+        margin-right: 12px;
+        border-radius: 50%;
+        background: var(--pulse);
+        box-shadow: 0 0 20px rgba(4, 230, 136, 0.82);
+      }
+
+      .cta-card {
+        position: absolute;
+        top: 72px;
+        left: 50px;
+        right: 50px;
+        z-index: 7;
+        padding: 28px 32px 30px;
+        border-radius: 26px;
+        border: 2px solid var(--pulse);
+        background: rgba(15, 19, 27, 0.92);
+        box-shadow: 0 28px 80px rgba(0, 0, 0, 0.45);
+        text-align: center;
+      }
+
+      .cta-title {
+        margin-top: 8px;
+        color: var(--warm-white);
+        font-family: "Archivo Black", sans-serif;
+        font-size: 64px;
+        line-height: 1;
+        letter-spacing: -0.035em;
+        text-transform: uppercase;
+      }
+
+      .cta-title strong {
+        color: var(--pulse);
+      }
+
+      .cta-copy {
+        margin-top: 14px;
+        color: var(--mint);
+        font-size: 25px;
+        font-weight: 600;
+      }
+
+      .brand-mark {
+        position: absolute;
+        right: 52px;
+        bottom: 48px;
+        z-index: 6;
+        width: 236px;
+        height: auto;
+        filter: drop-shadow(0 8px 24px rgba(0, 0, 0, 0.48));
+      }
+
+      .transition-wipe {
+        position: absolute;
+        inset: -80px;
+        z-index: 20;
+        background: var(--pulse);
+        pointer-events: none;
+      }
+
+      .transition-wipe::after {
+        content: "";
+        position: absolute;
+        top: 0;
+        right: -120px;
+        width: 180px;
+        height: 100%;
+        background: var(--mint);
+        transform: skewX(-7deg);
+      }
+    </style>
+  </head>
+  <body>
+    <div
+      id="root"
+      data-composition-id="main"
+      data-start="0"
+      data-duration="54.267"
+      data-width="1080"
+      data-height="1920"
+    >
+      <video
+        id="base-video"
+        class="clip full-video"
+        src="assets/saraiva-original.mp4"
+        data-start="0"
+        data-duration="54.267"
+        data-track-index="0"
+        muted
+        playsinline
+      ></video>
+      <audio
+        id="source-audio"
+        src="assets/saraiva-original.mp4"
+        data-start="0"
+        data-duration="54.267"
+        data-track-index="8"
+        data-volume="1"
+      ></audio>
+
+      <video
+        id="music-broll"
+        class="clip full-video broll"
+        src="assets/broll-music-producer.mp4"
+        data-start="5.04"
+        data-duration="2.6"
+        data-track-index="1"
+        muted
+        playsinline
+        data-layout-allow-overflow
+      ></video>
+      <div
+        id="music-label"
+        class="clip scene-label"
+        data-start="5.04"
+        data-duration="2.6"
+        data-track-index="4"
+      >
+        <div class="scene-kicker">mercado aquecido</div>
+        <div class="scene-title">Transforme empresas em <strong>música</strong></div>
+      </div>
+
+      <video
+        id="car-broll"
+        class="clip full-video broll"
+        src="assets/broll-car-dealership.mp4"
+        data-start="15.04"
+        data-duration="2.65"
+        data-track-index="1"
+        muted
+        playsinline
+        data-layout-allow-overflow
+      ></video>
+      <div
+        id="car-label"
+        class="clip scene-label"
+        data-start="15.04"
+        data-duration="2.65"
+        data-track-index="4"
+      >
+        <div class="scene-kicker">cliente real</div>
+        <div class="scene-title">Escolha um <strong>negócio local</strong></div>
+      </div>
+
+      <video
+        id="tool-closeup"
+        class="clip full-video"
+        src="assets/saraiva-original.mp4"
+        data-start="27.84"
+        data-duration="16.1"
+        data-media-start="27.84"
+        data-track-index="2"
+        muted
+        playsinline
+        data-layout-allow-overflow
+      ></video>
+      <div
+        id="tool-badge"
+        class="clip real-badge"
+        data-start="27.84"
+        data-duration="16.1"
+        data-track-index="4"
+      >
+        <span class="dot"></span>DEMONSTRAÇÃO REAL • MUSICACOM.IA
+      </div>
+
+      <div
+        id="hook"
+        class="clip hook-card"
+        data-start="0"
+        data-duration="5.04"
+        data-track-index="5"
+      >
+        <div class="hook-eyebrow">estratégia prática</div>
+        <div class="hook-title">Faça <span class="money">R$500</span> por dia</div>
+        <span class="hook-subtitle">vendendo música com IA</span>
+        <div class="hook-proof">Exemplo: 2 vendas de R$250 • resultados variam</div>
+      </div>
+
+      <div
+        id="cta"
+        class="clip cta-card"
+        data-start="44"
+        data-duration="10.267"
+        data-track-index="5"
+      >
+        <div class="cta-kicker">quer o passo a passo?</div>
+        <div class="cta-title">Comente <strong>“MÚSICA”</strong></div>
+        <div class="cta-copy">Eu te envio o acesso e o roteiro pelo Direct.</div>
+      </div>
+
+      <img
+        id="brand"
+        class="clip brand-mark"
+        src="assets/musicacom-logo.png"
+        data-start="7.64"
+        data-duration="46.627"
+        data-track-index="6"
+        alt="musicacom.ia"
+      />
+
+      <div
+        id="wipe"
+        class="clip transition-wipe"
+        data-start="0"
+        data-duration="54.267"
+        data-track-index="7"
+        data-layout-ignore
+      ></div>
+    </div>
+
+    <script>
+      window.__timelines = window.__timelines || {};
+      const tl = gsap.timeline({ paused: true });
+
+      tl.set("#wipe", { xPercent: -120 }, 0);
+      tl.from("#base-video", { opacity: 0.72, duration: 0.5, ease: "power2.out" }, 0.1);
+      tl.from("#hook", { y: -80, opacity: 0, duration: 0.56, ease: "back.out(1.4)" }, 0.16);
+      tl.from("#hook .hook-eyebrow", { x: -26, opacity: 0, duration: 0.36, ease: "power3.out" }, 0.28);
+      tl.from("#hook .hook-title", { scale: 0.9, opacity: 0, duration: 0.48, ease: "expo.out" }, 0.36);
+      tl.from("#hook .hook-subtitle", { y: 20, opacity: 0, duration: 0.42, ease: "power2.out" }, 0.5);
+      tl.from("#hook .hook-proof", { opacity: 0, duration: 0.34, ease: "sine.out" }, 0.7);
+
+      const wipeAt = (peak) => {
+        tl.set("#wipe", { xPercent: -120 }, peak - 0.23);
+        tl.to("#wipe", { xPercent: 0, duration: 0.22, ease: "power4.in" }, peak - 0.22);
+        tl.to("#wipe", { xPercent: 120, duration: 0.24, ease: "power4.out" }, peak);
+      };
+
+      wipeAt(5.04);
+      wipeAt(7.64);
+      wipeAt(15.04);
+      wipeAt(17.69);
+      wipeAt(27.84);
+      wipeAt(43.94);
+
+      tl.from("#music-label", { y: 70, opacity: 0, duration: 0.48, ease: "expo.out" }, 5.16);
+      tl.from("#music-label .scene-kicker", { x: -24, opacity: 0, duration: 0.32, ease: "power3.out" }, 5.28);
+      tl.from("#music-label .scene-title", { scale: 0.92, opacity: 0, duration: 0.44, ease: "back.out(1.25)" }, 5.34);
+
+      tl.from("#brand", { x: 54, opacity: 0, duration: 0.46, ease: "power3.out" }, 7.78);
+
+      tl.from("#car-label", { y: 70, opacity: 0, duration: 0.46, ease: "expo.out" }, 15.16);
+      tl.from("#car-label .scene-kicker", { x: -22, opacity: 0, duration: 0.3, ease: "power3.out" }, 15.28);
+      tl.from("#car-label .scene-title", { scale: 0.92, opacity: 0, duration: 0.42, ease: "back.out(1.25)" }, 15.34);
+
+      tl.from("#tool-badge", { y: -44, opacity: 0, duration: 0.52, ease: "back.out(1.4)" }, 27.96);
+      tl.from("#tool-badge .dot", { scale: 0, duration: 0.36, ease: "back.out(2)" }, 28.12);
+
+      tl.from("#cta", { y: -64, opacity: 0, duration: 0.58, ease: "back.out(1.35)" }, 44.12);
+      tl.from("#cta .cta-kicker", { x: -24, opacity: 0, duration: 0.36, ease: "power3.out" }, 44.26);
+      tl.from("#cta .cta-title", { scale: 0.9, opacity: 0, duration: 0.5, ease: "expo.out" }, 44.34);
+      tl.from("#cta .cta-copy", { y: 18, opacity: 0, duration: 0.42, ease: "power2.out" }, 44.54);
+      tl.to("#cta", { opacity: 0, y: -28, duration: 0.5, ease: "power2.in" }, 53.66);
+      tl.to("#brand", { opacity: 0, duration: 0.4, ease: "sine.in" }, 53.78);
+
+      window.__timelines.main = tl;
+    </script>
+  </body>
+</html>

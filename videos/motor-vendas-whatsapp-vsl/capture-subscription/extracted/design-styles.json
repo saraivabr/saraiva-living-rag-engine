@@ -1,0 +1,211 @@
+{
+  "typography": [
+    {
+      "role": "display",
+      "fontFamily": "Geist",
+      "fontSize": "107.2px",
+      "fontWeight": "400",
+      "lineHeight": "99.696px",
+      "letterSpacing": "-8.576px",
+      "color": "#FFFFFF",
+      "sampleText": "Entre na estrutura de hoje e acompanhe a construção do motor"
+    },
+    {
+      "role": "heading",
+      "fontFamily": "Geist",
+      "fontSize": "89.6px",
+      "fontWeight": "400",
+      "lineHeight": "86.016px",
+      "letterSpacing": "-6.72px",
+      "color": "#0B1713",
+      "sampleText": "Porque o valor não termina no primeiro prompt."
+    },
+    {
+      "role": "heading-2",
+      "fontFamily": "Geist",
+      "fontSize": "80px",
+      "fontWeight": "400",
+      "lineHeight": "76.8px",
+      "letterSpacing": "-6px",
+      "color": "#FFFFFF",
+      "sampleText": "Preencha uma vez. Autorize no seu banco. A página confirma o"
+    },
+    {
+      "role": "heading-2",
+      "fontFamily": "Geist",
+      "fontSize": "68.8px",
+      "fontWeight": "400",
+      "lineHeight": "67.424px",
+      "letterSpacing": "-4.816px",
+      "color": "#0B1713",
+      "sampleText": "Você começa pela estrutura que já funciona."
+    },
+    {
+      "role": "heading-3",
+      "fontFamily": "Geist",
+      "fontSize": "21.6px",
+      "fontWeight": "400",
+      "lineHeight": "32.4px",
+      "letterSpacing": "-0.864px",
+      "color": "#0B1713",
+      "sampleText": "Use o que já existe"
+    },
+    {
+      "role": "body",
+      "fontFamily": "Geist",
+      "fontSize": "17.28px",
+      "fontWeight": "400",
+      "lineHeight": "29.7216px",
+      "letterSpacing": "normal",
+      "color": "#9BACA2",
+      "sampleText": "A assinatura libera o que já está disponível e mantém você d"
+    },
+    {
+      "role": "link",
+      "fontFamily": "Geist",
+      "fontSize": "16px",
+      "fontWeight": "860",
+      "lineHeight": "24px",
+      "letterSpacing": "normal",
+      "color": "#06110B",
+      "sampleText": "Ver os dados e autorizar"
+    },
+    {
+      "role": "body-small",
+      "fontFamily": "Geist",
+      "fontSize": "12.8px",
+      "fontWeight": "900",
+      "lineHeight": "19.2px",
+      "letterSpacing": "normal",
+      "color": "#FFFFFF",
+      "sampleText": "R$"
+    },
+    {
+      "role": "label",
+      "fontFamily": "Geist",
+      "fontSize": "12.32px",
+      "fontWeight": "700",
+      "lineHeight": "18.48px",
+      "letterSpacing": "normal",
+      "color": "#B5C1D3",
+      "sampleText": "Nome completo"
+    }
+  ],
+  "spacing": {
+    "observed": [
+      5,
+      11,
+      13,
+      15,
+      17,
+      18,
+      19,
+      20,
+      22,
+      24,
+      26,
+      27,
+      30,
+      32,
+      35
+    ],
+    "baseUnit": 8
+  },
+  "radius": [
+    "9px"
+  ],
+  "shadows": [],
+  "buttons": [
+    {
+      "label": "Continuar para o Pix Automático",
+      "background": "#19C86B",
+      "backgroundImage": "",
+      "backdropFilter": "",
+      "color": "#06110B",
+      "padding": "0px",
+      "borderRadius": "11px",
+      "border": "0px none rgb(6, 17, 11)",
+      "boxShadow": "none",
+      "fontSize": "16px",
+      "fontWeight": "800",
+      "height": "55px"
+    }
+  ],
+  "cards": [
+    {
+      "label": "card",
+      "background": "#EFFBF3",
+      "backgroundImage": "",
+      "backdropFilter": "",
+      "color": "#0B1713",
+      "padding": "90px 134.4px",
+      "borderRadius": "0px",
+      "border": "0px solid rgb(11, 23, 19)",
+      "boxShadow": "none",
+      "fontSize": "16px",
+      "fontWeight": "400",
+      "height": "813.688px"
+    },
+    {
+      "label": "card",
+      "background": "#07110E",
+      "backgroundImage": "",
+      "backdropFilter": "",
+      "color": "#FFFFFF",
+      "padding": "90px 134.4px",
+      "borderRadius": "0px",
+      "border": "0px solid rgb(255, 255, 255)",
+      "boxShadow": "none",
+      "fontSize": "16px",
+      "fontWeight": "400",
+      "height": "813.688px"
+    },
+    {
+      "label": "card",
+      "background": "#FFFFFF",
+      "backgroundImage": "",
+      "backdropFilter": "",
+      "color": "#0B1713",
+      "padding": "30px",
+      "borderRadius": "18px",
+      "border": "1px solid rgb(217, 232, 222)",
+      "boxShadow": "none",
+      "fontSize": "16px",
+      "fontWeight": "400",
+      "height": "260px"
+    }
+  ],
+  "nav": {
+    "label": "navigation",
+    "background": "#FFFFFF",
+    "backgroundImage": "",
+    "backdropFilter": "blur(16px)",
+    "color": "#0B1713",
+    "padding": "0px 115.2px",
+    "borderRadius": "0px",
+    "border": "",
+    "boxShadow": "none",
+    "fontSize": "16px",
+    "fontWeight": "400",
+    "height": "76px"
+  },
+  "chips": [],
+  "statCells": [],
+  "tabs": [],
+  "backgrounds": [
+    {
+      "value": "radial-gradient(circle at 12% 10%, rgba(25, 200, 107, 0.14), rgba(0, 0, 0, 0) 34%), none",
+      "area": 2366280
+    }
+  ],
+  "glass": [
+    {
+      "backdropFilter": "blur(16px)",
+      "background": "rgba(255, 255, 255, 0.92)",
+      "border": "",
+      "borderRadius": "0px",
+      "boxShadow": "",
+      "area": 145920
+    }
+  ]
+}

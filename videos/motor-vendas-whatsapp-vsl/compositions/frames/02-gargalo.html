@@ -1,0 +1,541 @@
+<template>
+  <style>
+    #root {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      container-type: size;
+      color: #ffffff;
+      font-family: sans-serif;
+    }
+
+    #root * {
+      box-sizing: border-box;
+    }
+
+    .f02-gargalo-bg {
+      position: absolute;
+      inset: 0;
+      overflow: hidden;
+      background: #0d4e2b;
+    }
+
+    .f02-gargalo-bg-image {
+      position: absolute;
+      inset: -3%;
+      width: 106%;
+      height: 106%;
+      object-fit: cover;
+      opacity: 0.28;
+      filter: grayscale(0.28) contrast(1.08);
+      will-change: transform, opacity;
+    }
+
+    .f02-gargalo-bg-wash {
+      position: absolute;
+      inset: 0;
+      background: #116336;
+      opacity: 0.76;
+    }
+
+    .f02-gargalo-world {
+      position: absolute;
+      inset: 0 0 auto;
+      width: 100%;
+      height: 896px;
+      transform-origin: 50% 50%;
+      will-change: transform;
+    }
+
+    .f02-gargalo-topbar {
+      position: absolute;
+      top: 48px;
+      left: 96px;
+      right: 96px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding-bottom: 22px;
+      border-bottom: 2px solid #60e49c;
+      color: #ffffff;
+      font-family: monospace;
+      font-size: 24px;
+      font-weight: 500;
+      letter-spacing: 0.16em;
+      line-height: 1;
+      text-transform: uppercase;
+    }
+
+    .f02-gargalo-counter {
+      color: #60e49c;
+    }
+
+    .f02-gargalo-stage {
+      position: absolute;
+      inset: 0;
+      overflow: hidden;
+    }
+
+    .f02-gargalo-title {
+      position: absolute;
+      top: 306px;
+      left: 50%;
+      width: 800px;
+      margin-left: -400px;
+      color: #ffffff;
+      font-size: 98px;
+      font-weight: 500;
+      letter-spacing: -0.025em;
+      line-height: 0.9;
+      text-align: center;
+      z-index: 3;
+      will-change: transform, opacity;
+    }
+
+    .f02-gargalo-title-accent {
+      color: #60e49c;
+    }
+
+    .f02-gargalo-task {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 350px;
+      height: 126px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      padding: 22px 25px 21px;
+      border: 2px solid #60e49c;
+      border-radius: 8px;
+      background: #0d4e2b;
+      color: #ffffff;
+      z-index: 7;
+      will-change: transform, opacity;
+    }
+
+    .f02-gargalo-task-kicker {
+      color: #60e49c;
+      font-family: monospace;
+      font-size: 17px;
+      font-weight: 500;
+      letter-spacing: 0.15em;
+      line-height: 1;
+      text-transform: uppercase;
+    }
+
+    .f02-gargalo-task-name {
+      font-size: 41px;
+      font-weight: 500;
+      letter-spacing: -0.02em;
+      line-height: 0.95;
+    }
+
+    .f02-gargalo-task-pink {
+      border-color: #0d4e2b;
+      background: #60e49c;
+      color: #0d4e2b;
+    }
+
+    .f02-gargalo-task-pink .f02-gargalo-task-kicker {
+      color: #0d4e2b;
+    }
+
+    .f02-gargalo-connector {
+      position: absolute;
+      z-index: 2;
+      background: #60e49c;
+      transform-origin: 50% 50%;
+      will-change: transform, opacity;
+    }
+
+    .f02-gargalo-connector-left {
+      top: 482px;
+      left: 508px;
+      width: 118px;
+      height: 2px;
+      transform-origin: 0 50%;
+    }
+
+    .f02-gargalo-connector-right {
+      top: 482px;
+      right: 508px;
+      width: 118px;
+      height: 2px;
+      transform-origin: 100% 50%;
+    }
+
+    .f02-gargalo-connector-top {
+      top: 286px;
+      left: 959px;
+      width: 2px;
+      height: 48px;
+      transform-origin: 50% 0;
+    }
+
+    .f02-gargalo-connector-bottom {
+      top: 552px;
+      left: 959px;
+      width: 2px;
+      height: 61px;
+      transform-origin: 50% 100%;
+    }
+
+    .f02-gargalo-density {
+      position: absolute;
+      width: 10px;
+      height: 10px;
+      border: 2px solid #60e49c;
+      z-index: 2;
+      will-change: transform, opacity;
+    }
+
+    .f02-gargalo-density-a {
+      top: 204px;
+      left: 536px;
+    }
+
+    .f02-gargalo-density-b {
+      top: 664px;
+      left: 572px;
+    }
+
+    .f02-gargalo-density-c {
+      top: 190px;
+      right: 515px;
+    }
+
+    .f02-gargalo-density-d {
+      top: 680px;
+      right: 552px;
+    }
+
+    .f02-gargalo-field {
+      position: absolute;
+      top: 220px;
+      left: 50%;
+      width: 900px;
+      height: 472px;
+      margin-left: -450px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border: 2px solid #116336;
+      border-radius: 8px;
+      background: #ffffff;
+      z-index: 5;
+      transform-origin: 50% 50%;
+      will-change: transform, opacity;
+    }
+
+    .f02-gargalo-field-copy {
+      width: 760px;
+      color: #116336;
+      font-size: 86px;
+      font-weight: 500;
+      letter-spacing: -0.025em;
+      line-height: 0.9;
+      text-align: center;
+      will-change: transform, opacity;
+    }
+
+    .f02-gargalo-field-copy::before {
+      content: "";
+      display: block;
+      width: 128px;
+      height: 2px;
+      margin: 0 auto 30px;
+      background: #19c86b;
+    }
+
+    .f02-gargalo-field-accent {
+      color: #19c86b;
+    }
+  </style>
+
+  <div id="root" data-composition-id="02-gargalo" data-width="1920" data-height="1080" data-duration="9.974">
+    <div class="clip f02-gargalo-bg" data-start="0" data-duration="9.353" data-track-index="0">
+      <img
+        id="f02-gargalo-bg-image"
+        class="f02-gargalo-bg-image"
+        src="capture/assets/visual-conceitual-de-uma-abordagem-perso.webp"
+        alt=""
+      />
+      <div class="f02-gargalo-bg-wash"></div>
+    </div>
+
+    <div id="f02-gargalo-world" class="f02-gargalo-world">
+      <div id="f02-gargalo-topbar" class="f02-gargalo-topbar">
+        <span>Fluxo comercial</span>
+        <span class="f02-gargalo-counter">02 / Gargalo</span>
+      </div>
+
+      <div class="f02-gargalo-stage">
+        <div id="f02-gargalo-title" class="f02-gargalo-title">
+          O GARGALO<br /><span class="f02-gargalo-title-accent" data-layout-allow-overlap>NÃO É CRIAR</span>
+        </div>
+
+        <div
+          id="f02-gargalo-procurar"
+          class="f02-gargalo-task f02-gargalo-task-pink"
+          data-target-x="-760"
+          data-target-y="38"
+        >
+          <span class="f02-gargalo-task-kicker">01 / tarefa</span>
+          <span class="f02-gargalo-task-name">PROCURAR</span>
+        </div>
+
+        <div
+          id="f02-gargalo-pesquisar"
+          class="f02-gargalo-task"
+          data-target-x="760"
+          data-target-y="38"
+        >
+          <span class="f02-gargalo-task-kicker">02 / tarefa</span>
+          <span class="f02-gargalo-task-name">PESQUISAR</span>
+        </div>
+
+        <div
+          id="f02-gargalo-entender"
+          class="f02-gargalo-task"
+          data-target-x="0"
+          data-target-y="-282"
+        >
+          <span class="f02-gargalo-task-kicker">03 / tarefa</span>
+          <span class="f02-gargalo-task-name">ENTENDER</span>
+        </div>
+
+        <div
+          id="f02-gargalo-abordar"
+          class="f02-gargalo-task f02-gargalo-task-pink"
+          data-target-x="0"
+          data-target-y="282"
+        >
+          <span class="f02-gargalo-task-kicker">04 / tarefa</span>
+          <span class="f02-gargalo-task-name">ABORDAR</span>
+        </div>
+
+        <span id="f02-gargalo-line-left" class="f02-gargalo-connector f02-gargalo-connector-left"></span>
+        <span id="f02-gargalo-line-right" class="f02-gargalo-connector f02-gargalo-connector-right"></span>
+        <span id="f02-gargalo-line-top" class="f02-gargalo-connector f02-gargalo-connector-top"></span>
+        <span id="f02-gargalo-line-bottom" class="f02-gargalo-connector f02-gargalo-connector-bottom"></span>
+
+        <span class="f02-gargalo-density f02-gargalo-density-a"></span>
+        <span class="f02-gargalo-density f02-gargalo-density-b"></span>
+        <span class="f02-gargalo-density f02-gargalo-density-c"></span>
+        <span class="f02-gargalo-density f02-gargalo-density-d"></span>
+
+        <div id="f02-gargalo-field" class="f02-gargalo-field">
+          <div id="f02-gargalo-offer" class="f02-gargalo-field-copy" data-layout-allow-overlap>
+            UMA OFERTA<br />QUE FAZ <span class="f02-gargalo-field-accent" data-layout-allow-overlap>SENTIDO</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    (() => {
+      const root = document.querySelector('[data-composition-id="02-gargalo"]');
+      const world = root.querySelector("#f02-gargalo-world");
+      const bgImage = root.querySelector("#f02-gargalo-bg-image");
+      const title = root.querySelector("#f02-gargalo-title");
+      const topbar = root.querySelector("#f02-gargalo-topbar");
+      const procurar = root.querySelector("#f02-gargalo-procurar");
+      const pesquisar = root.querySelector("#f02-gargalo-pesquisar");
+      const entender = root.querySelector("#f02-gargalo-entender");
+      const abordar = root.querySelector("#f02-gargalo-abordar");
+      const field = root.querySelector("#f02-gargalo-field");
+      const offer = root.querySelector("#f02-gargalo-offer");
+      const horizontalLines = root.querySelectorAll(
+        ".f02-gargalo-connector-left, .f02-gargalo-connector-right",
+      );
+      const verticalLines = root.querySelectorAll(
+        ".f02-gargalo-connector-top, .f02-gargalo-connector-bottom",
+      );
+      const density = root.querySelectorAll(".f02-gargalo-density");
+      const tasks = [procurar, pesquisar, entender, abordar];
+
+      const cam = { scale: 1.055, x: 0, y: 0 };
+      const applyCamera = () => {
+        world.style.transform =
+          "translate(" + cam.x + "px, " + cam.y + "px) scale(" + cam.scale + ")";
+      };
+      applyCamera();
+
+      window.__timelines = window.__timelines || {};
+      const tl = gsap.timeline({ paused: true });
+      window.__timelines["02-gargalo"] = tl;
+
+      tl.fromTo(
+        bgImage,
+        { scale: 1.08, opacity: 0.14 },
+        { scale: 1, opacity: 0.28, duration: 1.7, ease: "power2.out" },
+        0,
+      );
+      tl.fromTo(
+        topbar,
+        { y: -24, opacity: 0 },
+        { y: 0, opacity: 1, duration: 0.55, ease: "power3.out" },
+        0.08,
+      );
+      tl.fromTo(
+        title,
+        { y: 28, scale: 0.96, opacity: 0 },
+        { y: 0, scale: 1, opacity: 1, duration: 0.7, ease: "power3.out" },
+        0.18,
+      );
+
+      tl.fromTo(
+        procurar,
+        { xPercent: -50, yPercent: -50, x: -860, y: 38, scale: 0.9, opacity: 0 },
+        {
+          xPercent: -50,
+          yPercent: -50,
+          x: -610,
+          y: 38,
+          scale: 1,
+          opacity: 1,
+          duration: 0.72,
+          ease: "power3.out",
+        },
+        0.68,
+      );
+      tl.fromTo(
+        pesquisar,
+        { xPercent: -50, yPercent: -50, x: 860, y: 38, scale: 0.9, opacity: 0 },
+        {
+          xPercent: -50,
+          yPercent: -50,
+          x: 610,
+          y: 38,
+          scale: 1,
+          opacity: 1,
+          duration: 0.72,
+          ease: "power3.out",
+        },
+        1.02,
+      );
+      tl.fromTo(
+        horizontalLines,
+        { scaleX: 0, opacity: 0 },
+        {
+          scaleX: 1,
+          opacity: 1,
+          duration: 0.5,
+          stagger: 0.12,
+          ease: "power2.out",
+        },
+        1.46,
+      );
+
+      tl.fromTo(
+        entender,
+        { xPercent: -50, yPercent: -50, x: 0, y: -392, scale: 0.88, opacity: 0 },
+        {
+          xPercent: -50,
+          yPercent: -50,
+          x: 0,
+          y: -222,
+          scale: 1,
+          opacity: 1,
+          duration: 0.76,
+          ease: "power3.out",
+        },
+        2.28,
+      );
+      tl.fromTo(
+        root.querySelector("#f02-gargalo-line-top"),
+        { scaleY: 0, opacity: 0 },
+        { scaleY: 1, opacity: 1, duration: 0.48, ease: "power2.out" },
+        2.92,
+      );
+      tl.fromTo(
+        abordar,
+        { xPercent: -50, yPercent: -50, x: 0, y: 388, scale: 0.88, opacity: 0 },
+        {
+          xPercent: -50,
+          yPercent: -50,
+          x: 0,
+          y: 238,
+          scale: 1,
+          opacity: 1,
+          duration: 0.76,
+          ease: "power3.out",
+        },
+        3.46,
+      );
+      tl.fromTo(
+        root.querySelector("#f02-gargalo-line-bottom"),
+        { scaleY: 0, opacity: 0 },
+        { scaleY: 1, opacity: 1, duration: 0.48, ease: "power2.out" },
+        4.08,
+      );
+      tl.fromTo(
+        density,
+        { scale: 0.2, opacity: 0 },
+        {
+          scale: 1,
+          opacity: 1,
+          duration: 0.42,
+          stagger: 0.21,
+          ease: "power3.out",
+        },
+        4.54,
+      );
+
+      tl.to(
+        cam,
+        {
+          scale: 1,
+          duration: 5.55,
+          ease: "power1.inOut",
+          onUpdate: applyCamera,
+        },
+        0,
+      );
+
+      tl.fromTo(
+        field,
+        { scaleX: 0.12, scaleY: 0.9, opacity: 0 },
+        {
+          scaleX: 1,
+          scaleY: 1,
+          opacity: 1,
+          duration: 0.46,
+          ease: "expo.out",
+        },
+        6,
+      );
+      tasks.forEach((task) => {
+        tl.to(
+          task,
+          {
+            x: Number(task.dataset.targetX),
+            y: Number(task.dataset.targetY),
+            duration: 0.54,
+            ease: "power3.out",
+          },
+          6,
+        );
+      });
+      tl.to(
+        cam,
+        {
+          scale: 1.055,
+          duration: 0.46,
+          ease: "power3.inOut",
+          onUpdate: applyCamera,
+        },
+        6,
+      );
+      tl.fromTo(
+        offer,
+        { y: 20, opacity: 0 },
+        { y: 0, opacity: 1, duration: 0.62, ease: "power3.out" },
+        6.42,
+      );
+    })();
+  </script>
+</template>

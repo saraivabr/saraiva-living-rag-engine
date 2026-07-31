@@ -1,0 +1,33 @@
+- generic [ref=f1e1]:
+  - generic [ref=f1e2]:
+    - banner [ref=f1e3]:
+      - link "Saraiva AI" [ref=f1e4] [cursor=pointer]:
+        - /url: "#"
+        - generic [ref=f1e5]: S
+        - generic [ref=f1e6]: SARAIVA.AI
+      - generic [ref=f1e9]: Inteligência comercial ativa
+    - main [ref=f1e11]:
+      - generic [ref=f1e13]:
+        - generic [ref=f1e14]:
+          - generic [ref=f1e15]: "01"
+          - text: PROSPECÇÃO COM CONTEXTO
+        - heading [level=1] [ref=f1e16]:
+          - text: Cole uma empresa.
+          - emphasis [ref=f1e17]: Saia com a venda pronta.
+        - paragraph [ref=f1e18]: A IA pesquisa o negócio, encontra a oportunidade e transforma dados públicos em uma estratégia comercial completa.
+        - generic [ref=f1e19]:
+          - generic [ref=f1e24]:
+            - generic [ref=f1e25]: LINK DA EMPRESA
+            - textbox "LINK DA EMPRESA" [active] [ref=f1e26]:
+              - /placeholder: Cole o Google Maps ou Instagram aqui
+              - text: https://www.instagram.com/scarlett.makeup/
+          - button "Analisar empresa" [ref=f1e27] [cursor=pointer]
+        - generic [ref=f1e31]:
+          - generic [ref=f1e32]: ACEITA
+          - button "Google Maps" [ref=f1e33] [cursor=pointer]
+          - button "Instagram" [ref=f1e37] [cursor=pointer]
+          - button "Usar empresa de exemplo" [ref=f1e42] [cursor=pointer]
+      - text: ✓ ✓ ✓ ✓
+  - status:
+    - generic: ✓
+    - paragraph: Abordagem copiada

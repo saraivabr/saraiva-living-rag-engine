@@ -1,0 +1,348 @@
+<template>
+  <div id="root" data-composition-id="01-prompt-ou-motor" data-width="1920" data-height="1080" data-duration="7.988">
+    <div
+      class="clip 01-prompt-ou-motor-ground-dark"
+      data-start="0"
+      data-duration="7.988"
+      data-track-index="0"
+    ></div>
+    <div
+      id="01-prompt-ou-motor-ground-light"
+      class="clip 01-prompt-ou-motor-ground-light"
+      data-start="4.5"
+      data-duration="3.488"
+      data-track-index="1"
+    ></div>
+
+    <div
+      class="clip 01-prompt-ou-motor-stage"
+      data-start="0"
+      data-duration="7.988"
+      data-track-index="2"
+    >
+      <header id="01-prompt-ou-motor-topbar">
+        <div id="01-prompt-ou-motor-topbar-label">PROMPT / MOTOR</div>
+        <div id="01-prompt-ou-motor-counter">01</div>
+      </header>
+
+      <main id="01-prompt-ou-motor-main">
+        <section id="01-prompt-ou-motor-scene-one" aria-label="Prompt">
+          <div id="01-prompt-ou-motor-intro-line">
+            <span id="01-prompt-ou-motor-word-0">VOCÊ</span>
+            <span id="01-prompt-ou-motor-word-1">JÁ</span>
+            <span id="01-prompt-ou-motor-word-2">TEM</span>
+            <span id="01-prompt-ou-motor-word-3">O</span>
+            <span id="01-prompt-ou-motor-word-4">PROMPT</span>
+          </div>
+        </section>
+
+        <section id="01-prompt-ou-motor-scene-two" aria-label="Pergunta">
+          <div id="01-prompt-ou-motor-question-label">A PERGUNTA É:</div>
+          <div id="01-prompt-ou-motor-token-slot">
+            <span id="01-prompt-ou-motor-typed-text"></span><span id="01-prompt-ou-motor-caret">_</span>
+          </div>
+        </section>
+
+        <section id="01-prompt-ou-motor-scene-three" aria-label="Motor de vendas">
+          <div id="01-prompt-ou-motor-final-label">A PERGUNTA É:</div>
+          <div id="01-prompt-ou-motor-final-token">TER UM MOTOR DE VENDAS?</div>
+        </section>
+      </main>
+
+      <div id="01-prompt-ou-motor-bottom-rule"></div>
+    </div>
+  </div>
+
+  <style>
+    #root {
+      position: relative;
+      width: 1920px;
+      height: 1080px;
+      overflow: hidden;
+      container-type: size;
+      color: #FFFFFF;
+    }
+
+    [class~="01-prompt-ou-motor-ground-dark"],
+    [class~="01-prompt-ou-motor-ground-light"] {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+    }
+
+    [class~="01-prompt-ou-motor-ground-dark"] {
+      background: #0D4E2B;
+    }
+
+    [class~="01-prompt-ou-motor-ground-light"] {
+      background: #FFFFFF;
+    }
+
+    [class~="01-prompt-ou-motor-stage"] {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      font-family: sans-serif;
+      font-synthesis: none;
+    }
+
+    [id="01-prompt-ou-motor-topbar"] {
+      position: absolute;
+      top: 5cqh;
+      left: 5cqw;
+      right: 5cqw;
+      height: 4.5cqh;
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      border-bottom: 2px solid #60E49C;
+      color: #60E49C;
+      font-family: monospace;
+      font-size: 1.35cqw;
+      font-weight: 500;
+      letter-spacing: 0.18em;
+      line-height: 1;
+    }
+
+    [id="01-prompt-ou-motor-counter"] {
+      letter-spacing: 0.08em;
+    }
+
+    [id="01-prompt-ou-motor-main"] {
+      position: absolute;
+      top: 0;
+      left: 5cqw;
+      right: 5cqw;
+      height: 83cqh;
+    }
+
+    [id="01-prompt-ou-motor-scene-one"],
+    [id="01-prompt-ou-motor-scene-two"],
+    [id="01-prompt-ou-motor-scene-three"] {
+      position: absolute;
+      inset: 0;
+    }
+
+    [id="01-prompt-ou-motor-intro-line"] {
+      position: absolute;
+      top: 23cqh;
+      left: 0;
+      right: 0;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: baseline;
+      justify-content: center;
+      gap: 0.18em;
+      color: #60E49C;
+      font-size: 7.3cqw;
+      font-weight: 500;
+      font-variation-settings: "opsz" 60;
+      letter-spacing: -0.03em;
+      line-height: 0.96;
+      text-align: center;
+    }
+
+    [id="01-prompt-ou-motor-word-4"] {
+      color: #FFFFFF;
+    }
+
+    [id="01-prompt-ou-motor-question-label"],
+    [id="01-prompt-ou-motor-final-label"] {
+      position: absolute;
+      top: 22cqh;
+      left: 0;
+      right: 0;
+      color: #60E49C;
+      font-family: monospace;
+      font-size: 1.35cqw;
+      font-weight: 500;
+      letter-spacing: 0.18em;
+      line-height: 1;
+      text-align: center;
+    }
+
+    [id="01-prompt-ou-motor-token-slot"],
+    [id="01-prompt-ou-motor-final-token"] {
+      position: absolute;
+      top: 34cqh;
+      left: 0;
+      right: 0;
+      min-height: 18cqh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #FFFFFF;
+      font-size: 6.6cqw;
+      font-weight: 500;
+      font-variation-settings: "opsz" 60;
+      letter-spacing: -0.03em;
+      line-height: 0.96;
+      text-align: center;
+      white-space: nowrap;
+    }
+
+    [id="01-prompt-ou-motor-token-slot"] {
+      font-family: monospace;
+      letter-spacing: -0.04em;
+    }
+
+    [id="01-prompt-ou-motor-typed-text"] {
+      display: inline-block;
+      min-width: 67cqw;
+      text-align: right;
+      white-space: pre;
+    }
+
+    [id="01-prompt-ou-motor-caret"] {
+      display: inline-block;
+      width: 0.34em;
+      margin-left: 0.04em;
+      color: #60E49C;
+      text-align: left;
+    }
+
+    [id="01-prompt-ou-motor-final-label"] {
+      color: #116336;
+    }
+
+    [id="01-prompt-ou-motor-final-token"] {
+      color: #157B43;
+      font-size: 6.6cqw;
+      letter-spacing: -0.035em;
+    }
+
+    [id="01-prompt-ou-motor-bottom-rule"] {
+      position: absolute;
+      top: 69cqh;
+      left: 5cqw;
+      right: 5cqw;
+      height: 2px;
+      background: #60E49C;
+    }
+  </style>
+
+  <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/gsap.min.js"></script>
+  <script>
+    (() => {
+      const frameId = "01-prompt-ou-motor";
+      const tl = gsap.timeline({ paused: true });
+      window.__timelines = window.__timelines || {};
+      window.__timelines[frameId] = tl;
+
+      const sceneOne = document.getElementById("01-prompt-ou-motor-scene-one");
+      const sceneTwo = document.getElementById("01-prompt-ou-motor-scene-two");
+      const sceneThree = document.getElementById("01-prompt-ou-motor-scene-three");
+      const lightGround = document.getElementById("01-prompt-ou-motor-ground-light");
+      const topbar = document.getElementById("01-prompt-ou-motor-topbar");
+      const bottomRule = document.getElementById("01-prompt-ou-motor-bottom-rule");
+      const questionLabel = document.getElementById("01-prompt-ou-motor-question-label");
+      const typedText = document.getElementById("01-prompt-ou-motor-typed-text");
+      const caret = document.getElementById("01-prompt-ou-motor-caret");
+      const finalToken = document.getElementById("01-prompt-ou-motor-final-token");
+
+      tl.set(sceneOne, { autoAlpha: 1 }, 0);
+      tl.set(sceneTwo, { autoAlpha: 0 }, 0);
+      tl.set(sceneThree, { autoAlpha: 0 }, 0);
+      tl.set(lightGround, { autoAlpha: 0 }, 0);
+
+      const introContent = [
+        { title: "VOCÊ", hold: 0.12 },
+        { title: "JÁ", hold: 0.10 },
+        { title: "TEM", hold: 0.11 },
+        { title: "O", hold: 0.09 },
+        { title: "PROMPT", hold: 0.24 }
+      ];
+      let introCursor = 0.08;
+      const introTimeline = introContent.map((entry) => {
+        const duration = 0.16 + entry.title.length * 0.025 + entry.hold;
+        const start = introCursor;
+        introCursor += duration;
+        return { ...entry, start, end: introCursor };
+      });
+
+      introTimeline.forEach((entry, index) => {
+        const word = document.getElementById(`01-prompt-ou-motor-word-${index}`);
+        tl.fromTo(
+          word,
+          { autoAlpha: 0, y: 34, filter: "blur(12px)" },
+          { autoAlpha: 1, y: 0, filter: "blur(0px)", duration: 0.34, ease: "power3.out" },
+          entry.start
+        );
+      });
+
+      tl.set(sceneOne, { autoAlpha: 0 }, 2.1);
+      tl.set(sceneTwo, { autoAlpha: 1 }, 2.1);
+      tl.fromTo(
+        questionLabel,
+        { autoAlpha: 0, y: 18 },
+        { autoAlpha: 1, y: 0, duration: 0.36, ease: "power2.out" },
+        2.1
+      );
+
+      const typedSequence = [
+        { t: 0.00, text: "" },
+        { t: 0.16, text: "só" },
+        { t: 0.38, text: "só c" },
+        { t: 0.54, text: "só criar" },
+        { t: 0.86, text: "só criar um" },
+        { t: 1.18, text: "só criar um s" },
+        { t: 1.36, text: "só criar um site" },
+        { t: 1.64, text: "só criar um site?" }
+      ];
+      const textAt = (time) => {
+        for (let i = typedSequence.length - 1; i >= 0; i -= 1) {
+          if (time >= typedSequence[i].t) return typedSequence[i].text;
+        }
+        return "";
+      };
+      const typeDriver = { t: 0 };
+      let lastTypedState = "";
+      tl.to(
+        typeDriver,
+        {
+          t: 2.2,
+          duration: 2.2,
+          ease: "none",
+          onUpdate: () => {
+            const nextText = textAt(typeDriver.t);
+            if (nextText !== lastTypedState) {
+              typedText.textContent = nextText;
+              lastTypedState = nextText;
+            }
+          }
+        },
+        2.25
+      );
+
+      const blinkDriver = { p: 0 };
+      tl.to(
+        blinkDriver,
+        {
+          p: Math.PI * 6,
+          duration: 2.4,
+          ease: "none",
+          onUpdate: () => {
+            caret.style.opacity = Math.sin(blinkDriver.p) >= 0 ? "1" : "0";
+          }
+        },
+        2.1
+      );
+
+      tl.set(sceneTwo, { autoAlpha: 0 }, 4.5);
+      tl.set(sceneThree, { autoAlpha: 1 }, 4.5);
+      tl.set(lightGround, { autoAlpha: 1 }, 4.5);
+      tl.set(caret, { autoAlpha: 0 }, 4.5);
+      tl.set(topbar, { color: "#116336", borderBottomColor: "#116336" }, 4.5);
+      tl.set(bottomRule, { backgroundColor: "#116336" }, 4.5);
+      tl.fromTo(
+        finalToken,
+        { scale: 1.055 },
+        { scale: 1, duration: 0.42, ease: "power3.out" },
+        4.5
+      );
+    })();
+  </script>
+</template>

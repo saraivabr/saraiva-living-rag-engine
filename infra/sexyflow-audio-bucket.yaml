@@ -1,0 +1,100 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: Private ephemeral audio storage for Saraiva Instagram SexyFlow staging.
+
+Parameters:
+  BucketName:
+    Type: String
+  LambdaRoleArn:
+    Type: String
+
+Resources:
+  AudioKey:
+    Type: AWS::KMS::Key
+    Properties:
+      Description: Saraiva Instagram ephemeral audio
+      EnableKeyRotation: true
+      KeyPolicy:
+        Version: "2012-10-17"
+        Statement:
+          - Sid: RootAdministration
+            Effect: Allow
+            Principal:
+              AWS:
+                Fn::Sub: arn:${AWS::Partition}:iam::${AWS::AccountId}:root
+            Action: "kms:*"
+            Resource: "*"
+          - Sid: ResponderUsage
+            Effect: Allow
+            Principal:
+              AWS:
+                Ref: LambdaRoleArn
+            Action:
+              - kms:Decrypt
+              - kms:Encrypt
+              - kms:GenerateDataKey
+            Resource: "*"
+
+  AudioBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName:
+        Ref: BucketName
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - BucketKeyEnabled: true
+            ServerSideEncryptionByDefault:
+              SSEAlgorithm: aws:kms
+              KMSMasterKeyID:
+                Fn::GetAtt: [AudioKey, Arn]
+      LifecycleConfiguration:
+        Rules:
+          - Id: DeleteInstagramAudioAfterOneDay
+            Status: Enabled
+            Prefix: instagram-audio/
+            ExpirationInDays: 1
+      OwnershipControls:
+        Rules:
+          - ObjectOwnership: BucketOwnerEnforced
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+
+  AudioBucketPolicy:
+    Type: AWS::S3::BucketPolicy
+    Properties:
+      Bucket:
+        Ref: AudioBucket
+      PolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Sid: DenyInsecureTransport
+            Effect: Deny
+            Principal: "*"
+            Action: "s3:*"
+            Resource:
+              - Fn::GetAtt: [AudioBucket, Arn]
+              - Fn::Sub: "${AudioBucket.Arn}/*"
+            Condition:
+              Bool:
+                aws:SecureTransport: "false"
+          - Sid: ResponderAudioAccess
+            Effect: Allow
+            Principal:
+              AWS:
+                Ref: LambdaRoleArn
+            Action:
+              - s3:GetObject
+              - s3:PutObject
+              - s3:DeleteObject
+            Resource:
+              Fn::Sub: "${AudioBucket.Arn}/instagram-audio/*"
+
+Outputs:
+  AudioBucketName:
+    Value:
+      Ref: AudioBucket
+  AudioKmsKeyArn:
+    Value:
+      Fn::GetAtt: [AudioKey, Arn]

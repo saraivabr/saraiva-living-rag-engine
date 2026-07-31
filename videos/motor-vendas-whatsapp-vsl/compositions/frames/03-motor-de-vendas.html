@@ -1,0 +1,632 @@
+<template>
+  <style>
+    #root {
+      position: relative;
+      width: 1920px;
+      height: 1080px;
+      overflow: hidden;
+      container-type: size;
+      color: #0d4e2b;
+      font-family: sans-serif;
+      font-weight: 400;
+    }
+
+    #root *,
+    #root *::before,
+    #root *::after {
+      box-sizing: border-box;
+    }
+
+    #root [id="03-motor-de-vendas-ground"] {
+      position: absolute;
+      inset: 0;
+      background: #ffffff;
+    }
+
+    #root [id="03-motor-de-vendas-scene"] {
+      position: absolute;
+      inset: 0;
+      overflow: hidden;
+    }
+
+    #root [id="03-motor-de-vendas-world"] {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 5600px;
+      height: 896px;
+      transform-origin: 50% 50%;
+      will-change: transform;
+    }
+
+    #root [data-role="top-rule"] {
+      position: absolute;
+      top: 84px;
+      left: 96px;
+      width: 5408px;
+      height: 2px;
+      background: #116336;
+    }
+
+    #root [data-role="chrome"] {
+      position: absolute;
+      top: 42px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      width: 1728px;
+      color: #116336;
+      font-family: monospace;
+      font-size: 22px;
+      font-weight: 500;
+      letter-spacing: 0.16em;
+      line-height: 1;
+      text-transform: uppercase;
+    }
+
+    #root [data-role="chrome"] span:last-child {
+      letter-spacing: 0.08em;
+    }
+
+    #root [data-stop="one"] {
+      left: 96px;
+    }
+
+    #root [data-stop="two"] {
+      left: 1796px;
+    }
+
+    #root [data-stop="three"] {
+      left: 3496px;
+    }
+
+    #root [id="03-motor-de-vendas-station-one"] {
+      position: absolute;
+      top: 220px;
+      left: 96px;
+      width: 1080px;
+      height: 540px;
+    }
+
+    #root [id="03-motor-de-vendas-pin"] {
+      position: absolute;
+      top: 37px;
+      left: 0;
+      width: 132px;
+      height: 164px;
+      transform-origin: 50% 85%;
+    }
+
+    #root [id="03-motor-de-vendas-pin"] path,
+    #root [id="03-motor-de-vendas-pin"] circle {
+      fill: none;
+      stroke: #19c86b;
+      stroke-width: 8px;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    #root [id="03-motor-de-vendas-company"] {
+      position: absolute;
+      top: 46px;
+      left: 164px;
+      width: 800px;
+      margin: 0;
+      color: #116336;
+      font-size: 138px;
+      font-weight: 500;
+      font-variation-settings: "opsz" 60;
+      letter-spacing: -0.03em;
+      line-height: 0.88;
+    }
+
+    #root [id="03-motor-de-vendas-origin-label"] {
+      position: absolute;
+      top: 288px;
+      left: 164px;
+      margin: 0;
+      color: #0b1713;
+      font-family: monospace;
+      font-size: 23px;
+      font-weight: 500;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+    }
+
+    #root [id="03-motor-de-vendas-route"] {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 5600px;
+      height: 896px;
+      overflow: visible;
+      pointer-events: none;
+    }
+
+    #root [id="03-motor-de-vendas-route"] path {
+      fill: none;
+      stroke: #19c86b;
+      stroke-width: 10px;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    #root [id="03-motor-de-vendas-station-two"] {
+      position: absolute;
+      top: 192px;
+      left: 1900px;
+      width: 1320px;
+      height: 560px;
+    }
+
+    #root [id="03-motor-de-vendas-step-index"] {
+      position: absolute;
+      top: 8px;
+      left: 0;
+      padding-bottom: 18px;
+      border-bottom: 2px solid #116336;
+      color: #116336;
+      font-family: monospace;
+      font-size: 24px;
+      font-weight: 500;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+    }
+
+    #root [id="03-motor-de-vendas-context"],
+    #root [id="03-motor-de-vendas-offer"] {
+      position: absolute;
+      left: 0;
+      margin: 0;
+      color: #116336;
+      font-size: 132px;
+      font-weight: 500;
+      font-variation-settings: "opsz" 60;
+      letter-spacing: -0.03em;
+      line-height: 0.9;
+    }
+
+    #root [id="03-motor-de-vendas-context"] {
+      top: 112px;
+    }
+
+    #root [id="03-motor-de-vendas-offer"] {
+      top: 250px;
+      color: #15aa5b;
+    }
+
+    #root [id="03-motor-de-vendas-plus"] {
+      position: absolute;
+      top: 406px;
+      left: 4px;
+      width: 820px;
+      height: 2px;
+      background: #116336;
+    }
+
+    #root [id="03-motor-de-vendas-plus"]::after {
+      content: "+";
+      position: absolute;
+      top: -39px;
+      right: -70px;
+      width: 56px;
+      color: #116336;
+      font-family: monospace;
+      font-size: 54px;
+      font-weight: 500;
+      line-height: 1;
+      text-align: center;
+    }
+
+    #root [id="03-motor-de-vendas-final-station"] {
+      position: absolute;
+      top: 132px;
+      left: 3504px;
+      width: 1620px;
+      height: 700px;
+    }
+
+    #root [id="03-motor-de-vendas-window"] {
+      position: absolute;
+      inset: 0;
+      overflow: hidden;
+      border: 2px solid #116336;
+      border-radius: 8px;
+      background: #ffffff;
+    }
+
+    #root [id="03-motor-de-vendas-window"]::before {
+      content: "";
+      position: absolute;
+      z-index: 2;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 46px;
+      border-bottom: 2px solid #116336;
+      background: #116336;
+    }
+
+    #root [id="03-motor-de-vendas-dots"] {
+      position: absolute;
+      z-index: 3;
+      top: 17px;
+      left: 22px;
+      display: flex;
+      gap: 12px;
+    }
+
+    #root [id="03-motor-de-vendas-dots"] i {
+      display: block;
+      width: 12px;
+      height: 12px;
+      border: 2px solid #116336;
+      border-radius: 50%;
+      background: #ffffff;
+    }
+
+    #root [id="03-motor-de-vendas-hero-image"] {
+      position: absolute;
+      top: 46px;
+      left: 0;
+      width: 100%;
+      height: 654px;
+      object-fit: cover;
+      object-position: center top;
+    }
+
+    #root [id="03-motor-de-vendas-motor-card"] {
+      position: absolute;
+      z-index: 4;
+      top: 96px;
+      left: 56px;
+      width: 706px;
+      padding: 34px 40px 38px;
+      border-radius: 6px;
+      background: #116336;
+      color: #60e49c;
+    }
+
+    #root [id="03-motor-de-vendas-motor-card"] span {
+      display: block;
+      margin-bottom: 16px;
+      font-family: monospace;
+      font-size: 20px;
+      font-weight: 500;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+    }
+
+    #root [id="03-motor-de-vendas-motor-card"] strong {
+      display: block;
+      font-size: 88px;
+      font-weight: 500;
+      font-variation-settings: "opsz" 60;
+      letter-spacing: -0.03em;
+      line-height: 0.9;
+    }
+
+    #root [id="03-motor-de-vendas-site-card"] {
+      position: absolute;
+      z-index: 4;
+      right: 48px;
+      bottom: 44px;
+      width: 620px;
+      padding: 24px 30px 26px;
+      border: 2px solid #116336;
+      border-radius: 6px;
+      background: #ffffff;
+      color: #116336;
+    }
+
+    #root [id="03-motor-de-vendas-site-card"] span {
+      display: block;
+      margin-bottom: 10px;
+      font-family: monospace;
+      font-size: 19px;
+      font-weight: 500;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+    }
+
+    #root [id="03-motor-de-vendas-site-card"] strong {
+      display: block;
+      font-size: 62px;
+      font-weight: 500;
+      font-variation-settings: "opsz" 60;
+      letter-spacing: -0.02em;
+      line-height: 0.92;
+    }
+
+    #root [id="03-motor-de-vendas-terminal"] {
+      position: absolute;
+      top: 458px;
+      left: 3378px;
+      width: 86px;
+      height: 86px;
+      border: 2px solid #116336;
+      border-radius: 50%;
+      background: #116336;
+    }
+
+    #root [id="03-motor-de-vendas-terminal"]::after {
+      content: "→";
+      position: absolute;
+      inset: 0;
+      color: #ffffff;
+      font-family: monospace;
+      font-size: 46px;
+      font-weight: 500;
+      line-height: 80px;
+      text-align: center;
+    }
+  </style>
+
+  <div id="root" data-composition-id="03-motor-de-vendas" data-width="1920" data-height="1080" data-duration="9.003">
+    <div
+      id="03-motor-de-vendas-ground"
+      class="clip"
+      data-start="0"
+      data-duration="9.003"
+      data-track-index="0"
+    ></div>
+
+    <div
+      id="03-motor-de-vendas-scene"
+      class="clip"
+      data-start="0"
+      data-duration="9.003"
+      data-track-index="1"
+    >
+      <div id="03-motor-de-vendas-world" data-layout-allow-overlap data-layout-allow-overflow>
+        <div data-role="top-rule"></div>
+        <div data-role="chrome" data-stop="one">
+          <span>Motor de Vendas</span><span>Origem</span>
+        </div>
+        <div data-role="chrome" data-stop="two">
+          <span>Motor de Vendas</span><span>Estrutura</span>
+        </div>
+        <div data-role="chrome" data-stop="three">
+          <span>Motor de Vendas</span><span>Destino</span>
+        </div>
+
+        <svg
+          id="03-motor-de-vendas-route"
+          viewBox="0 0 5600 896"
+          xmlns="http://www.w3.org/2000/svg"
+          aria-hidden="true"
+        >
+          <path
+            id="03-motor-de-vendas-route-one"
+            d="M 716 640 C 1080 640, 1425 640, 1850 640 C 2030 640, 2140 606, 2260 558"
+          />
+          <path
+            id="03-motor-de-vendas-route-two"
+            d="M 2260 558 C 2600 422, 2970 422, 3392 500"
+          />
+        </svg>
+
+        <section id="03-motor-de-vendas-station-one">
+          <svg
+            id="03-motor-de-vendas-pin"
+            viewBox="0 0 132 164"
+            xmlns="http://www.w3.org/2000/svg"
+            aria-hidden="true"
+          >
+            <path
+              id="03-motor-de-vendas-pin-outline"
+              d="M 66 8 C 34 8 12 31 12 62 C 12 101 66 150 66 150 C 66 150 120 101 120 62 C 120 31 98 8 66 8 Z"
+            />
+            <circle id="03-motor-de-vendas-pin-core" cx="66" cy="62" r="20" />
+          </svg>
+          <h2 id="03-motor-de-vendas-company">EMPRESA<br />REAL</h2>
+          <p id="03-motor-de-vendas-origin-label">Ponto de partida</p>
+        </section>
+
+        <section id="03-motor-de-vendas-station-two">
+          <div id="03-motor-de-vendas-step-index">Contexto da empresa</div>
+          <h2 id="03-motor-de-vendas-context">CONTEXTO</h2>
+          <h2 id="03-motor-de-vendas-offer">OFERTA</h2>
+          <div id="03-motor-de-vendas-plus" aria-hidden="true"></div>
+        </section>
+
+        <div id="03-motor-de-vendas-terminal" aria-hidden="true"></div>
+
+        <section id="03-motor-de-vendas-final-station">
+          <div id="03-motor-de-vendas-window">
+            <div id="03-motor-de-vendas-dots" aria-hidden="true">
+              <i></i><i></i><i></i>
+            </div>
+            <img
+              id="03-motor-de-vendas-hero-image"
+              src="capture/assets/checkout-compare-hero.png"
+              alt=""
+            />
+            <div id="03-motor-de-vendas-motor-card">
+              <span>Estrutura prática</span>
+              <strong>MOTOR DE<br />VENDAS</strong>
+            </div>
+            <div id="03-motor-de-vendas-site-card">
+              <span>Destino</span>
+              <strong>PROJETO DE SITE</strong>
+            </div>
+          </div>
+        </section>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/gsap.min.js"></script>
+  <script>
+    (() => {
+      const composition = document.querySelector(
+        '[data-composition-id="03-motor-de-vendas"]',
+      );
+      const world = composition.querySelector(
+        '[id="03-motor-de-vendas-world"]',
+      );
+      const pathOne = composition.querySelector(
+        '[id="03-motor-de-vendas-route-one"]',
+      );
+      const pathTwo = composition.querySelector(
+        '[id="03-motor-de-vendas-route-two"]',
+      );
+      const pinPaths = composition.querySelectorAll(
+        '[id="03-motor-de-vendas-pin"] path, [id="03-motor-de-vendas-pin"] circle',
+      );
+
+      [pathOne, pathTwo, ...pinPaths].forEach((path) => {
+        const length = path.getTotalLength();
+        path.style.strokeDasharray = `${length}`;
+        path.style.strokeDashoffset = `${length}`;
+      });
+
+      const camera = { scale: 1, x: 0, y: 0 };
+      const applyCamera = () => {
+        world.style.transform =
+          `translate(${camera.x}px, ${camera.y}px) scale(${camera.scale})`;
+      };
+      applyCamera();
+
+      const tl = gsap.timeline({ paused: true });
+      window.__timelines = window.__timelines || {};
+      window.__timelines["03-motor-de-vendas"] = tl;
+
+      tl.fromTo(
+        '[id="03-motor-de-vendas-pin"]',
+        { scale: 0.72, opacity: 0, y: 28 },
+        {
+          scale: 1,
+          opacity: 1,
+          y: 0,
+          duration: 0.42,
+          ease: "power2.out",
+        },
+        0.08,
+      );
+      tl.fromTo(
+        '[id="03-motor-de-vendas-company"]',
+        { x: -54, opacity: 0 },
+        { x: 0, opacity: 1, duration: 0.46, ease: "power2.out" },
+        0.12,
+      );
+      tl.to(
+        '[id="03-motor-de-vendas-pin-outline"]',
+        { strokeDashoffset: 0, duration: 0.56, ease: "power2.out" },
+        0.18,
+      );
+      tl.to(
+        '[id="03-motor-de-vendas-pin-core"]',
+        { strokeDashoffset: 0, duration: 0.4, ease: "power2.out" },
+        0.6,
+      );
+      tl.fromTo(
+        '[id="03-motor-de-vendas-origin-label"]',
+        { y: 18, opacity: 0 },
+        { y: 0, opacity: 1, duration: 0.38, ease: "power1.out" },
+        0.72,
+      );
+      tl.to(
+        pathOne,
+        { strokeDashoffset: 0, duration: 1.45, ease: "power2.out" },
+        0.56,
+      );
+      tl.to(
+        camera,
+        {
+          x: -1700,
+          duration: 1.18,
+          ease: "power3.inOut",
+          onUpdate: applyCamera,
+        },
+        1.68,
+      );
+      tl.fromTo(
+        '[id="03-motor-de-vendas-step-index"]',
+        { y: 18, opacity: 0 },
+        { y: 0, opacity: 1, duration: 0.38, ease: "power1.out" },
+        2.58,
+      );
+      tl.fromTo(
+        '[id="03-motor-de-vendas-context"]',
+        { x: 62, opacity: 0 },
+        { x: 0, opacity: 1, duration: 0.54, ease: "power2.out" },
+        2.74,
+      );
+      tl.fromTo(
+        '[id="03-motor-de-vendas-offer"]',
+        { x: 62, opacity: 0 },
+        { x: 0, opacity: 1, duration: 0.54, ease: "power2.out" },
+        3.34,
+      );
+      tl.fromTo(
+        '[id="03-motor-de-vendas-plus"]',
+        { scaleX: 0, opacity: 0, transformOrigin: "left center" },
+        {
+          scaleX: 1,
+          opacity: 1,
+          duration: 0.58,
+          ease: "power2.out",
+        },
+        3.82,
+      );
+      tl.to(
+        pathTwo,
+        { strokeDashoffset: 0, duration: 1.25, ease: "power2.out" },
+        3.82,
+      );
+      tl.fromTo(
+        '[id="03-motor-de-vendas-terminal"]',
+        { scale: 0.6, opacity: 0 },
+        { scale: 1, opacity: 1, duration: 0.42, ease: "power2.out" },
+        4.62,
+      );
+      tl.to(
+        camera,
+        {
+          x: -3400,
+          duration: 1.3,
+          ease: "power3.inOut",
+          onUpdate: applyCamera,
+        },
+        4.72,
+      );
+      tl.fromTo(
+        '[id="03-motor-de-vendas-window"]',
+        { y: 42, opacity: 0, scale: 0.97 },
+        {
+          y: 0,
+          opacity: 1,
+          scale: 1,
+          duration: 0.62,
+          ease: "power2.out",
+        },
+        5.5,
+      );
+      tl.fromTo(
+        '[id="03-motor-de-vendas-motor-card"]',
+        { x: -46, opacity: 0 },
+        { x: 0, opacity: 1, duration: 0.56, ease: "power2.out" },
+        6.12,
+      );
+      tl.fromTo(
+        '[id="03-motor-de-vendas-site-card"]',
+        { y: 34, opacity: 0 },
+        { y: 0, opacity: 1, duration: 0.58, ease: "power2.out" },
+        7.06,
+      );
+      tl.fromTo(
+        '[id="03-motor-de-vendas-dots"] i',
+        { scale: 0, opacity: 0 },
+        {
+          scale: 1,
+          opacity: 1,
+          duration: 0.34,
+          stagger: 0.11,
+          ease: "power2.out",
+        },
+        7.9,
+      );
+    })();
+  </script>
+</template>

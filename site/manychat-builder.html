@@ -1,0 +1,313 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>ManyChat — Flow Creator Studio</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        --mc-primary: #0084ff;
+        --mc-primary-hover: #0073e6;
+        --mc-bg: #f8fafc;
+        --mc-sidebar-bg: #1c2536;
+        --mc-border: #e2e8f0;
+        --mc-dark: #0f172a;
+        --mc-muted: #64748b;
+      }
+
+      * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Inter', sans-serif; }
+      body { background: var(--mc-bg); color: var(--mc-dark); height: 100vh; overflow: hidden; display: flex; }
+
+      /* Sidebar Left */
+      .sidebar {
+        width: 220px;
+        background: var(--mc-sidebar-bg);
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        padding: 16px 12px;
+        flex-shrink: 0;
+      }
+
+      .logo { display: flex; align-items: center; gap: 10px; color: #fff; font-weight: 700; font-size: 16px; padding: 6px 8px; }
+      .logo-box { width: 30px; height: 30px; background: var(--mc-primary); border-radius: 6px; display: grid; place-items: center; font-weight: 800; }
+
+      .menu { display: flex; flex-direction: column; gap: 4px; margin-top: 20px; }
+      .menu-btn { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: 6px; color: #94a3b8; font-size: 13px; font-weight: 500; border: 0; background: transparent; cursor: pointer; text-align: left; }
+      .menu-btn:hover, .menu-btn.active { background: rgba(255, 255, 255, 0.08); color: #fff; }
+      .menu-btn.active { background: var(--mc-primary); }
+
+      /* Main Editor Area */
+      .editor-shell { flex: 1; display: flex; flex-direction: column; height: 100vh; }
+
+      .topbar {
+        height: 56px;
+        background: #fff;
+        border-bottom: 1px solid var(--mc-border);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0 20px;
+      }
+
+      .flow-name-input { font-size: 15px; font-weight: 600; border: 1px solid transparent; padding: 4px 8px; border-radius: 4px; width: 280px; }
+      .flow-name-input:hover, .flow-name-input:focus { border-color: var(--mc-border); background: #f8fafc; outline: none; }
+
+      .top-actions { display: flex; gap: 10px; align-items: center; }
+      .btn-secondary { background: #f1f5f9; border: 1px solid #cbd5e1; color: #334155; padding: 8px 14px; border-radius: 6px; font-weight: 600; font-size: 13px; cursor: pointer; }
+      .btn-primary { background: var(--mc-primary); color: #fff; border: 0; padding: 8px 16px; border-radius: 6px; font-weight: 600; font-size: 13px; cursor: pointer; }
+      .btn-primary:hover { background: var(--mc-primary-hover); }
+
+      .workspace { flex: 1; display: flex; position: relative; overflow: hidden; }
+
+      /* Canvas & Nodes */
+      .canvas {
+        flex: 1;
+        background-color: #f8fafc;
+        background-image: radial-gradient(#cbd5e1 1px, transparent 1px);
+        background-size: 20px 20px;
+        position: relative;
+        overflow: auto;
+      }
+
+      .canvas-svg { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; }
+
+      /* Interactive Draggable Nodes */
+      .node-card {
+        position: absolute;
+        width: 280px;
+        background: #fff;
+        border: 2px solid #cbd5e1;
+        border-radius: 10px;
+        box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.08);
+        cursor: move;
+        transition: border-color 0.15s ease;
+      }
+
+      .node-card.selected { border-color: var(--mc-primary); box-shadow: 0 0 0 2px rgba(0, 132, 255, 0.2); }
+
+      .node-header { padding: 10px 14px; border-bottom: 1px solid var(--mc-border); display: flex; justify-content: space-between; font-size: 11px; font-weight: 700; text-transform: uppercase; color: var(--mc-muted); background: #f8fafc; border-radius: 8px 8px 0 0; }
+      .node-body { padding: 14px; }
+
+      .node-type-trigger { border-top: 4px solid #f59e0b; }
+      .node-type-message { border-top: 4px solid #10b981; }
+      .node-type-condition { border-top: 4px solid #3b82f6; }
+
+      .btn-add-node-action {
+        display: block;
+        width: 100%;
+        padding: 8px;
+        margin-top: 8px;
+        background: #f8fafc;
+        border: 1px dashed #cbd5e1;
+        border-radius: 6px;
+        color: var(--mc-primary);
+        font-weight: 600;
+        font-size: 12px;
+        text-align: center;
+        cursor: pointer;
+      }
+      .btn-add-node-action:hover { background: #eff6ff; border-color: #93c5fd; }
+
+      /* Right Inspector Panel (Onde você edita o bloco selecionado) */
+      .inspector {
+        width: 320px;
+        background: #fff;
+        border-left: 1px solid var(--mc-border);
+        padding: 20px;
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+        flex-shrink: 0;
+      }
+
+      .inspector-title { font-size: 16px; font-weight: 700; padding-bottom: 12px; border-bottom: 1px solid var(--mc-border); }
+
+      .form-field { display: flex; flex-direction: column; gap: 6px; }
+      .form-field label { font-size: 12px; font-weight: 600; color: var(--mc-muted); text-transform: uppercase; }
+      .form-field input, .form-field textarea, .form-field select {
+        padding: 10px; border: 1px solid var(--mc-border); border-radius: 6px; font-size: 13px; outline: none;
+      }
+      .form-field input:focus, .form-field textarea:focus { border-color: var(--mc-primary); }
+
+      .buttons-list { display: flex; flex-direction: column; gap: 8px; margin-top: 6px; }
+      .button-item-row { display: flex; gap: 6px; }
+      .button-item-row input { flex: 1; }
+
+      .port-dot {
+        width: 12px; height: 12px; background: var(--mc-primary); border: 2px solid #fff; border-radius: 50%; position: absolute; right: -6px; top: 50%; transform: translateY(-50%); box-shadow: 0 0 0 2px var(--mc-primary); cursor: pointer;
+      }
+    </style>
+  </head>
+  <body>
+    <aside class="sidebar">
+      <div>
+        <div class="logo">
+          <div class="logo-box">MC</div>
+          <span>ManyChat</span>
+        </div>
+        <div class="menu">
+          <button class="menu-btn active">⚡ Flow Builder</button>
+          <button class="menu-btn">💬 Live Chat</button>
+          <button class="menu-btn">👥 Contacts</button>
+          <button class="menu-btn">⚙️ Settings</button>
+        </div>
+      </div>
+    </aside>
+
+    <div class="editor-shell">
+      <header class="topbar">
+        <input class="flow-name-input" type="text" id="flowTitle" value="Novo Fluxo Instagram #01" />
+        <div class="top-actions">
+          <button class="btn-secondary" id="addBlockBtn">＋ Criar Novo Bloco</button>
+          <button class="btn-primary" id="publishBtn">Publicar no Instagram</button>
+        </div>
+      </header>
+
+      <div class="workspace">
+        <div class="canvas" id="canvas">
+          <svg class="canvas-svg" id="svgCanvas">
+            <path id="path1" d="M 330 140 C 400 140, 400 140, 480 140" stroke="#0084ff" stroke-width="3" fill="none"/>
+            <path id="path2" d="M 760 140 C 830 140, 830 140, 900 140" stroke="#10b981" stroke-width="3" fill="none"/>
+          </svg>
+
+          <!-- Bloco 1: Trigger Inicial -->
+          <div class="node-card node-type-trigger selected" id="node1" style="top: 80px; left: 50px;">
+            <div class="node-header">
+              <span>Gatilho de Entrada</span>
+              <span>⚡</span>
+            </div>
+            <div class="node-body">
+              <strong id="node1Title">Comentário ou DM</strong>
+              <p id="node1Desc">Palavras: PROMPT, MAPA, SARAIVA</p>
+            </div>
+            <div class="port-dot"></div>
+          </div>
+
+          <!-- Bloco 2: Follow Gate Check -->
+          <div class="node-card node-type-condition" id="node2" style="top: 80px; left: 480px;">
+            <div class="node-header">
+              <span>Condição (Follow Gate)</span>
+              <span>🔀</span>
+            </div>
+            <div class="node-body">
+              <strong>Checar se Segue @saraiva.ai</strong>
+              <p>Validação Oficial via Zernio API</p>
+              <div style="font-size:11px; font-weight:600; color:#10b981; margin-top:6px;">✓ Yes → Liberar Conteúdo</div>
+              <div style="font-size:11px; font-weight:600; color:#ef4444; margin-top:2px;">✕ No → Pedir Follow</div>
+            </div>
+            <div class="port-dot"></div>
+          </div>
+
+          <!-- Bloco 3: Envio de Mensagem / Conteúdo -->
+          <div class="node-card node-type-message" id="node3" style="top: 80px; left: 900px;">
+            <div class="node-header">
+              <span>Enviar Mensagem</span>
+              <span>💬</span>
+            </div>
+            <div class="node-body">
+              <strong id="node3Title">Entrega do Conteúdo</strong>
+              <p id="node3Text">Pronto! Aqui está a estrutura que você pediu.</p>
+              <button class="btn-add-node-action" id="node3Btn1">ENTRAR NA COMUNIDADE</button>
+            </div>
+            <div class="port-dot"></div>
+          </div>
+        </div>
+
+        <!-- Painel Direito de Edição Interativa do Bloco -->
+        <aside class="inspector">
+          <div class="inspector-title" id="inspectorTitle">Editar Bloco Selecionado</div>
+
+          <div class="form-field">
+            <label>Tipo do Bloco</label>
+            <select id="nodeTypeSelect">
+              <option value="message">Enviar Mensagem (Instagram DM)</option>
+              <option value="trigger">Gatilho de Entrada (Keyword/Story)</option>
+              <option value="condition">Condição / Follow Gate Check</option>
+            </select>
+          </div>
+
+          <div class="form-field">
+            <label>Título do Bloco</label>
+            <input type="text" id="editNodeTitle" value="Entrega do Conteúdo" />
+          </div>
+
+          <div class="form-field">
+            <label>Texto da Mensagem (DM)</label>
+            <textarea id="editNodeText" rows="4">Pronto! Aqui está a estrutura que você pediu.</textarea>
+          </div>
+
+          <div class="form-field">
+            <label>Botões de Resposta / CTA</label>
+            <div class="buttons-list" id="buttonsList">
+              <div class="button-item-row">
+                <input type="text" value="ENTRAR NA COMUNIDADE" />
+              </div>
+            </div>
+            <button class="btn-add-node-action" style="margin-top:6px;" id="addNewBtnInInspector">＋ Adicionar Novo Botão</button>
+          </div>
+
+          <div style="margin-top:auto;">
+            <button class="btn-primary" style="width:100%; padding:12px;" id="saveNodeChanges">Salvar Alterações no Bloco</button>
+          </div>
+        </aside>
+      </div>
+    </div>
+
+    <script>
+      // Lógica de Edição Interativa em Tempo Real
+      const editTitle = document.getElementById('editNodeTitle');
+      const editText = document.getElementById('editNodeText');
+      const node3Title = document.getElementById('node3Title');
+      const node3Text = document.getElementById('node3Text');
+
+      editTitle.addEventListener('input', (e) => {
+        node3Title.textContent = e.target.value;
+      });
+
+      editText.addEventListener('input', (e) => {
+        node3Text.textContent = e.target.value;
+      });
+
+      document.getElementById('addNewBtnInInspector').addEventListener('click', () => {
+        const input = document.createElement('input');
+        input.type = 'text';
+        input.value = 'NOVO BOTÃO';
+        document.getElementById('buttonsList').appendChild(input);
+
+        const newBtn = document.createElement('button');
+        newBtn.className = 'btn-add-node-action';
+        newBtn.textContent = 'NOVO BOTÃO';
+        document.querySelector('#node3 .node-body').appendChild(newBtn);
+      });
+
+      document.getElementById('publishBtn').addEventListener('click', () => {
+        alert('🎉 Novo fluxo salvo e sincronizado com a AWS Lambda do Instagram!');
+      });
+
+      document.getElementById('addBlockBtn').addEventListener('click', () => {
+        const canvas = document.getElementById('canvas');
+        const newNode = document.createElement('div');
+        newNode.className = 'node-card node-type-message';
+        newNode.style.top = '280px';
+        newNode.style.left = '480px';
+        newNode.innerHTML = `
+          <div class="node-header"><span>Novo Bloco</span><span>💬</span></div>
+          <div class="node-body">
+            <strong>Nova Resposta Automática</strong>
+            <p>Escreva o texto no painel à direita...</p>
+            <button class="btn-add-node-action">NOVA AÇÃO</button>
+          </div>
+          <div class="port-dot"></div>
+        `;
+        canvas.appendChild(newNode);
+      });
+    </script>
+  </body>
+</html>

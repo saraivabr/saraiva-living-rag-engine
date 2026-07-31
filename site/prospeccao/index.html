@@ -1,0 +1,414 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#f3f6fb" />
+    <meta
+      name="description"
+      content="Transforme o link de uma empresa em diagnóstico, abordagem, oferta e proposta comercial."
+    />
+    <title>Cliente Pronto — Inteligência Comercial</title>
+    <link
+      rel="icon"
+      href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='16' fill='%230957e8'/%3E%3Ctext x='32' y='43' text-anchor='middle' font-family='Arial' font-size='34' font-weight='700' fill='white'%3ES%3C/text%3E%3C/svg%3E"
+    />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="noise" aria-hidden="true"></div>
+    <div class="orb orb-one" aria-hidden="true"></div>
+    <div class="orb orb-two" aria-hidden="true"></div>
+
+    <div class="app">
+      <header class="topbar">
+        <a class="brand" href="#" aria-label="Saraiva AI">
+          <span class="brand-symbol">S</span>
+          <span class="brand-name">SARAIVA<span>.AI</span></span>
+        </a>
+
+        <div class="product-name">
+          <span class="product-dot"></span>
+          CLIENTE PRONTO
+        </div>
+
+        <div class="system-status">
+          <span class="status-pulse"></span>
+          Inteligência comercial ativa
+        </div>
+      </header>
+
+      <main>
+        <section class="hero" id="heroSection">
+          <div class="hero-copy">
+            <div class="eyebrow">
+              <span>01</span>
+              PROSPECÇÃO COM CONTEXTO
+            </div>
+            <h1>Cole uma empresa.<br /><em>Saia com a venda pronta.</em></h1>
+            <p class="hero-description">
+              A IA pesquisa o negócio, encontra a oportunidade e transforma dados públicos
+              em uma estratégia comercial completa.
+            </p>
+
+            <form class="search-box" id="analysisForm">
+              <div class="source-icon" id="sourceIcon" aria-hidden="true">
+                <svg viewBox="0 0 24 24">
+                  <path d="M10.6 13.4a4 4 0 0 0 5.7 0l2.1-2.1a4 4 0 0 0-5.7-5.7l-1.2 1.2" />
+                  <path d="M13.4 10.6a4 4 0 0 0-5.7 0l-2.1 2.1a4 4 0 0 0 5.7 5.7l1.2-1.2" />
+                </svg>
+              </div>
+              <label class="input-wrap" for="companyLink">
+                <span>LINK DA EMPRESA</span>
+                <input
+                  id="companyLink"
+                  type="url"
+                  inputmode="url"
+                  autocomplete="off"
+                  placeholder="Cole o Google Maps ou Instagram aqui"
+                  required
+                />
+              </label>
+              <button class="analyze-button" id="analyzeButton" type="submit">
+                <span>Analisar empresa</span>
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                  <path d="M5 12h14M13 6l6 6-6 6" />
+                </svg>
+              </button>
+            </form>
+            <p class="analysis-error" id="analysisError" role="alert" hidden></p>
+
+            <div class="source-row">
+              <span>ACEITA</span>
+              <button class="source-chip" type="button" data-source="google">
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                  <path d="M12 21s6-5.3 6-11a6 6 0 1 0-12 0c0 5.7 6 11 6 11Z" />
+                  <circle cx="12" cy="10" r="2.2" />
+                </svg>
+                Google Maps
+              </button>
+              <button class="source-chip" type="button" data-source="instagram">
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                  <rect x="4" y="4" width="16" height="16" rx="5" />
+                  <circle cx="12" cy="12" r="3.5" />
+                  <circle cx="17.3" cy="6.8" r=".8" class="fill-dot" />
+                </svg>
+                Instagram
+              </button>
+              <button class="example-button" id="exampleButton" type="button">
+                Usar empresa de exemplo
+              </button>
+            </div>
+          </div>
+
+          <aside class="deliverables">
+            <div class="deliverables-head">
+              <span>O QUE A IA ENTREGA</span>
+              <span class="live-pill"><i></i> EM TEMPO REAL</span>
+            </div>
+            <ol>
+              <li>
+                <span class="deliverable-number">01</span>
+                <div>
+                  <strong>Diagnóstico da oportunidade</strong>
+                  <p>Sinais públicos, gargalos e potencial comercial.</p>
+                </div>
+                <i>↗</i>
+              </li>
+              <li>
+                <span class="deliverable-number">02</span>
+                <div>
+                  <strong>Estratégia de abordagem</strong>
+                  <p>Mensagem personalizada e follow-up.</p>
+                </div>
+                <i>↗</i>
+              </li>
+              <li>
+                <span class="deliverable-number">03</span>
+                <div>
+                  <strong>Oferta e investimento</strong>
+                  <p>Escopo, ancoragem e valor recomendado.</p>
+                </div>
+                <i>↗</i>
+              </li>
+              <li>
+                <span class="deliverable-number">04</span>
+                <div>
+                  <strong>Plano para fechar a venda</strong>
+                  <p>Proposta e próximos passos executáveis.</p>
+                </div>
+                <i>↗</i>
+              </li>
+            </ol>
+          </aside>
+        </section>
+
+        <section class="processing" id="processingSection" hidden aria-live="polite">
+          <div class="scanner-card">
+            <div class="radar">
+              <span class="radar-grid"></span>
+              <span class="radar-sweep"></span>
+              <span class="radar-core">S</span>
+              <i class="radar-point point-one"></i>
+              <i class="radar-point point-two"></i>
+              <i class="radar-point point-three"></i>
+            </div>
+            <div class="processing-copy">
+              <div class="eyebrow"><span>02</span> ANÁLISE EM CURSO</div>
+              <h2 id="processingTitle">Mapeando presença digital...</h2>
+              <p id="processingSubtitle">Cruzando sinais públicos e contexto comercial.</p>
+              <div class="progress-track">
+                <span id="progressBar"></span>
+              </div>
+              <div class="progress-meta">
+                <span id="progressPercent">12%</span>
+                <span id="processingSource">Fonte detectada</span>
+              </div>
+            </div>
+          </div>
+
+          <ol class="processing-steps" id="processingSteps">
+            <li data-step="0"><span>01</span> Identificando o negócio <i></i></li>
+            <li data-step="1"><span>02</span> Lendo presença digital <i></i></li>
+            <li data-step="2"><span>03</span> Mapeando oportunidade <i></i></li>
+            <li data-step="3"><span>04</span> Construindo a oferta <i></i></li>
+            <li data-step="4"><span>05</span> Calculando investimento <i></i></li>
+            <li data-step="5"><span>06</span> Criando abordagem <i></i></li>
+          </ol>
+        </section>
+
+        <section class="results" id="resultsSection" hidden>
+          <header class="result-header">
+            <div class="company-identity">
+              <div class="company-logo" id="companyInitials">SM</div>
+              <div>
+                <div class="result-kicker">
+                  <span class="success-dot"></span>
+                  DOSSIÊ COMERCIAL CONCLUÍDO
+                </div>
+                <h2 id="companyName">Scarlett Makeup</h2>
+                <p id="companyMeta">Beleza e estética · Salvador, BA</p>
+              </div>
+            </div>
+
+            <div class="opportunity-score">
+              <div>
+                <span>POTENCIAL DE VENDA</span>
+                <strong><b id="scoreValue">87</b>/100</strong>
+              </div>
+              <div class="score-ring" id="scoreRing" aria-hidden="true">
+                <span>ALTO</span>
+              </div>
+            </div>
+          </header>
+
+          <nav class="result-tabs" aria-label="Seções do dossiê">
+            <button class="result-tab active" type="button" data-tab="overview">Visão geral</button>
+            <button class="result-tab" type="button" data-tab="approach">Abordagem</button>
+            <button class="result-tab" type="button" data-tab="offer">Oferta e valor</button>
+            <button class="result-tab" type="button" data-tab="plan">Plano de fechamento</button>
+          </nav>
+
+          <div class="tab-panel active" data-panel="overview">
+            <div class="result-grid overview-grid">
+              <article class="result-card diagnosis-card">
+                <div class="card-label"><span>01</span> DIAGNÓSTICO PRINCIPAL</div>
+                <h3 id="diagnosisTitle">
+                  Marca elogiada, mas o perfil ainda não transforma confiança em pedidos.
+                </h3>
+                <p id="diagnosisText">
+                  A empresa tem prova social forte e presença visual consistente. A oportunidade
+                  está em criar um caminho direto entre descoberta, desejo e conversa no WhatsApp.
+                </p>
+                <div class="signal-grid">
+                  <div>
+                    <small id="signalOneLabel">AVALIAÇÃO</small>
+                    <strong><b id="signalOneValue">4.9</b> <span id="signalOneSuffix">★</span></strong>
+                  </div>
+                  <div>
+                    <small id="signalTwoLabel">PROVAS PÚBLICAS</small>
+                    <strong><b id="signalTwoValue">127</b> <span id="signalTwoSuffix">avaliações</span></strong>
+                  </div>
+                  <div>
+                    <small id="signalThreeLabel">PRESENÇA DIGITAL</small>
+                    <strong><b id="signalThreeValue">Ativa</b> <span class="mini-green" id="signalThreeSuffix">●</span></strong>
+                  </div>
+                </div>
+              </article>
+
+              <article class="result-card opportunity-card">
+                <div class="card-label"><span>02</span> OPORTUNIDADE</div>
+                <div class="opportunity-visual">
+                  <span class="before">VISITA</span>
+                  <i>→</i>
+                  <span class="after">CONVERSA</span>
+                  <i>→</i>
+                  <span class="after strong">VENDA</span>
+                </div>
+                <h3 id="opportunityTitle">Transformar atenção em agendamentos.</h3>
+                <p id="opportunityText">
+                  Uma página de conversão com serviços, portfólio, prova social e chamada direta
+                  para orçamento reduz a perda de clientes entre o perfil e o WhatsApp.
+                </p>
+                <div class="impact-box">
+                  <span>IMPACTO PROJETADO</span>
+                  <strong>+ clareza <i>·</i> + conversas <i>·</i> + pedidos</strong>
+                </div>
+              </article>
+            </div>
+
+            <article class="result-card route-card">
+              <div class="card-label"><span>03</span> ESTRATÉGIA RECOMENDADA</div>
+              <div class="route">
+                <div class="route-step">
+                  <span>1</span>
+                  <small>ABORDAR</small>
+                  <strong>Mostrar que a análise já foi feita</strong>
+                </div>
+                <i class="route-line"></i>
+                <div class="route-step">
+                  <span>2</span>
+                  <small>PROVAR</small>
+                  <strong>Apresentar a oportunidade visual</strong>
+                </div>
+                <i class="route-line"></i>
+                <div class="route-step">
+                  <span>3</span>
+                  <small>OFERTAR</small>
+                  <strong>Conduzir para uma decisão simples</strong>
+                </div>
+              </div>
+            </article>
+          </div>
+
+          <div class="tab-panel" data-panel="approach">
+            <div class="result-grid approach-grid">
+              <article class="result-card message-card">
+                <div class="card-label"><span>01</span> PRIMEIRA MENSAGEM</div>
+                <div class="message-bubble">
+                  <p id="approachMessage">
+                    Oi! Encontrei a Scarlett Makeup enquanto pesquisava negócios de beleza em
+                    Salvador. A marca já transmite muita confiança, mas notei uma oportunidade de
+                    transformar mais visitas em pedidos pelo WhatsApp. Preparei uma ideia rápida
+                    para vocês. Posso te mostrar?
+                  </p>
+                  <span>Agora · Mensagem personalizada</span>
+                </div>
+                <button class="copy-button" type="button" data-copy="approachMessage">
+                  <svg viewBox="0 0 24 24" aria-hidden="true">
+                    <rect x="8" y="8" width="11" height="11" rx="2" />
+                    <path d="M16 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h2" />
+                  </svg>
+                  Copiar abordagem
+                </button>
+              </article>
+
+              <article class="result-card followup-card">
+                <div class="card-label"><span>02</span> SE NÃO RESPONDER</div>
+                <div class="timeline">
+                  <div>
+                    <span>D+2</span>
+                    <p id="followupOne">Posso te enviar a ideia visual que montei? Você avalia em 2 minutos.</p>
+                  </div>
+                  <div>
+                    <span>D+5</span>
+                    <p id="followupTwo">Deixo a análise reservada por aqui. Se fizer sentido, te mostro sem compromisso.</p>
+                  </div>
+                </div>
+              </article>
+            </div>
+          </div>
+
+          <div class="tab-panel" data-panel="offer">
+            <div class="result-grid offer-grid">
+              <article class="result-card offer-main">
+                <div class="card-label"><span>01</span> OFERTA RECOMENDADA</div>
+                <span class="offer-badge">PROJETO DE ENTRADA</span>
+                <h3 id="offerName">Máquina Local de Agendamentos</h3>
+                <p id="offerPromise">
+                  Uma presença comercial enxuta para transformar buscas e visitas no perfil em
+                  conversas qualificadas.
+                </p>
+                <ul id="offerScope">
+                  <li>Página responsiva focada em conversão</li>
+                  <li>Serviços, portfólio e prova social</li>
+                  <li>WhatsApp, localização e chamada para ação</li>
+                  <li>SEO local básico e publicação</li>
+                </ul>
+              </article>
+
+              <article class="result-card price-card">
+                <div class="card-label"><span>02</span> INVESTIMENTO SUGERIDO</div>
+                <p>Valor para apresentar ao cliente</p>
+                <div class="price">
+                  <small>R$</small>
+                  <strong id="priceValue">1.497</strong>
+                  <span>à vista</span>
+                </div>
+                <div class="price-anchor">
+                  <span>ou 3x de</span>
+                  <strong id="installmentValue">R$ 549</strong>
+                </div>
+                <div class="recurring">
+                  <span>CONTINUIDADE OPCIONAL</span>
+                  <strong id="monthlyValue">R$ 297/mês</strong>
+                  <small>atualizações, suporte e otimização</small>
+                </div>
+              </article>
+            </div>
+          </div>
+
+          <div class="tab-panel" data-panel="plan">
+            <article class="result-card closing-card">
+              <div class="card-label"><span>01</span> PLANO DE FECHAMENTO</div>
+              <div class="closing-steps">
+                <div class="closing-step done">
+                  <span>01</span>
+                  <div><small>HOJE</small><strong>Enviar abordagem personalizada</strong></div>
+                  <i>✓</i>
+                </div>
+                <div class="closing-step">
+                  <span>02</span>
+                  <div><small>APÓS RESPOSTA</small><strong>Mostrar diagnóstico e oportunidade</strong></div>
+                  <i>→</i>
+                </div>
+                <div class="closing-step">
+                  <span>03</span>
+                  <div><small>NA CONVERSA</small><strong>Apresentar escopo e ancoragem</strong></div>
+                  <i>→</i>
+                </div>
+                <div class="closing-step">
+                  <span>04</span>
+                  <div><small>DECISÃO</small><strong>Enviar proposta de uma página</strong></div>
+                  <i>→</i>
+                </div>
+              </div>
+              <button class="proposal-button" id="proposalButton" type="button">
+                <span>Gerar proposta comercial</span>
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6" /></svg>
+              </button>
+            </article>
+          </div>
+
+          <footer class="result-footer">
+            <span><i></i> <b id="footerEvidence">Dados públicos coletados agora e estratégia gerada com IA</b></span>
+            <button id="newAnalysisButton" type="button">＋ Nova análise</button>
+          </footer>
+        </section>
+      </main>
+    </div>
+
+    <div class="toast" id="toast" role="status" aria-live="polite">
+      <span>✓</span>
+      <p>Abordagem copiada</p>
+    </div>
+
+    <script src="app.js"></script>
+  </body>
+</html>

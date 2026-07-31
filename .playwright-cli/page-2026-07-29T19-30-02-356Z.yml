@@ -1,0 +1,63 @@
+- generic [ref=f2e1]:
+  - generic [ref=f2e2]:
+    - banner [ref=f2e3]:
+      - link "Saraiva AI" [ref=f2e4] [cursor=pointer]:
+        - /url: "#"
+        - generic [ref=f2e5]: S
+        - generic [ref=f2e6]: SARAIVA.AI
+      - generic [ref=f2e7]: Inteligência comercial ativa
+    - main [ref=f2e9]:
+      - text: ✓ ✓ ✓ ✓ ✓ ✓
+      - generic [ref=f2e79]:
+        - generic [ref=f2e80]:
+          - generic [ref=f2e81]:
+            - generic [ref=f2e82]: SM
+            - generic [ref=f2e83]:
+              - generic [ref=f2e84]: DOSSIÊ COMERCIAL CONCLUÍDO
+              - heading "Scarlett Makeup" [level=2] [ref=f2e86]
+              - paragraph [ref=f2e87]: Beleza e estética · Salvador, BA
+          - generic [ref=f2e88]:
+            - generic [ref=f2e89]:
+              - generic [ref=f2e90]: POTENCIAL DE VENDA
+              - strong [ref=f2e91]: 87/100
+            - generic [ref=f2e92]: ALTO
+        - navigation "Seções do dossiê" [ref=f2e94]:
+          - button "Visão geral" [ref=f2e95] [cursor=pointer]
+          - button "Abordagem" [ref=f2e96] [cursor=pointer]
+          - button "Oferta e valor" [active] [ref=f2e97] [cursor=pointer]
+          - button "Plano de fechamento" [ref=f2e98] [cursor=pointer]
+        - generic [ref=f2e175]:
+          - article [ref=f2e176]:
+            - generic [ref=f2e177]:
+              - generic [ref=f2e178]: "01"
+              - text: OFERTA RECOMENDADA
+            - generic [ref=f2e179]: PROJETO DE ENTRADA
+            - heading "Máquina Local de Agendamentos" [level=3] [ref=f2e180]
+            - paragraph [ref=f2e181]: Uma presença comercial enxuta para transformar buscas e visitas no perfil em conversas qualificadas.
+            - list [ref=f2e182]:
+              - listitem [ref=f2e183]: ✓ Página responsiva focada em conversão
+              - listitem [ref=f2e184]: ✓ Serviços, portfólio e prova social
+              - listitem [ref=f2e185]: ✓ WhatsApp, localização e chamada para ação
+              - listitem [ref=f2e186]: ✓ SEO local básico e publicação
+          - article [ref=f2e187]:
+            - generic [ref=f2e188]:
+              - generic [ref=f2e189]: "02"
+              - text: INVESTIMENTO SUGERIDO
+            - paragraph [ref=f2e190]: Valor para apresentar ao cliente
+            - generic [ref=f2e191]:
+              - generic [ref=f2e192]: R$
+              - strong [ref=f2e193]: "1.497"
+              - generic [ref=f2e194]: à vista
+            - generic [ref=f2e195]:
+              - generic [ref=f2e196]: ou 3x de
+              - strong [ref=f2e197]: R$ 549
+            - generic [ref=f2e198]:
+              - generic [ref=f2e199]: CONTINUIDADE OPCIONAL
+              - strong [ref=f2e200]: R$ 297/mês
+              - generic [ref=f2e201]: atualizações, suporte e otimização
+        - generic [ref=f2e148]:
+          - generic [ref=f2e149]: Dados organizados e estratégia gerada com IA
+          - button "＋ Nova análise" [ref=f2e151] [cursor=pointer]
+  - status:
+    - generic: ✓
+    - paragraph: Abordagem copiada
