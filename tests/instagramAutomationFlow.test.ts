@@ -8,6 +8,7 @@ import {
   isInstagramFlowOptOut,
   isInstagramFlowResume,
   pauseInstagramFlow,
+  recoverInstagramFlowSessionForInbound,
   resumeInstagramFlowMessage,
   SARAIVA_FLOW_ID,
   shouldAdvanceInstagramFlow,
@@ -159,6 +160,74 @@ test('falha de entrega retoma os quatro passos sem introduzir áudio ou outra of
   assert.equal(retried.messages?.length, 4);
   assert.match(JSON.stringify(retried.messages), /COPIAR PROMPT/);
   assert.doesNotMatch(JSON.stringify(retried.messages), /WhatsApp|Laboratório|áudio/i);
+});
+
+test('sessão histórica sem fluxo só é retomada após novo inbound e volta à bifurcação correta', () => {
+  const recovered = recoverInstagramFlowSessionForInbound(
+    WEBSITE_PROMPT_MEDIA_ID,
+    undefined,
+    {
+      now: startedAt,
+      correlationId: 'corr-recovered-no-session',
+      transport: 'zernio',
+      conversationId: 'conversation-recovered',
+    },
+  );
+  assert.ok(recovered);
+  assert.equal(recovered.stage, 'awaiting_intent');
+  assert.equal(recovered.transport, 'zernio');
+  assert.equal(recovered.conversationId, 'conversation-recovered');
+  assert.equal(
+    recoverInstagramFlowSessionForInbound(PROSPECTING_FLOW_MEDIA_ID, undefined),
+    undefined,
+  );
+});
+
+test('sessão antiga que ofereceu comunidade não afirma que entregou o prompt', () => {
+  const legacy = {
+    ...createInstagramCommentFlow(WEBSITE_PROMPT_MEDIA_ID, {
+      now: startedAt,
+      correlationId: 'corr-legacy-community',
+    })!.session,
+    stage: 'offering_community' as const,
+    path: 'build' as const,
+    destinationUrl: 'https://example.invalid/old-community',
+    communityCtaMessageId: 'old-card',
+  };
+  assert.equal(shouldAdvanceInstagramFlow(legacy, { text: 'oi' }), true);
+  const recovered = advanceInstagramFlow(legacy, { text: 'oi' }, { now: startedAt })!;
+  assert.equal(recovered.event, 'legacy_site_flow_recovered');
+  assert.equal(recovered.session.stage, 'awaiting_intent');
+  assert.equal(recovered.session.path, undefined);
+  assert.equal(recovered.session.destinationUrl, undefined);
+  assert.equal(recovered.session.communityCtaMessageId, undefined);
+  assert.equal(recovered.message.kind, 'quick_replies');
+  if (recovered.message.kind !== 'quick_replies') return;
+  assert.deepEqual(
+    recovered.message.quickReplies.map((item) => item.title),
+    ['MINHA EMPRESA', 'VENDER SITES'],
+  );
+  assert.doesNotMatch(
+    JSON.stringify(recovered),
+    /WhatsApp|comunidade|Laboratório|prompt gratuito já está liberado/i,
+  );
+});
+
+test('lembrete de oferta só é usado quando a entrega gratuita tem checkpoint', () => {
+  const delivered = {
+    ...createInstagramCommentFlow(WEBSITE_PROMPT_MEDIA_ID, {
+      now: startedAt,
+      correlationId: 'corr-delivered-reminder',
+    })!.session,
+    stage: 'offering_product' as const,
+    path: 'ready' as const,
+    promptDeliveredAt: startedAt.toISOString(),
+  };
+  const repeated = advanceInstagramFlow(delivered, { text: 'obrigado' }, { now: startedAt })!;
+  assert.equal(repeated.reasonCode, 'product_cta_already_sent');
+  assert.equal(repeated.message.kind, 'text');
+  if (repeated.message.kind !== 'text') return;
+  assert.match(repeated.message.text, /prompt gratuito já está liberado/i);
 });
 
 test('reel de prospecção usa nome confiável no acesso direto', () => {

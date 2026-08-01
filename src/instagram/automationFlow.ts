@@ -229,6 +229,16 @@ export function createInstagramCommentFlow(
   };
 }
 
+export function recoverInstagramFlowSessionForInbound(
+  mediaId: string | undefined,
+  current: InstagramFlowSession | undefined,
+  options: InstagramFlowOptions = {},
+): InstagramFlowSession | undefined {
+  if (current) return current;
+  if (mediaId !== WEBSITE_PROMPT_MEDIA_ID) return undefined;
+  return createInstagramCommentFlow(mediaId, options)?.session;
+}
+
 export function advanceInstagramFlow(
   current: InstagramFlowSession,
   input: { payload?: string; text?: string },
@@ -443,6 +453,12 @@ export function shouldAdvanceInstagramFlow(
   const action = resolveAction(input.payload, input.text);
   const text = input.text?.trim() || '';
   if (current.campaign === 'sites_workshop') {
+    if (
+      !current.promptDeliveredAt
+      && ['technical_paused', 'offering_community', 'offering_product', 'completed'].includes(current.stage)
+    ) {
+      return true;
+    }
     if (current.stage === 'technical_paused') return action === 'retry';
     if (current.stage === 'awaiting_request') {
       return input.payload === SARAIVA_FLOW_PAYLOAD.sitesOpen
@@ -484,8 +500,10 @@ export function resumeInstagramFlowMessage(
     if (current.stage === 'awaiting_request') return websiteRequestMessage();
     if (current.stage === 'awaiting_intent') return websiteRequestMessage();
     if (current.stage === 'offering_product' || current.stage === 'offering_community') {
+      if (!current.promptDeliveredAt) return websiteRequestMessage();
       return websiteOfferReminder(current.path);
     }
+    if (current.stage === 'completed' && !current.promptDeliveredAt) return websiteRequestMessage();
   }
   if (current.stage === 'awaiting_request') return requestMessage();
   if (current.stage === 'awaiting_intent') return pathMessage(current.firstName);
@@ -873,6 +891,29 @@ function advanceWebsiteSitesFlow(
   options: InstagramFlowOptions,
 ): InstagramFlowStep {
   const now = (options.now || new Date()).toISOString();
+  if (
+    !current.promptDeliveredAt
+    && ['technical_paused', 'offering_community', 'offering_product', 'completed'].includes(current.stage)
+  ) {
+    return {
+      session: {
+        ...current,
+        stage: 'awaiting_intent',
+        path: undefined,
+        destinationUrl: undefined,
+        communityCtaMessageId: undefined,
+        communityOpenedAt: undefined,
+        productOfferedAt: undefined,
+        productCtaMessageId: undefined,
+        promptCardMessageId: undefined,
+        completedAt: undefined,
+        updatedAt: now,
+      },
+      message: websiteRequestMessage(),
+      event: 'legacy_site_flow_recovered',
+      reasonCode: 'intent_selection_required',
+    };
+  }
   if (current.stage === 'technical_paused') {
     if (input.payload !== SARAIVA_FLOW_PAYLOAD.retry) {
       return repeat(current, retryMessage(), now);

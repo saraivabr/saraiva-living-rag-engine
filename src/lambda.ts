@@ -34,6 +34,7 @@ import {
   isInstagramFlowOptOut,
   isInstagramFlowResume,
   pauseInstagramFlow,
+  recoverInstagramFlowSessionForInbound,
   resumeInstagramFlowMessage,
   shouldAdvanceInstagramFlow,
   summarizeInteractiveMessage,
@@ -2236,17 +2237,27 @@ async function processZernioMessage(
   apiKey: string,
 ): Promise<Record<string, unknown>> {
   const context = await getLeadContext(input.senderId);
-  if (!context?.instagramFlow || !isZernioFlowMedia(context.postId)) {
+  if (!context || !isZernioFlowMedia(context.postId)) {
     return { ignored: true, reasonCode: 'session_not_found' };
   }
-  if (context.instagramFlow.optedOutAt) {
+  const activeSession = recoverInstagramFlowSessionForInbound(
+    context.postId,
+    context.instagramFlow,
+    {
+      transport: 'zernio',
+      conversationId: input.conversationId,
+    },
+  );
+  if (!activeSession) return { ignored: true, reasonCode: 'session_not_found' };
+  const canonicalPromise = resolveKnownMediaPromise(context.postId || '') ?? context.promise;
+  if (activeSession.optedOutAt) {
     if (!isInstagramFlowResume(input.text)) {
       return { ignored: true, reasonCode: 'opt_out_active' };
     }
     const resumedAt = new Date().toISOString();
     const resumedSession: InstagramFlowSession = {
-      ...context.instagramFlow,
-      stage: context.instagramFlow.campaign === 'sites_workshop'
+      ...activeSession,
+      stage: activeSession.campaign === 'sites_workshop'
         ? 'awaiting_request'
         : 'awaiting_intent',
       conversationId: input.conversationId,
@@ -2273,6 +2284,7 @@ async function processZernioMessage(
     await saveLeadContext({
       ...context,
       username: input.username || context.username,
+      promise: canonicalPromise,
       instagramFlow: resumedSession,
       personalizedOffer: undefined,
       socialSelling: context.socialSelling ? {
@@ -2308,7 +2320,7 @@ async function processZernioMessage(
   if (isInstagramFlowOptOut(input.text)) {
     const stoppedAt = new Date().toISOString();
     const stoppedSession: InstagramFlowSession = {
-      ...context.instagramFlow,
+      ...activeSession,
       stage: 'completed',
       conversationId: input.conversationId,
       completedAt: stoppedAt,
@@ -2328,6 +2340,7 @@ async function processZernioMessage(
     await saveLeadContext({
       ...context,
       username: input.username || context.username,
+      promise: canonicalPromise,
       instagramFlow: stoppedSession,
       socialSelling: {
         ...(context.socialSelling || {
@@ -2369,7 +2382,7 @@ async function processZernioMessage(
     accountType: 'BUSINESS',
   });
   const currentSession = {
-    ...context.instagramFlow,
+    ...activeSession,
     transport: 'zernio' as const,
     conversationId: input.conversationId,
   };
@@ -2429,7 +2442,7 @@ async function processZernioMessage(
     username: input.username || context.username,
     postId: context.postId,
     postPermalink: context.postPermalink,
-    promise: context.promise,
+    promise: canonicalPromise,
     socialSelling: context.socialSelling,
     profileFacts: profileBrief.facts.length ? profileBrief.facts : context.profileFacts,
     automationJournal: context.automationJournal,
