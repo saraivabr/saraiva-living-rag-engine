@@ -6,7 +6,6 @@ import {
   resolveCommentCampaignCopy,
   resolvePostPromise,
   resolveKnownMediaPromise,
-  websiteCampaignVariantCount,
   type PostPromise,
   type PromiseKind,
 } from '../src/socialSelling/flow.js';
@@ -39,16 +38,17 @@ test('vincula o post VOZ corrigido ao mapa da IA de ligacao', () => {
   assert.match(promise?.privateReply || '', /atendimento, vendas, suporte ou agenda/i);
 });
 
-test('reel de sites abre o workshop prático no WhatsApp sem oferta antiga', () => {
+test('reel de sites registra a promessa exata do prompt gratuito', () => {
   const promise = resolveKnownMediaPromise(WEBSITE_PROMPT_MEDIA_ID);
 
-  assert.equal(promise?.kind, 'sites_whatsapp_workshop');
-  assert.match(promise?.privateReply || '', /@Sites/);
-  assert.match(promise?.privateReply || '', /WhatsApp/i);
+  assert.equal(promise?.kind, 'website_prompt');
+  assert.match(promise?.label || '', /prompt usado no vídeo/i);
+  assert.match(promise?.privateReply || '', /liberado gratuitamente/i);
+  assert.match(promise?.privateReply || '', /prompt-do-video/i);
   assert.match(promise?.publicReply || '', /Direct|inbox/i);
   assert.doesNotMatch(
     JSON.stringify(promise),
-    /loja\.saraiva\.ai|Cliente Pronto|R\$19,90|checkout|proposta|10 empresas/i,
+    /WhatsApp|Laboratório|comunidade|loja\.saraiva\.ai|Cliente Pronto|R\$19,90|checkout|proposta|10 empresas/i,
   );
 });
 
@@ -61,31 +61,18 @@ test('post correto da prospeccao nao herda a oferta de sites', () => {
   assert.doesNotMatch(JSON.stringify(promise), /Cliente Pronto|loja\.saraiva\.ai|R\\$19,90/i);
 });
 
-test('campanha de sites rotaciona copy sem trocar a variante em retries', () => {
+test('reel do prompt mantém a mesma entrega gratuita em retries', () => {
   const promise = resolveKnownMediaPromise(WEBSITE_PROMPT_MEDIA_ID);
   assert.ok(promise);
 
   const first = resolveCommentCampaignCopy(promise, '17900000000000123');
   const retry = resolveCommentCampaignCopy(promise, '17900000000000123');
   assert.deepEqual(retry, first);
-
-  const copies = Array.from({ length: 500 }, (_, index) => (
-    resolveCommentCampaignCopy(promise, `comment-${index}`)
-  ));
-  const variants = new Map(copies.map((copy) => [copy.variant, copy]));
-
-  assert.equal(variants.size, websiteCampaignVariantCount());
-  assert.equal(new Set([...variants.values()].map((copy) => copy.publicReply)).size, variants.size);
-
-  for (const copy of variants.values()) {
-    assert.match(copy.publicReply, /inbox|Direct/i, copy.variant);
-    assert.doesNotMatch(copy.publicReply, /últimas vagas|desconto|garantia/i, copy.variant);
-
-    assert.match(copy.privateReply, /@Sites/, copy.variant);
-    assert.match(copy.privateReply, /WhatsApp/i, copy.variant);
-    assert.doesNotMatch(copy.privateReply, /Cliente Pronto|loja\.saraiva\.ai|R\$19,90|checkout/i, copy.variant);
-    assert.ok(Buffer.byteLength(copy.privateReply, 'utf8') <= 500, copy.variant);
-  }
+  assert.equal(first.variant, 'default');
+  assert.match(first.publicReply, /Direct/i);
+  assert.match(first.privateReply, /prompt-do-video/i);
+  assert.doesNotMatch(first.privateReply, /WhatsApp|Laboratório|comunidade|checkout/i);
+  assert.ok(Buffer.byteLength(first.privateReply, 'utf8') <= 500);
 });
 
 test('caption de sites com ChatGPT vence o fallback generico de prompt', () => {
@@ -118,11 +105,17 @@ test('mensagens antigas de APOSTILA e PRONTO não reabrem checkout no reel de si
   assert.equal(guide.sales.offer, 'diagnostic');
   assert.equal(guide.sales.priceCents, undefined);
   assert.equal(guide.sales.checkoutUrl, undefined);
+  assert.match(guide.reply, /prompt-do-video/i);
+  assert.equal((guide.reply.match(/\?/g) || []).length, 0);
 
   const ready = buildSocialSellingTurn('PRONTO', promise);
   assert.equal(ready.sales.offer, 'diagnostic');
   assert.equal(ready.sales.priceCents, undefined);
-  assert.doesNotMatch(JSON.stringify([guide, ready]), /loja\.saraiva\.ai|R\$19,90/i);
+  assert.match(ready.reply, /copiar e usar sem pagar/i);
+  assert.doesNotMatch(
+    JSON.stringify([guide.reply, guide.sales, ready.reply, ready.sales]),
+    /loja\.saraiva\.ai|R\$19,90|Cliente Pronto/i,
+  );
 });
 
 test('todos os contextos de voz vendem somente o Workshop Ligacoes com IA atual', () => {

@@ -97,7 +97,7 @@ export function resolveKnownMediaPromise(mediaId?: string): PostPromise | undefi
     case PROSPECTING_FLOW_MEDIA_ID:
       return prospectingAutomationPromise();
     case WEBSITE_PROMPT_MEDIA_ID:
-      return sitesWhatsappWorkshopPromise();
+      return websitePromptPromise();
     case '17876885349503055':
     case '18106260469955774':
       return voiceAiMapWorkshopPromise();
@@ -562,6 +562,16 @@ export function buildSocialSellingTurn(
     has(lower, ['entrei', 'comprei', 'paguei', 'pix pago', 'ja paguei', 'já paguei'])
   ) {
     return turn(paymentVerificationReply(), state, promise, text);
+  }
+
+  if (promise.kind === 'website_prompt') {
+    const reply = [
+      'o prompt gratuito mostrado no vídeo está liberado aqui:',
+      'https://app.saraiva.ai/prompt-do-video',
+      '',
+      'você pode abrir, copiar e usar sem pagar.',
+    ].join('\n');
+    return turn(reply, state, promise, text);
   }
 
   if (

@@ -77,7 +77,7 @@ export function resolveSalesOffer(
   state?: SocialSellingState,
 ): Pick<SalesSnapshot, 'offer' | 'offerLabel' | 'checkoutUrl' | 'priceCents'> {
   if (promise?.kind === 'website_prompt') {
-    return websiteAutomationOffer;
+    return diagnosticOffer;
   }
   return isVoiceAiWorkshopPromise(promise) ? voiceAiWorkshopOffer : diagnosticOffer;
 }
