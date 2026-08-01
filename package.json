@@ -13,6 +13,7 @@
     "ops:instagram:media": "node scripts/check-instagram-ops.mjs --check-media",
     "schedule:instagram": "node scripts/schedule-instagram-batch.mjs",
     "backfill:media-context": "tsx src/backfillMediaContext.ts",
+    "recover:website-prompt-leads": "tsx src/recoverWebsitePromptLeads.ts",
     "seed": "node dist/seed.js",
     "typecheck": "tsc --noEmit",
     "test": "tsx --test tests/**/*.test.ts"

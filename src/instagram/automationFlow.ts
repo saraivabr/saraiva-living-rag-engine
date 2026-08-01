@@ -64,6 +64,9 @@ export interface InstagramFlowSession {
   productCtaMessageId?: string;
   followUpSentAt?: string;
   followUpMessageId?: string;
+  recoveryPreparedAt?: string;
+  recoverySentAt?: string;
+  recoveryMessageId?: string;
   abandonmentAudioSentAt?: string;
   abandonmentAudioStage?: InstagramFlowStage;
   abandonmentAudioMessageId?: string;
