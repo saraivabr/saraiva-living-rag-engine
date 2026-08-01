@@ -7,6 +7,13 @@ import {
 
 const ZERNIO_API_BASE = 'https://zernio.com/api/v1';
 
+export function isTerminalZernioConversationError(error: unknown): boolean {
+  const message = (error instanceof Error ? error.message : '').toLowerCase();
+  return message.includes('platform_api_error')
+    && message.includes('conversation thread')
+    && (message.includes('archived') || message.includes('deleted'));
+}
+
 export interface SendZernioMessageInput {
   apiKey: string;
   accountId: string;

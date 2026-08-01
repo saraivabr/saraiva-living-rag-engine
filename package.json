@@ -14,6 +14,8 @@
     "schedule:instagram": "node scripts/schedule-instagram-batch.mjs",
     "backfill:media-context": "tsx src/backfillMediaContext.ts",
     "recover:website-prompt-leads": "tsx src/recoverWebsitePromptLeads.ts",
+    "audit:website-prompt-comments": "tsx src/auditWebsitePromptComments.ts",
+    "reconcile:website-prompt-comments": "tsx src/reconcileWebsitePromptComments.ts",
     "seed": "node dist/seed.js",
     "typecheck": "tsc --noEmit",
     "test": "tsx --test tests/**/*.test.ts"

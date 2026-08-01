@@ -17,6 +17,7 @@ import {
 import {
   findZernioCommentReply,
   findRecentZernioAudioMessage,
+  isTerminalZernioConversationError,
   replyZernioComment,
   sendZernioInteractive,
   sendZernioPrivateReply,
@@ -28,6 +29,13 @@ import {
 import type { LeadContext } from '../src/store/leadContextStore.js';
 
 const accountId = '6a1205a62b2567671a24e855';
+
+test('conversa arquivada é falha terminal e não deve entrar em retry', () => {
+  assert.equal(isTerminalZernioConversationError(new Error(
+    'zernio_request_failed:platform_api_error:This conversation thread has been archived or deleted.',
+  )), true);
+  assert.equal(isTerminalZernioConversationError(new Error('zernio_request_failed:timeout')), false);
+});
 
 test('canário libera somente participantes explicitamente permitidos', () => {
   const previous = process.env.ZERNIO_CANARY_SENDER_IDS;

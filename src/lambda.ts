@@ -121,6 +121,7 @@ import {
 import {
   findZernioCommentReply,
   findRecentZernioAudioMessage,
+  isTerminalZernioConversationError,
   replyZernioComment,
   sendZernioInteractive,
   sendZernioPrivateReply,
@@ -2123,6 +2124,30 @@ async function processZernioComment(
         } catch (error) {
           if (isAlreadyRepliedError(error)) {
             privateMessageId = `zernio-private-reply:${input.commentId}`;
+          } else if (isTerminalZernioConversationError(error)) {
+            await releaseEffectLease(privateEffectKey, privateLease.owner);
+            const pausedAt = new Date().toISOString();
+            flowEntry.session = {
+              ...flowEntry.session,
+              stage: 'technical_paused',
+              updatedAt: pausedAt,
+            };
+            await persistInitialInstagramFlowContext({
+              senderId: input.senderId,
+              commentId: input.commentId,
+              username: input.username,
+              mediaId: input.mediaId,
+              commentText: input.text,
+              privateReply,
+              promise,
+              flowEntry,
+              privateReplyAccepted: false,
+            });
+            return {
+              ignored: true,
+              stage: 'technical_paused',
+              reasonCode: 'private_thread_unavailable',
+            };
           } else {
             if (!isUncertainZernioDeliveryError(error)) {
               await releaseEffectLease(privateEffectKey, privateLease.owner);
