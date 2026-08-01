@@ -1,0 +1,4 @@
+[submodule "storefront"]
+	path = storefront
+	url = https://github.com/saraivabr/saraiva-ai-storefront.git
+	branch = main
