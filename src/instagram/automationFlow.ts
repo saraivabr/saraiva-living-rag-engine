@@ -24,6 +24,7 @@ export type InstagramFlowStage =
   | 'offering_example'
   | 'example_opened'
   | 'offering_community'
+  | 'offering_product'
   | 'completed'
   | 'technical_paused';
 
@@ -55,6 +56,14 @@ export interface InstagramFlowSession {
   exampleOpenedAt?: string;
   communityCtaMessageId?: string;
   communityOpenedAt?: string;
+  promptDeliveredAt?: string;
+  promptOpenedAt?: string;
+  promptCardMessageId?: string;
+  productOfferedAt?: string;
+  productOpenedAt?: string;
+  productCtaMessageId?: string;
+  followUpSentAt?: string;
+  followUpMessageId?: string;
   abandonmentAudioSentAt?: string;
   abandonmentAudioStage?: InstagramFlowStage;
   abandonmentAudioMessageId?: string;
@@ -101,6 +110,7 @@ export type InstagramInteractiveMessage =
 export interface InstagramFlowStep {
   session: InstagramFlowSession;
   message: InstagramInteractiveMessage;
+  messages?: InstagramInteractiveMessage[];
   event: string;
   reasonCode: string;
   offer?: {
@@ -140,7 +150,22 @@ export const SARAIVA_FLOW_PAYLOAD = {
   retry: 'FLOW:SARAIVA:RETRY',
   restart: 'FLOW:SARAIVA:RESTART',
   sitesOpen: 'FLOW:SITES:OPEN',
+  sitesOwnBusiness: 'FLOW:SITES:INTENT:OWN',
+  sitesSell: 'FLOW:SITES:INTENT:SELL',
 } as const;
+
+const WEBSITE_INTENT_OPTIONS: InstagramQuickReply[] = [
+  { title: 'MINHA EMPRESA', payload: SARAIVA_FLOW_PAYLOAD.sitesOwnBusiness },
+  { title: 'VENDER SITES', payload: SARAIVA_FLOW_PAYLOAD.sitesSell },
+];
+
+export const WEBSITE_PRODUCT_BUTTON_OPTIONS = [
+  'VER GERADOR',
+  'ACESSAR GERADOR',
+  'CONHECER GERADOR',
+] as const;
+
+export const WEBSITE_PRODUCT_BUTTON_RECOMMENDED = WEBSITE_PRODUCT_BUTTON_OPTIONS[0];
 
 const PATH_OPTIONS: InstagramQuickReply[] = [
   { title: 'QUERO TER UMA', payload: SARAIVA_FLOW_PAYLOAD.ready },
@@ -172,16 +197,15 @@ export function createInstagramCommentFlow(
       session: {
         id: SARAIVA_FLOW_ID,
         campaign: 'sites_workshop',
-        stage: 'awaiting_request',
+        stage: 'awaiting_intent',
         correlationId,
-        path: 'build',
         transport: options.transport,
         conversationId: options.conversationId,
         startedAt: now,
         updatedAt: now,
       },
       message: websiteRequestMessage(),
-      publicReply: 'Te enviei o passo a passo no Direct 👀',
+      publicReply: 'Te chamei no Direct para entregar o prompt 👀',
       event: 'sites_flow_started',
       reasonCode: 'campaign_match',
     };
@@ -420,9 +444,12 @@ export function shouldAdvanceInstagramFlow(
   const text = input.text?.trim() || '';
   if (current.campaign === 'sites_workshop') {
     if (current.stage === 'technical_paused') return action === 'retry';
-    return current.stage === 'awaiting_request'
-      && (input.payload === SARAIVA_FLOW_PAYLOAD.sitesOpen
-        || ['criar meu site', 'quero criar meu site'].includes(normalize(text)));
+    if (current.stage === 'awaiting_request') {
+      return input.payload === SARAIVA_FLOW_PAYLOAD.sitesOpen
+        || ['criar meu site', 'quero criar meu site'].includes(normalize(text));
+    }
+    if (current.stage === 'offering_product' || current.stage === 'offering_community') return true;
+    return current.stage === 'awaiting_intent' && Boolean(resolveWebsiteIntent(input.payload, text));
   }
   if (action === 'restart') return true;
   if (current.stage === 'technical_paused') return action === 'retry';
@@ -455,8 +482,9 @@ export function resumeInstagramFlowMessage(
 ): InstagramInteractiveMessage {
   if (current.campaign === 'sites_workshop') {
     if (current.stage === 'awaiting_request') return websiteRequestMessage();
-    if (current.stage === 'offering_community') {
-      return { kind: 'text', text: 'O passo a passo está no botão CRIAR MEU SITE NO WHATSAPP.' };
+    if (current.stage === 'awaiting_intent') return websiteRequestMessage();
+    if (current.stage === 'offering_product' || current.stage === 'offering_community') {
+      return websiteOfferReminder(current.path);
     }
   }
   if (current.stage === 'awaiting_request') return requestMessage();
@@ -513,11 +541,8 @@ function requestMessage(): InstagramInteractiveMessage {
 function websiteRequestMessage(): InstagramInteractiveMessage {
   return {
     kind: 'quick_replies',
-    text: 'Você comentou SARAIVA porque sabe que seu site atual é um ralo de clientes. Clica abaixo e veja como virar esse jogo em minutos.',
-    quickReplies: [{
-      title: 'CRIAR MEU SITE',
-      payload: SARAIVA_FLOW_PAYLOAD.sitesOpen,
-    }],
+    text: 'Pode deixar: vou te entregar o prompt do vídeo. Você quer usar para:',
+    quickReplies: WEBSITE_INTENT_OPTIONS,
   };
 }
 
@@ -575,9 +600,6 @@ function retryMessage(): InstagramInteractiveMessage {
 }
 
 function buildOfferFallback(session: InstagramFlowSession): string {
-  if (session.campaign === 'sites_workshop') {
-    return 'Perfeito. No WhatsApp eu vou te mostrar como abrir o @Sites, usar um briefing que gera um site melhor e revisar tudo antes de publicar. Faz sentido pra você?';
-  }
   const name = session.firstName || 'Olha';
   const objective = asSentenceContinuation(session.qualification?.desiredOutcome
     || session.qualification?.business
@@ -595,8 +617,10 @@ function asSentenceContinuation(value: string): string {
     : trimmed;
 }
 
+export type TrackedFlowKind = 'example' | 'community' | 'prompt' | 'product';
+
 function trackedRedirectUrl(
-  kind: 'example' | 'community',
+  kind: TrackedFlowKind,
   session: InstagramFlowSession,
   options: InstagramFlowOptions = {},
 ): string {
@@ -623,18 +647,6 @@ export function createCommunityCtaCard(
   session: InstagramFlowSession,
   options: InstagramFlowOptions = {},
 ): InstagramInteractiveMessage & { kind: 'link_card' } {
-  if (session.campaign === 'sites_workshop') {
-    return {
-      kind: 'link_card',
-      title: 'Crie seu site com o ChatGPT',
-      subtitle: 'Passo a passo do @Sites, prompt-base e revisão para deixar o resultado pronto para publicar.',
-      buttons: [{
-        type: 'web_url',
-        title: 'CRIAR MEU SITE',
-        url: trackedRedirectUrl('community', session, options),
-      }],
-    };
-  }
   return {
     kind: 'link_card',
     title: 'Laboratório de Agentes & IA Saraiva',
@@ -655,7 +667,7 @@ export function createCommunityDestinationUrl(session: InstagramFlowSession): st
 }
 
 export function verifyTrackedFlowSignature(
-  kind: 'example' | 'community',
+  kind: TrackedFlowKind,
   intent: 'ter' | 'aprender',
   correlationId: string,
   signature: string,
@@ -711,6 +723,115 @@ function resolveBuildLevel(payload?: string): InstagramFlowQualification['level'
   return undefined;
 }
 
+function resolveWebsiteIntent(
+  payload?: string,
+  text?: string,
+): InstagramFlowPath | undefined {
+  if (payload === SARAIVA_FLOW_PAYLOAD.sitesOwnBusiness) return 'ready';
+  if (payload === SARAIVA_FLOW_PAYLOAD.sitesSell) return 'build';
+  const value = normalize(text);
+  if (['minha empresa', 'meu negocio', 'meu site', 'empresa propria'].includes(value)) return 'ready';
+  if (['vender sites', 'criar para clientes', 'sites para clientes', 'meus clientes'].includes(value)) return 'build';
+  return undefined;
+}
+
+export function createWebsitePromptCard(
+  session: InstagramFlowSession,
+  options: InstagramFlowOptions = {},
+): InstagramInteractiveMessage & { kind: 'link_card' } {
+  return {
+    kind: 'link_card',
+    title: 'Prompt usado no vídeo',
+    subtitle: session.path === 'ready'
+      ? 'Use gratuitamente como ponto de partida para o site da sua empresa.'
+      : 'Use gratuitamente como ponto de partida para criar sites para potenciais clientes.',
+    buttons: [{
+      type: 'web_url',
+      title: 'COPIAR PROMPT',
+      url: trackedRedirectUrl('prompt', session, options),
+    }],
+  };
+}
+
+export function createWebsiteProductCard(
+  session: InstagramFlowSession,
+  options: InstagramFlowOptions = {},
+): InstagramInteractiveMessage & { kind: 'link_card' } {
+  return {
+    kind: 'link_card',
+    title: 'Gerador de Prompts — R$ 9,97',
+    subtitle: session.path === 'ready'
+      ? 'Crie novos prompts para páginas, produtos, serviços e campanhas da sua empresa.'
+      : 'Crie novos prompts para diferentes nichos, empresas e potenciais clientes.',
+    buttons: [{
+      type: 'web_url',
+      title: WEBSITE_PRODUCT_BUTTON_RECOMMENDED,
+      url: trackedRedirectUrl('product', session, options),
+    }],
+  };
+}
+
+function websiteContextMessage(path: InstagramFlowPath): InstagramInteractiveMessage {
+  return {
+    kind: 'text',
+    text: path === 'ready'
+      ? 'Perfeito. Este é o prompt do vídeo para você usar como ponto de partida no site da sua empresa 👇'
+      : 'Perfeito. Este é o prompt do vídeo para você usar como ponto de partida em sites de potenciais clientes 👇',
+  };
+}
+
+function websiteTransitionMessage(path: InstagramFlowPath): InstagramInteractiveMessage {
+  return {
+    kind: 'text',
+    text: path === 'ready'
+      ? 'Esse modelo resolve o exemplo do vídeo. Para criar novos prompts para outras páginas e necessidades da sua empresa, você teria que adaptar a estrutura manualmente.'
+      : 'Esse modelo resolve o exemplo do vídeo. Para usar em outros nichos e clientes, você teria que adaptar e reescrever a estrutura manualmente.',
+  };
+}
+
+function websiteOfferReminder(path?: InstagramFlowPath): InstagramInteractiveMessage {
+  return {
+    kind: 'text',
+    text: path === 'build'
+      ? 'O prompt gratuito já está liberado acima. Teste com um projeto; se quiser criar versões para outros nichos e clientes, o Gerador está no botão que enviei.'
+      : 'O prompt gratuito já está liberado acima. Teste na sua empresa; se quiser criar versões para outras páginas, o Gerador está no botão que enviei.',
+  };
+}
+
+function websiteDeliveryStep(
+  current: InstagramFlowSession,
+  path: InstagramFlowPath,
+  options: InstagramFlowOptions,
+  now: string,
+  event = 'website_prompt_delivered',
+  reasonCode = 'free_prompt_before_product',
+): InstagramFlowStep {
+  const session: InstagramFlowSession = {
+    ...current,
+    path,
+    firstName: sanitizeFirstName(options.firstName) || current.firstName,
+    username: options.username?.trim() || current.username,
+    profileFacts: options.profileFacts || current.profileFacts,
+    stage: 'offering_product',
+    promptDeliveredAt: now,
+    productOfferedAt: now,
+    updatedAt: now,
+  };
+  const messages: InstagramInteractiveMessage[] = [
+    websiteContextMessage(path),
+    createWebsitePromptCard(session, options),
+    websiteTransitionMessage(path),
+    createWebsiteProductCard(session, options),
+  ];
+  return {
+    session,
+    message: messages[0],
+    messages,
+    event,
+    reasonCode,
+  };
+}
+
 function sanitizeFreeText(value?: string): string | undefined {
   const normalized = value?.replace(/\s+/g, ' ').trim();
   if (!normalized || normalized.length < 2 || normalized.length > 280) return undefined;
@@ -756,37 +877,44 @@ function advanceWebsiteSitesFlow(
     if (input.payload !== SARAIVA_FLOW_PAYLOAD.retry) {
       return repeat(current, retryMessage(), now);
     }
-    return communityOffer({
-      ...current,
-      stage: 'awaiting_request',
-      path: 'build',
-      updatedAt: now,
-    }, options, now, {
-      event: 'technical_retry_requested',
-      reasonCode: 'technical_retry',
-    });
+    if (!current.path) {
+      return {
+        session: { ...current, stage: 'awaiting_intent', updatedAt: now },
+        message: websiteRequestMessage(),
+        event: 'technical_retry_requested',
+        reasonCode: 'technical_retry',
+      };
+    }
+    return websiteDeliveryStep(
+      current,
+      current.path,
+      options,
+      now,
+      'technical_retry_requested',
+      'technical_retry',
+    );
   }
 
   if (current.stage === 'awaiting_request') {
     const opened = input.payload === SARAIVA_FLOW_PAYLOAD.sitesOpen
       || ['criar meu site', 'quero criar meu site'].includes(normalize(input.text));
     if (!opened) return repeat(current, websiteRequestMessage(), now, 'site_creation_confirmation_required');
-    const firstName = sanitizeFirstName(options.firstName);
-    return communityOffer({
-      ...current,
-      firstName,
-      username: options.username?.trim() || current.username,
-      profileFacts: options.profileFacts || current.profileFacts,
-      path: 'build',
-      updatedAt: now,
-    }, options, now, {
-      event: 'site_creation_confirmed',
-      reasonCode: 'opt_in_received',
-    });
+    return {
+      session: { ...current, stage: 'awaiting_intent', path: undefined, updatedAt: now },
+      message: websiteRequestMessage(),
+      event: 'legacy_site_flow_recovered',
+      reasonCode: 'intent_selection_required',
+    };
   }
 
-  if (current.stage === 'offering_community') {
-    return repeat(current, resumeInstagramFlowMessage(current), now, 'community_cta_already_sent');
+  if (current.stage === 'awaiting_intent') {
+    const path = resolveWebsiteIntent(input.payload, input.text);
+    if (!path) return repeat(current, websiteRequestMessage(), now, 'intent_selection_required');
+    return websiteDeliveryStep(current, path, options, now);
+  }
+
+  if (current.stage === 'offering_product' || current.stage === 'offering_community') {
+    return repeat(current, websiteOfferReminder(current.path), now, 'product_cta_already_sent');
   }
 
   return repeat(current, websiteRequestMessage(), now, 'site_flow_state_recovered');

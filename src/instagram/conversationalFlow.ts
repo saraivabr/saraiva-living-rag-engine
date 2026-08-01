@@ -35,15 +35,17 @@ export async function generateConversationalFlowReply(input: {
       label: sitesWorkshop ? 'Criação de sites com ChatGPT' : 'Estrutura de Prospecção Automatizada',
       trustedContext: [
         sitesWorkshop
-          ? 'Sites permite criar, hospedar, refinar e compartilhar sites no ChatGPT.'
+          ? 'A promessa do Reel é entregar gratuitamente o prompt usado no vídeo.'
           : 'A estrutura ajuda a encontrar empresas, organizar oportunidades e preparar abordagens.',
         sitesWorkshop
-          ? 'A pessoa pode iniciar o fluxo mencionando @Sites no ChatGPT e deve revisar conteúdo, links e comportamento antes de publicar.'
+          ? 'Primeiro a pessoa escolhe entre usar na própria empresa ou criar e vender sites para clientes.'
           : 'O destino desta campanha é a comunidade gratuita Saraiva no WhatsApp.',
         sitesWorkshop
-          ? 'O passo a passo, o prompt-base e a revisão ficam na comunidade Saraiva no WhatsApp.'
+          ? 'Depois da escolha, o prompt gratuito é entregue antes da única oferta: Gerador de Prompts por R$ 9,97.'
           : 'O convite fica no botão ENTRAR NA COMUNIDADE enviado na conversa.',
-        'Não há preço, prazo, garantia ou promessa de resultado autorizado nesta conversa.',
+        sitesWorkshop
+          ? 'Não mencione WhatsApp, comunidade, laboratório, consultoria, outra ferramenta ou outra oferta.'
+          : 'Não há preço, prazo, garantia ou promessa de resultado autorizado nesta conversa.',
         `Etapa atual: ${input.session.stage}.`,
         `Próxima pergunta obrigatória: ${resumeText}`,
       ].join('\n'),

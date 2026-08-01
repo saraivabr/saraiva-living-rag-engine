@@ -13,11 +13,17 @@ const WAITING_STAGES = new Set<InstagramFlowSession['stage']>([
   'awaiting_build_goal',
   'offering_example',
   'offering_community',
+  'offering_product',
 ]);
 
 export interface AbandonmentAudioCandidate {
   context: LeadContext;
   script: string;
+}
+
+export interface AbandonmentTextCandidate {
+  context: LeadContext;
+  message: string;
 }
 
 export function buildAbandonmentAudioCandidate(
@@ -26,6 +32,7 @@ export function buildAbandonmentAudioCandidate(
 ): AbandonmentAudioCandidate | undefined {
   const session = context.instagramFlow;
   if (!session || session.id !== 'saraiva-prospecting-v1') return undefined;
+  if (session.campaign === 'sites_workshop') return undefined;
   if (session.optedOutAt) return undefined;
   if (session.transport !== 'zernio' || !session.conversationId) return undefined;
   if (!WAITING_STAGES.has(session.stage)) return undefined;
@@ -46,11 +53,41 @@ export function buildAbandonmentAudioCandidate(
   };
 }
 
+export function buildWebsitePromptFollowUpCandidate(
+  context: LeadContext,
+  options: { now?: Date; waitMs?: number } = {},
+): AbandonmentTextCandidate | undefined {
+  const session = context.instagramFlow;
+  if (
+    !session
+    || session.id !== 'saraiva-prospecting-v1'
+    || session.campaign !== 'sites_workshop'
+    || session.stage !== 'offering_product'
+    || !session.promptDeliveredAt
+    || session.productOpenedAt
+    || session.followUpSentAt
+    || session.optedOutAt
+    || session.transport !== 'zernio'
+    || !session.conversationId
+  ) return undefined;
+
+  const lastInteraction = context.interactions?.at(-1);
+  if (!lastInteraction || lastInteraction.direction !== 'out') return undefined;
+  const now = options.now || new Date();
+  const waitMs = options.waitMs ?? 60 * 60 * 1_000;
+  const lastActivityAt = Date.parse(context.updatedAt || session.updatedAt);
+  if (!Number.isFinite(lastActivityAt) || now.getTime() - lastActivityAt < waitMs) return undefined;
+
+  return {
+    context,
+    message: session.path === 'build'
+      ? 'Você já recebeu o prompt do vídeo. Quando puder, teste com um projeto. Se quiser criar versões para outros nichos e clientes, o Gerador está no botão que enviei.'
+      : 'Você já recebeu o prompt do vídeo. Quando puder, teste na sua empresa. Se quiser criar versões para outras páginas, o Gerador está no botão que enviei.',
+  };
+}
+
 export function buildAbandonmentAudioScript(session: InstagramFlowSession): string {
   const name = session.firstName ? `${session.firstName}, ` : '';
-  if (session.campaign === 'sites_workshop') {
-    return `${name}passei aqui porque você pediu a estrutura e travou. Deixar isso pra depois é continuar perdendo cliente todo dia por falta de um site conversional. Clica no botão e pega o mapa no WhatsApp. Faz sentido pra você?`;
-  }
   return `${name}passei aqui porque você pediu essa estrutura e a conversa travou. Ficar parado na dúvida só atrasa suas vendas. ${stagePrompt(session.stage)} Faz sentido pra você?`;
 }
 

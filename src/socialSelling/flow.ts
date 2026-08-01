@@ -440,9 +440,9 @@ export function websiteCampaignVariantCount(): number {
 function websitePromptPromise(): PostPromise {
   return {
     kind: 'website_prompt',
-    label: 'Sistema Cliente Pronto para vender e entregar um site',
-    publicReply: WEBSITE_PUBLIC_REPLY_VARIANTS[0],
-    privateReply: websitePrivateReply(0),
+    label: 'prompt usado no vídeo para criar o site',
+    publicReply: 'Te chamei no Direct para entregar o prompt 👀',
+    privateReply: 'Aqui está o prompt que usei no vídeo, liberado gratuitamente para copiar: https://app.saraiva.ai/prompt-do-video',
   };
 }
 

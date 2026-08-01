@@ -35,6 +35,7 @@ export interface InstagramAutomationOutcomeV1 {
     | 'offering_example'
     | 'example_opened'
     | 'offering_community'
+    | 'offering_product'
     | 'completed'
     | 'technical_paused';
   status: 'completed' | 'ignored' | 'retrying' | 'technical_paused';

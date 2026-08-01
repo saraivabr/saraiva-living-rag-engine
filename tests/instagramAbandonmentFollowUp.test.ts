@@ -3,6 +3,7 @@ import test from 'node:test';
 import {
   buildAbandonmentAudioCandidate,
   buildAbandonmentAudioScript,
+  buildWebsitePromptFollowUpCandidate,
 } from '../src/instagram/abandonmentFollowUp.js';
 import type { LeadContext } from '../src/store/leadContextStore.js';
 
@@ -104,19 +105,41 @@ test('após cinco minutos reforça o WhatsApp, mas não cobra quem já abriu', (
   assert.equal(buildAbandonmentAudioCandidate(opened, { now }), undefined);
 });
 
-test('recuperação do reel de sites permanece curta e não faz novas perguntas', () => {
+test('reel de sites nunca recebe áudio e faz um follow-up textual após entregar o prompt', () => {
   const sites = context({ postId: '18130447453725127' });
   sites.instagramFlow = {
     ...sites.instagramFlow!,
     campaign: 'sites_workshop',
-    stage: 'awaiting_request',
-    path: 'build',
+    stage: 'offering_product',
+    path: 'ready',
+    promptDeliveredAt: '2026-07-31T11:00:00.000Z',
   };
-  const candidate = buildAbandonmentAudioCandidate(sites, { now });
+  assert.equal(buildAbandonmentAudioCandidate(sites, { now }), undefined);
+  const candidate = buildWebsitePromptFollowUpCandidate(sites, { now, waitMs: 5 * 60 * 1_000 });
   assert.ok(candidate);
-  assert.match(candidate.script, /CRIAR MEU SITE/);
-  assert.match(candidate.script, /@Sites/);
-  assert.match(candidate.script, /WhatsApp/);
-  assert.match(candidate.script, /Faz sentido pra você\?$/);
-  assert.doesNotMatch(candidate.script, /qual é o seu negócio|cidade|nicho|nível/i);
+  assert.match(candidate.message, /já recebeu o prompt do vídeo/i);
+  assert.match(candidate.message, /teste na sua empresa/i);
+  assert.match(candidate.message, /Gerador/i);
+  assert.doesNotMatch(candidate.message, /WhatsApp|culpa|perdendo clientes|urgente|qual é o seu negócio/i);
+});
+
+test('follow-up de Vender Sites é adaptado, único e não sai após clique na oferta', () => {
+  const sites = context({ postId: '18130447453725127' });
+  sites.instagramFlow = {
+    ...sites.instagramFlow!,
+    campaign: 'sites_workshop',
+    stage: 'offering_product',
+    path: 'build',
+    promptDeliveredAt: '2026-07-31T11:00:00.000Z',
+  };
+  const candidate = buildWebsitePromptFollowUpCandidate(sites, { now, waitMs: 5 * 60 * 1_000 });
+  assert.match(candidate?.message || '', /outros nichos e clientes/i);
+  sites.instagramFlow = { ...sites.instagramFlow, productOpenedAt: '2026-07-31T12:05:00.000Z' };
+  assert.equal(buildWebsitePromptFollowUpCandidate(sites, { now, waitMs: 5 * 60 * 1_000 }), undefined);
+  sites.instagramFlow = {
+    ...sites.instagramFlow,
+    productOpenedAt: undefined,
+    followUpSentAt: '2026-07-31T12:05:00.000Z',
+  };
+  assert.equal(buildWebsitePromptFollowUpCandidate(sites, { now, waitMs: 5 * 60 * 1_000 }), undefined);
 });

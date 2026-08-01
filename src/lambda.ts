@@ -38,12 +38,17 @@ import {
   shouldAdvanceInstagramFlow,
   summarizeInteractiveMessage,
   verifyTrackedFlowSignature,
+  type TrackedFlowKind,
+  type InstagramFlowStep,
   type InstagramFlowSession,
 } from './instagram/automationFlow.js';
 import { generateConversationalFlowReply } from './instagram/conversationalFlow.js';
 import { buildSafeProfileBrief } from './instagram/profilePersonalization.js';
 import { deliverPersonalizedOffer, deliverStandaloneSaraivaAudio } from './instagram/personalizedOffer.js';
-import { buildAbandonmentAudioCandidate } from './instagram/abandonmentFollowUp.js';
+import {
+  buildAbandonmentAudioCandidate,
+  buildWebsitePromptFollowUpCandidate,
+} from './instagram/abandonmentFollowUp.js';
 import {
   parseInstagramAutomationCommand,
   type InstagramAutomationCommandV1,
@@ -195,6 +200,7 @@ interface CycleResponse {
   commentCampaignRun?: CommentCampaignRunSummary;
   websiteGuidePayments?: WebsiteGuidePaymentPollSummary;
   abandonmentAudioFollowUps?: AbandonmentAudioFollowUpSummary;
+  abandonmentTextFollowUps?: AbandonmentAudioFollowUpSummary;
   report?: string;
   zernioAudioRepair?: {
     repaired: boolean;
@@ -678,6 +684,7 @@ export async function handler(event?: LambdaEvent): Promise<CycleResponse | Sche
   try {
     const scheduled = await publishDueScheduledPosts();
     const abandonmentAudioFollowUps = await runZernioAbandonmentAudioFollowUps();
+    const abandonmentTextFollowUps = await runWebsitePromptTextFollowUps();
     const websiteGuidePayments = await pollWebsiteGuidePayments();
     await runCycle();
     const calendarSync = await syncCalendarAfterCycle(scheduled.length > 0);
@@ -686,6 +693,7 @@ export async function handler(event?: LambdaEvent): Promise<CycleResponse | Sche
       finishedAt: new Date().toISOString(),
       scheduledPublished: scheduled.length,
       abandonmentAudioFollowUps,
+      abandonmentTextFollowUps,
       websiteGuidePayments,
       ...(calendarSync ? { calendarSync } : {}),
     };
@@ -1589,8 +1597,9 @@ async function handleHttp(event: LambdaEvent): Promise<LambdaResponse> {
     return handleWebsiteGuideStorefrontHttp(event, method, path);
   }
 
-  if (method === 'GET' && (path === '/instagram/example' || path === '/instagram/community')) {
-    return handleInstagramTrackedRedirect(event, path.endsWith('/example') ? 'example' : 'community');
+  const trackedInstagramKind = path.match(/^\/instagram\/(example|community|prompt|product)$/)?.[1] as TrackedFlowKind | undefined;
+  if (method === 'GET' && trackedInstagramKind) {
+    return handleInstagramTrackedRedirect(event, trackedInstagramKind);
   }
 
   if (method === 'GET') {
@@ -1654,7 +1663,7 @@ async function handleHttp(event: LambdaEvent): Promise<LambdaResponse> {
 
 async function handleInstagramTrackedRedirect(
   event: LambdaEvent,
-  kind: 'example' | 'community',
+  kind: TrackedFlowKind,
 ): Promise<LambdaResponse> {
   const params = event.queryStringParameters || {};
   const correlationId = params.correlation?.trim() || '';
@@ -1677,6 +1686,41 @@ async function handleInstagramTrackedRedirect(
   }
   const tracking = await getInstagramTracking(correlationId);
   if (!tracking || tracking.intent !== intent) return text(404, 'link not found');
+
+  if (kind === 'prompt' || kind === 'product') {
+    const context = await getLeadContext(tracking.senderId);
+    if (!context?.instagramFlow || context.instagramFlow.correlationId !== correlationId) {
+      return text(404, 'flow not found');
+    }
+    const openedAt = new Date().toISOString();
+    const action = kind === 'prompt' ? 'open_free_prompt' : 'open_prompt_generator';
+    const result = kind === 'prompt' ? 'free_prompt_opened' : 'prompt_generator_opened';
+    await saveLeadContext({
+      ...context,
+      instagramFlow: {
+        ...context.instagramFlow,
+        ...(kind === 'prompt' ? { promptOpenedAt: openedAt } : { productOpenedAt: openedAt }),
+        updatedAt: openedAt,
+      },
+      automationJournal: appendAutomationDecision(context.automationJournal, {
+        at: openedAt,
+        action,
+        verifiedFacts: ['signed_correlation', `intent:${intent}`],
+        rule: kind === 'prompt'
+          ? 'free_prompt_before_product'
+          : 'single_product_offer_after_free_prompt',
+        result,
+        reasonCode: result,
+      }),
+    });
+    const destinationUrl = new URL(kind === 'prompt'
+      ? 'https://app.saraiva.ai/prompt-do-video'
+      : 'https://app.saraiva.ai/quero-o-prompt');
+    destinationUrl.searchParams.set('correlationId', correlationId);
+    destinationUrl.searchParams.set('intent', intent);
+    if (kind === 'product') destinationUrl.searchParams.set('campaign', 'quero_o_prompt');
+    return redirect(destinationUrl.toString());
+  }
 
   if (kind === 'example') {
     const eventId = `example-opened-${correlationId}`;
@@ -1896,11 +1940,16 @@ async function processZernioLifecycle(
     && input.messageId === context.instagramFlow.abandonmentAudioMessageId
     ? context.instagramFlow.abandonmentAudioStage
     : undefined;
+  const failedWebsiteFollowUp = input.event === 'message.failed'
+    && input.messageId === context.instagramFlow.followUpMessageId;
   const updated = applyZernioLifecycleToContext(context, input);
   if (failedAbandonmentStage) {
     await clearOnce(
       `zernio-abandonment-audio#${context.instagramFlow.correlationId}#${failedAbandonmentStage}`,
     );
+  }
+  if (failedWebsiteFollowUp) {
+    await clearOnce(`zernio-website-prompt-follow-up#${context.instagramFlow.correlationId}`);
   }
   await saveLeadContext(updated);
   if (input.event === 'message.failed' && updated.instagramFlow?.stage === 'technical_paused') {
@@ -1924,11 +1973,18 @@ export function applyZernioLifecycleToContext(
     && input.messageId === session.initialMessageId;
   const failedCard = input.event === 'message.failed'
     && input.messageId === context.personalizedOffer?.cardMessageId;
+  const failedWebsiteCard = input.event === 'message.failed'
+    && (
+      input.messageId === session.promptCardMessageId
+      || input.messageId === session.productCtaMessageId
+    );
   const failedAudio = input.event === 'message.failed'
     && input.messageId === context.personalizedOffer?.audioMessageId;
   const failedAbandonment = input.event === 'message.failed'
     && input.messageId === session.abandonmentAudioMessageId;
-  const criticalFailure = failedInitial || failedCard || failedAudio;
+  const failedWebsiteFollowUp = input.event === 'message.failed'
+    && input.messageId === session.followUpMessageId;
+  const criticalFailure = failedInitial || failedCard || failedAudio || failedWebsiteCard;
 
   return {
     ...context,
@@ -1939,6 +1995,14 @@ export function applyZernioLifecycleToContext(
         abandonmentAudioMessageId: undefined,
         abandonmentAudioSentAt: undefined,
         abandonmentAudioStage: undefined,
+      } : {}),
+      ...(failedWebsiteFollowUp ? {
+        followUpMessageId: undefined,
+        followUpSentAt: undefined,
+      } : {}),
+      ...(failedWebsiteCard ? {
+        promptCardMessageId: undefined,
+        productCtaMessageId: undefined,
       } : {}),
       ...(criticalFailure ? { stage: 'technical_paused' as const } : {}),
       updatedAt: now,
@@ -2317,7 +2381,7 @@ async function processZernioMessage(
   };
   let generativeSource: 'bedrock' | 'fallback' | undefined;
   let generativeFallbackReason: string | undefined;
-  const flowStep = shouldAdvanceInstagramFlow(currentSession, flowInput)
+  const flowStep: InstagramFlowStep | undefined = shouldAdvanceInstagramFlow(currentSession, flowInput)
     ? advanceInstagramFlow(currentSession, flowInput, flowOptions)
     : await (async () => {
         const conversational = await generateConversationalFlowReply({
@@ -2335,6 +2399,7 @@ async function processZernioMessage(
             ? 'generative_reply_with_flow_resume'
             : 'deterministic_reply_with_flow_resume',
           offer: undefined,
+          messages: undefined,
         };
       })();
   if (!flowStep) return { ignored: true, reasonCode: 'invalid_flow_state' };
@@ -2381,6 +2446,14 @@ async function processZernioMessage(
       personalizedOffer: context.personalizedOffer,
     });
     return { shadow: true, stage: flowStep.session.stage };
+  }
+
+  const flowMessages = flowStep.messages?.length ? flowStep.messages : [flowStep.message];
+  if (flowStep.session.campaign === 'sites_workshop' && flowStep.messages?.length) {
+    if (!process.env.INSTAGRAM_COMMUNITY_LINK_SECRET?.trim()) {
+      throw new Error('instagram_link_secret_missing');
+    }
+    await saveInstagramTracking(input.senderId, flowStep.session);
   }
 
   if (flowStep.offer) {
@@ -2465,10 +2538,22 @@ async function processZernioMessage(
     };
   }
 
-  const messageId = await sendInteractive(input.senderId, flowStep.message);
+  const messageIds: string[] = [];
+  for (const message of flowMessages) {
+    messageIds.push(await sendInteractive(input.senderId, message));
+  }
+  const messageId = messageIds.at(-1) || '';
+  const outboundMessages = flowMessages.map((message) => summarizeInteractiveMessage(message));
+  const persistedFlowSession = flowStep.session.campaign === 'sites_workshop' && messageIds.length === 4
+    ? {
+        ...flowStep.session,
+        promptCardMessageId: messageIds[1],
+        productCtaMessageId: messageIds[3],
+      }
+    : flowStep.session;
   await saveLeadContext({
     ...baseContext,
-    instagramFlow: flowStep.session,
+    instagramFlow: persistedFlowSession,
     automationJournal: appendAutomationDecision(baseContext.automationJournal, {
       at: new Date().toISOString(),
       action: flowStep.event,
@@ -2482,16 +2567,17 @@ async function processZernioMessage(
     personalizedOffer: context.personalizedOffer,
     interactions: [
       ...baseContext.interactions,
-      {
+      ...outboundMessages.map((text) => ({
         at: new Date().toISOString(),
-        direction: 'out',
-        text: summarizeInteractiveMessage(flowStep.message),
-      },
+        direction: 'out' as const,
+        text,
+      })),
     ],
   });
   return {
-    stage: flowStep.session.stage,
+    stage: persistedFlowSession.stage,
     messageId,
+    ...(messageIds.length > 1 ? { messageIds } : {}),
     reasonCode: flowStep.reasonCode,
     ...(generativeSource ? { generativeSource } : {}),
   };
@@ -2687,6 +2773,101 @@ async function runZernioAbandonmentAudioFollowUps(): Promise<AbandonmentAudioFol
         stage,
         sender: anonymizeForLog(context.senderId),
         error: (error as Error).message,
+      });
+    }
+  }
+  return summary;
+}
+
+async function runWebsitePromptTextFollowUps(): Promise<AbandonmentAudioFollowUpSummary> {
+  const summary: AbandonmentAudioFollowUpSummary = { checked: 0, eligible: 0, sent: 0, failed: 0 };
+  const mode = process.env.ZERNIO_SEXYFLOW_MODE?.trim() || 'shadow';
+  const accountId = process.env.ZERNIO_ACCOUNT_ID?.trim();
+  if (mode === 'shadow' || !accountId) return summary;
+
+  const credentials = await getZernioCredentials();
+  if (credentials.canarySenderIds?.length) {
+    process.env.ZERNIO_CANARY_SENDER_IDS = credentials.canarySenderIds.join(',');
+  }
+  const waitMinutes = Math.max(
+    5,
+    Number(process.env.ZERNIO_WEBSITE_PROMPT_FOLLOW_UP_DELAY_MINUTES || 60),
+  );
+  const limit = Math.min(
+    10,
+    Math.max(1, Number(process.env.ZERNIO_WEBSITE_PROMPT_FOLLOW_UP_PER_CYCLE || 3)),
+  );
+  const contexts = await listLeadContexts(500);
+  summary.checked = contexts.length;
+
+  for (const context of contexts) {
+    if (summary.sent >= limit) break;
+    if (!isZernioLiveForSender(context.senderId, mode)) continue;
+    const candidate = buildWebsitePromptFollowUpCandidate(context, {
+      waitMs: waitMinutes * 60 * 1_000,
+    });
+    if (!candidate) continue;
+    summary.eligible++;
+
+    const session = candidate.context.instagramFlow!;
+    const lockId = `zernio-website-prompt-follow-up#${session.correlationId}`;
+    if (!(await markOnce(lockId))) continue;
+    try {
+      const latest = await getLeadContext(context.senderId);
+      if (
+        !latest?.instagramFlow
+        || latest.updatedAt !== context.updatedAt
+        || latest.instagramFlow.stage !== 'offering_product'
+        || latest.instagramFlow.productOpenedAt
+        || latest.instagramFlow.followUpSentAt
+      ) {
+        await clearOnce(lockId);
+        continue;
+      }
+      const messageId = await sendZernioInteractive({
+        apiKey: credentials.apiKey,
+        accountId,
+        conversationId: latest.instagramFlow.conversationId!,
+        message: { kind: 'text', text: candidate.message },
+        reconcileSince: latest.updatedAt,
+      });
+      const sentAt = new Date().toISOString();
+      await saveLeadContext({
+        ...latest,
+        instagramFlow: {
+          ...latest.instagramFlow,
+          followUpSentAt: sentAt,
+          followUpMessageId: messageId,
+          updatedAt: sentAt,
+        },
+        automationJournal: [
+          ...(latest.automationJournal || []),
+          {
+            at: sentAt,
+            action: 'send_website_prompt_follow_up',
+            verifiedFacts: ['free_prompt_delivered', `intent:${latest.instagramFlow.path === 'build' ? 'sell_sites' : 'own_business'}`],
+            rule: 'one_short_follow_up_without_pressure',
+            result: 'follow_up_sent',
+            reasonCode: 'website_prompt_follow_up_sent',
+          },
+        ].slice(-100),
+        interactions: [
+          ...(latest.interactions || []),
+          { at: sentAt, direction: 'out', text: candidate.message },
+        ],
+      });
+      summary.sent++;
+      console.info('zernio_website_prompt_follow_up_sent', {
+        sender: anonymizeForLog(latest.senderId),
+        messageId: anonymizeForLog(messageId),
+        reasonCode: 'website_prompt_follow_up_sent',
+      });
+    } catch (error) {
+      summary.failed++;
+      await clearOnce(lockId);
+      console.warn('zernio_website_prompt_follow_up_failed', {
+        sender: anonymizeForLog(context.senderId),
+        safeErrorCode: extractSafeErrorCode((error as Error).message),
       });
     }
   }
@@ -3557,6 +3738,9 @@ function decisionRuleFor(reasonCode: string): string {
     community_cta_sent: 'direct_whatsapp_community_cta',
     community_opened: 'record_click_before_redirect',
     whatsapp_community_opened: 'record_click_before_whatsapp_redirect',
+    free_prompt_before_product: 'free_prompt_before_single_product_offer',
+    intent_selection_required: 'one_intent_choice_before_free_delivery',
+    product_cta_already_sent: 'do_not_duplicate_product_offer',
     path_selected: 'exact_payload_selects_offer',
     audio_sent: 'verified_facts_only',
     audio_fallback_text: 'audio_failure_must_not_block_offer',
@@ -3707,7 +3891,8 @@ async function handleWebhookPayload(
         if (flowStep && context) {
           let personalizedOffer: LeadContext['personalizedOffer'];
           let persistedSession = flowStep.session;
-          let outboundText = summarizeInteractiveMessage(flowStep.message);
+          const flowMessages = flowStep.messages?.length ? flowStep.messages : [flowStep.message];
+          let outboundText = flowMessages.map((message) => summarizeInteractiveMessage(message)).join('\n\n');
           const promise = resolveKnownMediaPromise(context.postId || '')
             ?? context.promise;
           const turn = buildSocialSellingTurn(inboundText, promise, context.socialSelling);
@@ -3750,6 +3935,12 @@ async function handleWebhookPayload(
             };
             outboundText = `${personalizedOffer.script}\n${summarizeInteractiveMessage(flowStep.offer.card)}`;
           } else {
+            if (flowStep.session.campaign === 'sites_workshop' && flowStep.messages?.length) {
+              if (!process.env.INSTAGRAM_COMMUNITY_LINK_SECRET?.trim()) {
+                throw new Error('instagram_link_secret_missing');
+              }
+              await saveInstagramTracking(senderId, flowStep.session);
+            }
             // Checkpoint antes do efeito externo: se o envio falhar, o retry
             // parte do estágio novo e repete somente a mensagem necessária.
             await saveLeadContext({
@@ -3768,7 +3959,17 @@ async function handleWebhookPayload(
               personalizedOffer: context.personalizedOffer,
               interactions: context.interactions,
             });
-            await sendDirectInteractive(senderId, flowStep.message);
+            const sentMessageIds: string[] = [];
+            for (const message of flowMessages) {
+              sentMessageIds.push(await sendDirectInteractive(senderId, message));
+            }
+            if (flowStep.session.campaign === 'sites_workshop' && sentMessageIds.length === 4) {
+              persistedSession = {
+                ...flowStep.session,
+                promptCardMessageId: sentMessageIds[1],
+                productCtaMessageId: sentMessageIds[3],
+              };
+            }
           }
           const interactions = appendLeadInteractions(context, inboundText, outboundText);
           handled++;
@@ -4010,11 +4211,13 @@ async function handleWebhookPayload(
 
 export function needsWebsitePromptCorrection(context?: LeadContext): boolean {
   if (context?.promise.kind !== 'website_prompt') return false;
+  if (context.instagramFlow?.promptDeliveredAt) return false;
   return !(context.interactions || []).some(
     (interaction) => interaction.direction === 'out'
       && (
         interaction.text.includes('Aqui esta o prompt que usei')
         || interaction.text.includes('"Crie um site completo')
+        || interaction.text.includes('Prompt usado no vídeo')
       ),
   );
 }

@@ -12,6 +12,8 @@ import {
   SARAIVA_FLOW_ID,
   shouldAdvanceInstagramFlow,
   verifyTrackedFlowSignature,
+  WEBSITE_PRODUCT_BUTTON_OPTIONS,
+  WEBSITE_PRODUCT_BUTTON_RECOMMENDED,
 } from '../src/instagram/automationFlow.js';
 import { generateConversationalFlowReply } from '../src/instagram/conversationalFlow.js';
 import {
@@ -23,71 +25,93 @@ import { buildSaraivaAudioScript } from '../src/instagram/personalizedOffer.js';
 
 const startedAt = new Date('2026-07-30T12:00:00.000Z');
 
-test('comentário SARAIVA abre os dois caminhos prometidos no Reel', () => {
+test('reel de prospecção preserva o acesso direto atualmente publicado', () => {
   const entry = createInstagramCommentFlow(PROSPECTING_FLOW_MEDIA_ID, {
     now: startedAt,
     correlationId: 'anonymous-test',
   });
   assert.ok(entry);
   assert.equal(entry.session.id, SARAIVA_FLOW_ID);
-  assert.equal(entry.session.stage, 'awaiting_intent');
+  assert.equal(entry.session.stage, 'awaiting_request');
   assert.equal(entry.message.kind, 'quick_replies');
   if (entry.message.kind !== 'quick_replies') return;
-  assert.deepEqual(entry.message.quickReplies.map((item) => item.title), [
-    'QUERO TER UMA',
-    'QUERO APRENDER',
-  ]);
+  assert.deepEqual(entry.message.quickReplies.map((item) => item.title), ['VER ESTRUTURA']);
   assert.ok(Buffer.byteLength(entry.message.text, 'utf8') < 200);
-  assert.equal(entry.publicReply, 'Te enviei duas opções no Direct.');
+  assert.equal(entry.publicReply, 'Te enviei o acesso no Direct 👀');
 });
 
-test('reel de sites abre fluxo direto sem perguntas de qualificação', () => {
+test('reel de sites confirma a entrega e bifurca somente entre empresa própria e vender sites', () => {
   const entry = createInstagramCommentFlow(WEBSITE_PROMPT_MEDIA_ID, {
     now: startedAt,
     correlationId: 'corr-sites',
   })!;
   assert.equal(entry.session.campaign, 'sites_workshop');
-  assert.equal(entry.session.stage, 'awaiting_request');
+  assert.equal(entry.session.stage, 'awaiting_intent');
   assert.equal(entry.message.kind, 'quick_replies');
   if (entry.message.kind !== 'quick_replies') return;
-  assert.match(entry.message.text, /criar um site profissional com o ChatGPT/i);
-  assert.deepEqual(entry.message.quickReplies, [{
-    title: 'CRIAR MEU SITE',
-    payload: 'FLOW:SITES:OPEN',
-  }]);
+  assert.match(entry.message.text, /vou te entregar o prompt do vídeo/i);
+  assert.deepEqual(entry.message.quickReplies.map((item) => item.title), [
+    'MINHA EMPRESA',
+    'VENDER SITES',
+  ]);
+  assert.ok(entry.message.quickReplies.every((item) => item.title.length <= 20));
   assert.doesNotMatch(
     JSON.stringify(entry),
-    /qual (?:é|e) o seu negócio|cidade|nicho|nível atual|Cliente Pronto|loja\.saraiva\.ai|R\$19,90/i,
+    /qual (?:é|e) o seu negócio|cidade|nicho|nível atual|Cliente Pronto|Laboratório|WhatsApp|R\$19,90/i,
   );
+  assert.match(entry.publicReply, /entregar o prompt/i);
 });
 
-test('um clique no fluxo de sites envia áudio e CTA direto para o WhatsApp', () => {
+test('caminho Minha Empresa entrega o prompt gratuito antes da única oferta de R$ 9,97', () => {
   const entry = createInstagramCommentFlow(WEBSITE_PROMPT_MEDIA_ID, {
     now: startedAt,
     correlationId: 'corr-sites-offer',
   })!;
   assert.equal(shouldAdvanceInstagramFlow(entry.session, {
-    payload: 'FLOW:SITES:OPEN',
+    payload: 'FLOW:SITES:INTENT:OWN',
   }), true);
-  const offer = advanceInstagramFlow(entry.session, {
-    payload: 'FLOW:SITES:OPEN',
+  const delivery = advanceInstagramFlow(entry.session, {
+    payload: 'FLOW:SITES:INTENT:OWN',
   }, { firstName: 'Ana' })!;
-  assert.equal(offer.session.stage, 'offering_community');
-  assert.equal(offer.session.path, 'build');
-  assert.equal(offer.event, 'site_creation_confirmed');
-  assert.equal(offer.offer?.kind, 'community');
-  assert.deepEqual(offer.offer?.card.buttons.map((button) => button.title), [
-    'CRIAR MEU SITE NO WHATSAPP',
-  ]);
-  const script = buildSaraivaAudioScript(offer.session);
-  assert.match(script, /^Ana,/);
-  assert.match(script, /@Sites/);
-  assert.match(script, /prompt-base/);
-  assert.match(script, /Faz sentido pra você\?$/);
-  assert.doesNotMatch(script, /qual|cidade|nicho|preço|checkout/i);
+  assert.equal(delivery.session.stage, 'offering_product');
+  assert.equal(delivery.session.path, 'ready');
+  assert.equal(delivery.event, 'website_prompt_delivered');
+  assert.equal(delivery.reasonCode, 'free_prompt_before_product');
+  assert.equal(delivery.offer, undefined);
+  assert.equal(delivery.messages?.length, 4);
+  const serialized = JSON.stringify(delivery.messages);
+  const promptIndex = serialized.indexOf('COPIAR PROMPT');
+  const productIndex = serialized.indexOf('Gerador de Prompts — R$ 9,97');
+  assert.ok(promptIndex >= 0 && productIndex > promptIndex);
+  assert.match(serialized, /site da sua empresa/i);
+  assert.match(serialized, /\/instagram\/prompt\?/);
+  assert.match(serialized, /\/instagram\/product\?/);
+  assert.doesNotMatch(serialized, /WhatsApp|comunidade|Laboratório|consultoria|áudio/i);
+  assert.throws(() => buildSaraivaAudioScript(delivery.session), /sites_workshop_audio_forbidden/);
 });
 
-test('pergunta livre no fluxo de sites responde e reapresenta o mesmo botão', async () => {
+test('caminho Vender Sites adapta contexto e oferta sem questionário nem promessa exagerada', () => {
+  const entry = createInstagramCommentFlow(WEBSITE_PROMPT_MEDIA_ID, {
+    now: startedAt,
+    correlationId: 'corr-sites-sell',
+  })!;
+  const delivery = advanceInstagramFlow(entry.session, {
+    payload: 'FLOW:SITES:INTENT:SELL',
+  })!;
+  assert.equal(delivery.session.path, 'build');
+  const serialized = JSON.stringify(delivery.messages);
+  assert.match(serialized, /potenciais clientes/i);
+  assert.match(serialized, /outros nichos e clientes/i);
+  assert.doesNotMatch(serialized, /enriquecer|renda|garant|clientes garantidos|WhatsApp|Laboratório/i);
+});
+
+test('botão recomendado do produto é claro e as três opções respeitam 20 caracteres', () => {
+  assert.equal(WEBSITE_PRODUCT_BUTTON_RECOMMENDED, 'VER GERADOR');
+  assert.equal(WEBSITE_PRODUCT_BUTTON_OPTIONS.length, 3);
+  assert.ok(WEBSITE_PRODUCT_BUTTON_OPTIONS.every((title) => title.length <= 20));
+});
+
+test('pergunta livre antes da escolha responde e reapresenta somente as duas intenções', async () => {
   const entry = createInstagramCommentFlow(WEBSITE_PROMPT_MEDIA_ID, { now: startedAt })!;
   assert.equal(shouldAdvanceInstagramFlow(entry.session, {
     text: 'preciso saber programar?',
@@ -103,8 +127,8 @@ test('pergunta livre no fluxo de sites responde e reapresenta o mesmo botão', a
   assert.equal(reply.message.kind, 'quick_replies');
   if (reply.message.kind !== 'quick_replies') return;
   assert.match(reply.message.text, /não/i);
-  assert.deepEqual(reply.message.quickReplies.map((button) => button.title), ['CRIAR MEU SITE']);
-  assert.equal(entry.session.stage, 'awaiting_request');
+  assert.deepEqual(reply.message.quickReplies.map((button) => button.title), ['MINHA EMPRESA', 'VENDER SITES']);
+  assert.equal(entry.session.stage, 'awaiting_intent');
 });
 
 test('opt-out explícito encerra o fluxo sem confundir frases normais', () => {
@@ -118,12 +142,12 @@ test('opt-out explícito encerra o fluxo sem confundir frases normais', () => {
   assert.equal(isInstagramFlowResume('quero saber mais'), false);
 });
 
-test('falha do card no reel de sites retoma o áudio e o card com um único retry', () => {
+test('falha de entrega retoma os quatro passos sem introduzir áudio ou outra oferta', () => {
   const entry = createInstagramCommentFlow(WEBSITE_PROMPT_MEDIA_ID, { now: startedAt })!;
-  const offer = advanceInstagramFlow(entry.session, {
-    payload: 'FLOW:SITES:OPEN',
+  const delivery = advanceInstagramFlow(entry.session, {
+    payload: 'FLOW:SITES:INTENT:OWN',
   }, { firstName: 'Ana' })!;
-  const paused = pauseInstagramFlow(offer.session).session;
+  const paused = pauseInstagramFlow(delivery.session).session;
   assert.equal(shouldAdvanceInstagramFlow(paused, {
     payload: 'FLOW:SARAIVA:RETRY',
   }), true);
@@ -131,52 +155,49 @@ test('falha do card no reel de sites retoma o áudio e o card com um único retr
     payload: 'FLOW:SARAIVA:RETRY',
   }, { firstName: 'Ana' })!;
   assert.equal(retried.event, 'technical_retry_requested');
-  assert.equal(retried.offer?.kind, 'community');
-  assert.equal(retried.offer?.card.kind, 'link_card');
-  assert.equal(retried.offer?.card.buttons[0]?.title, 'CRIAR MEU SITE NO WHATSAPP');
+  assert.equal(retried.session.stage, 'offering_product');
+  assert.equal(retried.messages?.length, 4);
+  assert.match(JSON.stringify(retried.messages), /COPIAR PROMPT/);
+  assert.doesNotMatch(JSON.stringify(retried.messages), /WhatsApp|Laboratório|áudio/i);
 });
 
-test('escolha consulta nome confiável e pede o objetivo', () => {
+test('reel de prospecção usa nome confiável no acesso direto', () => {
   const entry = createInstagramCommentFlow(PROSPECTING_FLOW_MEDIA_ID, { now: startedAt })!;
   const step = advanceInstagramFlow(entry.session, {
-    payload: 'FLOW:SARAIVA:READY',
+    payload: 'FLOW:SARAIVA:OPEN',
   }, {
     firstName: 'Fellipe',
     profileFacts: [],
   });
-  assert.equal(step?.session.stage, 'awaiting_goal');
-  assert.equal(step?.reasonCode, 'intent_selected');
+  assert.equal(step?.session.stage, 'offering_community');
+  assert.equal(step?.session.firstName, 'Fellipe');
+  assert.equal(step?.reasonCode, 'community_offer_ready');
   assert.equal(step?.message.kind, 'text');
 });
 
-test('sem nome confiável pergunta diretamente antes de oferecer', () => {
+test('reel de prospecção não exige nome antes do acesso direto', () => {
   const entry = createInstagramCommentFlow(PROSPECTING_FLOW_MEDIA_ID, { now: startedAt })!;
-  const requested = advanceInstagramFlow(entry.session, { payload: 'FLOW:SARAIVA:READY' });
-  assert.equal(requested?.session.stage, 'awaiting_name');
-  assert.equal(requested?.reasonCode, 'name_confirmation_required');
-
-  const named = advanceInstagramFlow(requested!.session, { text: 'bruna saraiva' });
-  assert.equal(named?.session.firstName, 'Bruna');
-  assert.equal(named?.session.stage, 'awaiting_goal');
+  const requested = advanceInstagramFlow(entry.session, { payload: 'FLOW:SARAIVA:OPEN' });
+  assert.equal(requested?.session.stage, 'offering_community');
+  assert.equal(requested?.session.firstName, undefined);
+  assert.equal(requested?.reasonCode, 'community_offer_ready');
 });
 
-test('nome em frase natural e caminhos digitados avançam sem perder o trilho', () => {
+test('texto livre não substitui o clique explícito do reel de prospecção', () => {
   const entry = createInstagramCommentFlow(PROSPECTING_FLOW_MEDIA_ID, { now: startedAt })!;
-  const requested = advanceInstagramFlow(entry.session, { payload: 'FLOW:SARAIVA:READY' })!;
-  const named = advanceInstagramFlow(requested.session, { text: 'Pode me chamar de carolina' })!;
-  assert.equal(named.session.firstName, 'Carolina');
-  assert.equal(named.session.stage, 'awaiting_goal');
-  assert.equal(named.session.path, 'ready');
-  assert.equal(shouldAdvanceInstagramFlow(named.session, { text: 'conseguir mais clientes' }), true);
+  const repeated = advanceInstagramFlow(entry.session, { text: 'Pode me chamar de carolina' })!;
+  assert.equal(repeated.session.stage, 'awaiting_request');
+  assert.equal(repeated.session.firstName, undefined);
+  assert.equal(shouldAdvanceInstagramFlow(entry.session, { text: 'conseguir mais clientes' }), false);
+  assert.equal(shouldAdvanceInstagramFlow(entry.session, { payload: 'FLOW:SARAIVA:OPEN' }), true);
 });
 
-test('ramo ferramenta pronta qualifica e envia direto para a comunidade no WhatsApp', () => {
+test('acesso direto do reel de prospecção preserva a oferta rastreável publicada', () => {
   const entry = createInstagramCommentFlow(PROSPECTING_FLOW_MEDIA_ID, {
     now: startedAt,
     correlationId: 'corr-platform',
   })!;
-  const path = advanceInstagramFlow(entry.session, { payload: 'FLOW:SARAIVA:READY' }, { firstName: 'Ana' })!;
-  const offer = advanceInstagramFlow(path.session, { text: 'conseguir clientes para minha consultoria' })!;
+  const offer = advanceInstagramFlow(entry.session, { payload: 'FLOW:SARAIVA:OPEN' }, { firstName: 'Ana' })!;
   assert.equal(offer.session.stage, 'offering_community');
   assert.equal(offer.offer?.kind, 'community');
   assert.equal(offer.offer?.path, 'ready');
@@ -189,18 +210,15 @@ test('ramo ferramenta pronta qualifica e envia direto para a comunidade no Whats
   assert.ok(urls.every((url) => url.includes('correlation=corr-platform')));
 });
 
-test('ramo aprender termina no mesmo convite rastreável do WhatsApp', () => {
+test('payload antigo de bifurcação não altera o reel de prospecção atual', () => {
   const entry = createInstagramCommentFlow(PROSPECTING_FLOW_MEDIA_ID, {
     now: startedAt,
     correlationId: 'corr-community',
   })!;
-  const path = advanceInstagramFlow(entry.session, { payload: 'FLOW:SARAIVA:BUILD' }, { firstName: 'Leo' })!;
-  const offer = advanceInstagramFlow(path.session, { text: 'Criar um sistema de prospecção' })!;
-  assert.equal(offer.offer?.path, 'build');
-  assert.deepEqual(offer?.offer?.card.buttons.map((button) => button.title), [
-    'ENTRAR NA COMUNIDADE',
-  ]);
-  assert.equal(offer.session.stage, 'offering_community');
+  const repeated = advanceInstagramFlow(entry.session, { payload: 'FLOW:SARAIVA:BUILD' }, { firstName: 'Leo' })!;
+  assert.equal(repeated.session.stage, 'awaiting_request');
+  assert.equal(repeated.offer, undefined);
+  assert.equal(repeated.message.kind, 'quick_replies');
 });
 
 test('perfil oficial usa no máximo dois fatos e bloqueia sensível no áudio', () => {
@@ -238,7 +256,8 @@ test('script usa apenas fato permitido e não menciona métricas de perfil', () 
   });
   assert.match(script, /^Ana,/);
   assert.match(script, /example\.com/);
-  assert.match(script, /comunidade gratuita do WhatsApp/i);
+  assert.match(script, /Laboratório Saraiva/i);
+  assert.match(script, /entra direto na plataforma/i);
   assert.doesNotMatch(script, /exemplo real/i);
   assert.match(script, /Faz sentido pra você\?$/);
   assert.doesNotMatch(script, /seguidores|renda|aparência/i);
@@ -269,7 +288,7 @@ test('script do caminho ferramenta incorpora objetivo verbal sem duplicar verbos
     firstName: 'Ana',
   });
 
-  assert.match(script, /^Ana, pelo que você me falou, você quer prospectar clientes/);
+  assert.match(script, /^Ana, se você quer prospectar clientes/);
   assert.doesNotMatch(script, /colocar prospectar|colocar conseguir/i);
   assert.match(script, /Faz sentido pra você\?$/);
 });
@@ -303,11 +322,16 @@ test('redirecionamento aceita somente intenção, correlação e assinatura corr
     verifyTrackedFlowSignature('community', 'aprender', 'corr-1', signature, secret),
     false,
   );
+  const promptSignature = createHmac('sha256', secret)
+    .update('prompt:ter:corr-1')
+    .digest('hex');
+  assert.equal(verifyTrackedFlowSignature('prompt', 'ter', 'corr-1', promptSignature, secret), true);
+  assert.equal(verifyTrackedFlowSignature('product', 'ter', 'corr-1', promptSignature, secret), false);
 });
 
-test('destino final preserva exatamente o convite do WhatsApp', () => {
-  const previous = process.env.INSTAGRAM_WHATSAPP_COMMUNITY_URL;
-  process.env.INSTAGRAM_WHATSAPP_COMMUNITY_URL = 'https://chat.whatsapp.com/Invite123?s=cl&p=i&ilr=2';
+test('destino final preserva exatamente a URL configurada', () => {
+  const previous = process.env.INSTAGRAM_COMMUNITY_DESTINATION_URL;
+  process.env.INSTAGRAM_COMMUNITY_DESTINATION_URL = 'https://saraiva.ai/acesso';
   try {
     const session = createInstagramCommentFlow(PROSPECTING_FLOW_MEDIA_ID, {
       now: startedAt,
@@ -315,11 +339,11 @@ test('destino final preserva exatamente o convite do WhatsApp', () => {
     })!.session;
     assert.equal(
       createCommunityDestinationUrl(session),
-      'https://chat.whatsapp.com/Invite123?s=cl&p=i&ilr=2',
+      'https://saraiva.ai/acesso',
     );
   } finally {
-    if (previous === undefined) delete process.env.INSTAGRAM_WHATSAPP_COMMUNITY_URL;
-    else process.env.INSTAGRAM_WHATSAPP_COMMUNITY_URL = previous;
+    if (previous === undefined) delete process.env.INSTAGRAM_COMMUNITY_DESTINATION_URL;
+    else process.env.INSTAGRAM_COMMUNITY_DESTINATION_URL = previous;
   }
 });
 

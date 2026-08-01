@@ -195,7 +195,7 @@ async function consumeDailyAudioQuota(): Promise<void> {
 export function buildSaraivaAudioScript(session: InstagramFlowSession): string {
   const name = session.firstName || 'Olha só';
   if (session.campaign === 'sites_workshop') {
-    return `${name}, a maioria passa semanas apanhando do WordPress ou pagando caro por um site que não converte ninguém. O que eu vou te mostrar no WhatsApp não é historinha, é o prompt-base e a estrutura exata do @Sites pra colocar um site profissional rodando hoje. Entra no botão e pega o mapa antes que você perca mais clientes pro seu concorrente. Faz sentido pra você?`;
+    throw new Error('sites_workshop_audio_forbidden');
   }
   const fact = session.profileFacts?.find((item) => item.allowedInAudio && item.confidence >= 0.8);
   const verified = fact ? ` E eu vi que ${normalizeFact(fact.value)}.` : '';

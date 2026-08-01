@@ -280,27 +280,28 @@ test('sessão nova usa o contrato e os dois caminhos prometidos no Reel', () => 
   ]);
 });
 
-test('sessão do reel de sites usa um único botão e vai direto ao WhatsApp', () => {
+test('sessão do reel de sites entrega o prompt grátis antes do Gerador de R$ 9,97', () => {
   const entry = createInstagramCommentFlow(WEBSITE_PROMPT_MEDIA_ID, {
     correlationId: 'corr-sites-zernio',
     transport: 'zernio',
   })!;
   assert.equal(entry.session.campaign, 'sites_workshop');
-  assert.equal(entry.session.stage, 'awaiting_request');
+  assert.equal(entry.session.stage, 'awaiting_intent');
   assert.equal(entry.message.kind, 'quick_replies');
   if (entry.message.kind !== 'quick_replies') return;
-  assert.deepEqual(entry.message.quickReplies.map((item) => item.title), ['CRIAR MEU SITE']);
+  assert.deepEqual(entry.message.quickReplies.map((item) => item.title), ['MINHA EMPRESA', 'VENDER SITES']);
 
-  const offer = advanceInstagramFlow(entry.session, {
-    payload: 'FLOW:SITES:OPEN',
+  const delivery = advanceInstagramFlow(entry.session, {
+    payload: 'FLOW:SITES:INTENT:SELL',
   }, { firstName: 'Ana' })!;
-  assert.equal(offer.session.stage, 'offering_community');
-  assert.deepEqual(offer.offer?.card.buttons.map((item) => item.title), [
-    'CRIAR MEU SITE',
-  ]);
+  assert.equal(delivery.session.stage, 'offering_product');
+  assert.equal(delivery.messages?.[1]?.kind, 'link_card');
+  assert.equal(delivery.messages?.[3]?.kind, 'link_card');
+  const serialized = JSON.stringify([entry, delivery]);
+  assert.ok(serialized.indexOf('COPIAR PROMPT') < serialized.indexOf('VER GERADOR'));
   assert.doesNotMatch(
-    JSON.stringify([entry, offer]),
-    /Cliente Pronto|loja\.saraiva\.ai|R\$19,90|checkout|qual é o seu negócio|cidade|nicho/i,
+    serialized,
+    /Cliente Pronto|Laboratório|WhatsApp|R\$19,90|qual é o seu negócio|cidade|questionário/i,
   );
 });
 
