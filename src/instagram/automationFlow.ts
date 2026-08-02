@@ -725,6 +725,17 @@ export function createStorefrontProductDestinationUrl(input: {
   return destination.toString();
 }
 
+export function createFreePromptDestinationUrl(input: {
+  correlationId: string;
+  intent: 'ter' | 'aprender';
+  issuedAt: number;
+  secret: string;
+}): string {
+  const destination = new URL(createStorefrontProductDestinationUrl(input));
+  destination.pathname = '/prompt-do-video';
+  return destination.toString();
+}
+
 function resolveAction(payload?: string, text?: string): 'open' | 'ready' | 'build' | 'retry' | 'restart' | undefined {
   if (payload === SARAIVA_FLOW_PAYLOAD.open) return 'open';
   if (payload === SARAIVA_FLOW_PAYLOAD.ready) return 'ready';

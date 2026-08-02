@@ -6,6 +6,7 @@ import {
   createCommunityDestinationUrl,
   createInstagramCommentFlow,
   createStorefrontProductDestinationUrl,
+  createFreePromptDestinationUrl,
   isInstagramFlowOptOut,
   isInstagramFlowResume,
   pauseInstagramFlow,
@@ -134,6 +135,22 @@ test('destino do botão VER GERADOR leva a oferta assinada de R$ 9,97', () => {
       .update('quero_o_prompt:aprender:corr-sites-product:1785643200')
       .digest('hex'),
   );
+});
+
+test('prompt gratuito abre na home do produto e preserva a oferta assinada', () => {
+  const secret = '12345678901234567890123456789012';
+  const url = new URL(createFreePromptDestinationUrl({
+    correlationId: 'corr-sites-free-prompt',
+    intent: 'ter',
+    issuedAt: 1_785_643_200,
+    secret,
+  }));
+  assert.equal(url.origin, 'https://prompt.saraiva.ai');
+  assert.equal(url.pathname, '/prompt-do-video');
+  assert.equal(url.searchParams.get('campaign'), 'quero_o_prompt');
+  assert.equal(url.searchParams.get('sourceIntent'), 'ter');
+  assert.equal(url.searchParams.get('sourceIssuedAt'), '1785643200');
+  assert.match(url.searchParams.get('sourceSignature') ?? '', /^[a-f0-9]{64}$/);
 });
 
 test('pergunta livre antes da escolha responde e reapresenta somente as duas intenções', async () => {
