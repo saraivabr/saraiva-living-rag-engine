@@ -31,6 +31,7 @@ import {
   createCommunityCtaCard,
   createCommunityDestinationUrl,
   createInstagramCommentFlow,
+  createStorefrontProductDestinationUrl,
   isInstagramFlowOptOut,
   isInstagramFlowResume,
   pauseInstagramFlow,
@@ -1715,12 +1716,17 @@ async function handleInstagramTrackedRedirect(
         reasonCode: result,
       }),
     });
-    const destinationUrl = new URL(kind === 'prompt'
-      ? 'https://app.saraiva.ai/prompt-do-video'
-      : 'https://app.saraiva.ai/quero-o-prompt');
+    if (kind === 'product') {
+      return redirect(createStorefrontProductDestinationUrl({
+        correlationId,
+        intent,
+        issuedAt: Math.floor(Date.now() / 1_000),
+        secret: credentials.communityLinkSecret,
+      }));
+    }
+    const destinationUrl = new URL('https://app.saraiva.ai/prompt-do-video');
     destinationUrl.searchParams.set('correlationId', correlationId);
     destinationUrl.searchParams.set('intent', intent);
-    if (kind === 'product') destinationUrl.searchParams.set('campaign', 'quero_o_prompt');
     return redirect(destinationUrl.toString());
   }
 

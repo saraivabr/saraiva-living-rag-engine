@@ -5,6 +5,7 @@ import {
   advanceInstagramFlow,
   createCommunityDestinationUrl,
   createInstagramCommentFlow,
+  createStorefrontProductDestinationUrl,
   isInstagramFlowOptOut,
   isInstagramFlowResume,
   pauseInstagramFlow,
@@ -110,6 +111,29 @@ test('botão recomendado do produto é claro e as três opções respeitam 20 ca
   assert.equal(WEBSITE_PRODUCT_BUTTON_RECOMMENDED, 'VER GERADOR');
   assert.equal(WEBSITE_PRODUCT_BUTTON_OPTIONS.length, 3);
   assert.ok(WEBSITE_PRODUCT_BUTTON_OPTIONS.every((title) => title.length <= 20));
+});
+
+test('destino do botão VER GERADOR leva a oferta assinada de R$ 9,97', () => {
+  const secret = '12345678901234567890123456789012';
+  const url = new URL(createStorefrontProductDestinationUrl({
+    correlationId: 'corr-sites-product',
+    intent: 'aprender',
+    issuedAt: 1_785_643_200,
+    secret,
+  }));
+  assert.equal(url.origin, 'https://app.saraiva.ai');
+  assert.equal(url.pathname, '/quero-o-prompt');
+  assert.equal(url.searchParams.get('correlationId'), 'corr-sites-product');
+  assert.equal(url.searchParams.get('intent'), 'aprender');
+  assert.equal(url.searchParams.get('campaign'), 'quero_o_prompt');
+  assert.equal(url.searchParams.get('sourceIntent'), 'aprender');
+  assert.equal(url.searchParams.get('sourceIssuedAt'), '1785643200');
+  assert.equal(
+    url.searchParams.get('sourceSignature'),
+    createHmac('sha256', secret)
+      .update('quero_o_prompt:aprender:corr-sites-product:1785643200')
+      .digest('hex'),
+  );
 });
 
 test('pergunta livre antes da escolha responde e reapresenta somente as duas intenções', async () => {

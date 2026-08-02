@@ -701,6 +701,30 @@ export function verifyTrackedFlowSignature(
   return timingSafeEqual(Buffer.from(expected, 'hex'), Buffer.from(signature, 'hex'));
 }
 
+export function createStorefrontProductDestinationUrl(input: {
+  correlationId: string;
+  intent: 'ter' | 'aprender';
+  issuedAt: number;
+  secret: string;
+}): string {
+  if (!input.secret || input.secret.length < 32) {
+    throw new Error('instagram_attribution_secret_invalid');
+  }
+  const destination = new URL('https://app.saraiva.ai/quero-o-prompt');
+  destination.searchParams.set('correlationId', input.correlationId);
+  destination.searchParams.set('intent', input.intent);
+  destination.searchParams.set('campaign', 'quero_o_prompt');
+  destination.searchParams.set('sourceIntent', input.intent);
+  destination.searchParams.set('sourceIssuedAt', String(input.issuedAt));
+  destination.searchParams.set(
+    'sourceSignature',
+    createHmac('sha256', input.secret)
+      .update(`quero_o_prompt:${input.intent}:${input.correlationId}:${input.issuedAt}`)
+      .digest('hex'),
+  );
+  return destination.toString();
+}
+
 function resolveAction(payload?: string, text?: string): 'open' | 'ready' | 'build' | 'retry' | 'restart' | undefined {
   if (payload === SARAIVA_FLOW_PAYLOAD.open) return 'open';
   if (payload === SARAIVA_FLOW_PAYLOAD.ready) return 'ready';
