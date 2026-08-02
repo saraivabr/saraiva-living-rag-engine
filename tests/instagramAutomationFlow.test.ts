@@ -121,7 +121,7 @@ test('destino do botão VER GERADOR leva a oferta assinada de R$ 9,97', () => {
     issuedAt: 1_785_643_200,
     secret,
   }));
-  assert.equal(url.origin, 'https://app.saraiva.ai');
+  assert.equal(url.origin, 'https://prompt.saraiva.ai');
   assert.equal(url.pathname, '/quero-o-prompt');
   assert.equal(url.searchParams.get('correlationId'), 'corr-sites-product');
   assert.equal(url.searchParams.get('intent'), 'aprender');

@@ -710,7 +710,7 @@ export function createStorefrontProductDestinationUrl(input: {
   if (!input.secret || input.secret.length < 32) {
     throw new Error('instagram_attribution_secret_invalid');
   }
-  const destination = new URL('https://app.saraiva.ai/quero-o-prompt');
+  const destination = new URL('https://prompt.saraiva.ai/quero-o-prompt');
   destination.searchParams.set('correlationId', input.correlationId);
   destination.searchParams.set('intent', input.intent);
   destination.searchParams.set('campaign', 'quero_o_prompt');
