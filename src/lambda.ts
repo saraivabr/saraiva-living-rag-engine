@@ -1724,7 +1724,7 @@ async function handleInstagramTrackedRedirect(
         secret: credentials.communityLinkSecret,
       }));
     }
-    const destinationUrl = new URL('https://app.saraiva.ai/prompt-do-video');
+    const destinationUrl = new URL('https://prompt.saraiva.ai/prompt-do-video');
     destinationUrl.searchParams.set('correlationId', correlationId);
     destinationUrl.searchParams.set('intent', intent);
     return redirect(destinationUrl.toString());

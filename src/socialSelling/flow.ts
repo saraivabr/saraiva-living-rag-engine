@@ -442,7 +442,7 @@ function websitePromptPromise(): PostPromise {
     kind: 'website_prompt',
     label: 'prompt usado no vídeo para criar o site',
     publicReply: 'Te chamei no Direct para entregar o prompt 👀',
-    privateReply: 'Aqui está o prompt que usei no vídeo, liberado gratuitamente para copiar: https://app.saraiva.ai/prompt-do-video',
+    privateReply: 'Aqui está o prompt que usei no vídeo, liberado gratuitamente para copiar: https://prompt.saraiva.ai/prompt-do-video',
   };
 }
 
@@ -567,7 +567,7 @@ export function buildSocialSellingTurn(
   if (promise.kind === 'website_prompt') {
     const reply = [
       'o prompt gratuito mostrado no vídeo está liberado aqui:',
-      'https://app.saraiva.ai/prompt-do-video',
+      'https://prompt.saraiva.ai/prompt-do-video',
       '',
       'você pode abrir, copiar e usar sem pagar.',
     ].join('\n');

@@ -45,6 +45,8 @@ test('reel de sites registra a promessa exata do prompt gratuito', () => {
   assert.match(promise?.label || '', /prompt usado no vídeo/i);
   assert.match(promise?.privateReply || '', /liberado gratuitamente/i);
   assert.match(promise?.privateReply || '', /prompt-do-video/i);
+  assert.match(promise?.privateReply || '', /https:\/\/prompt\.saraiva\.ai\/prompt-do-video/);
+  assert.doesNotMatch(promise?.privateReply || '', /https:\/\/app\.saraiva\.ai\/prompt-do-video/);
   assert.match(promise?.publicReply || '', /Direct|inbox/i);
   assert.doesNotMatch(
     JSON.stringify(promise),
