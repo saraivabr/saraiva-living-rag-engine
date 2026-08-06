@@ -27,7 +27,9 @@ import {
   advanceInstagramFlow,
   createCommunityCtaCard,
   createCommunityDestinationUrl,
+  createFreePromptDestinationUrl,
   createInstagramCommentFlow,
+  createStorefrontProductDestinationUrl,
   isInstagramFlowOptOut,
   isInstagramFlowResume,
   pauseInstagramFlow,
@@ -1259,7 +1261,9 @@ async function handleInstagramTrackedRedirect(
 ): Promise<LambdaResponse> {
   const params = event.queryStringParameters || {};
   const correlationId = params.correlation?.trim() || '';
-  const intent = params.intent === 'ter' || params.intent === 'aprender' ? params.intent : undefined;
+  const intent: 'ter' | 'aprender' | undefined = params.intent === 'ter' || params.intent === 'aprender'
+    ? params.intent
+    : undefined;
   const signature = params.sig?.trim() || '';
   const credentials = await getZernioCredentials();
   if (
@@ -1307,33 +1311,17 @@ async function handleInstagramTrackedRedirect(
     });
     // 'prompt' é a entrega gratuita prometida no Reel; 'product' é a Biblioteca
     // paga. Mandar os dois para a mesma página cobra por algo anunciado de graça.
-    const destinationUrl = new URL(kind === 'prompt'
-      ? 'https://app.saraiva.ai/prompt-do-video'
-      : 'https://app.saraiva.ai/quero-o-prompt');
-    destinationUrl.searchParams.set('correlationId', correlationId);
-    destinationUrl.searchParams.set('intent', intent);
-    if (kind === 'product') {
-      const issuedAt = Math.floor(Date.now() / 1_000);
-      destinationUrl.searchParams.set('campaign', 'quero_o_prompt');
-      destinationUrl.searchParams.set('sourceIntent', intent);
-      destinationUrl.searchParams.set('sourceIssuedAt', String(issuedAt));
-function createStorefrontAttributionSignature(correlationId: string, intent: string, issuedAt: number, secret: string): string {
-  return createHmac('sha256', secret)
-    .update(`${correlationId}:${intent}:${issuedAt}`)
-    .digest('hex');
-}
-
-      destinationUrl.searchParams.set(
-        'sourceSignature',
-        createStorefrontAttributionSignature(
-          correlationId,
-          intent,
-          issuedAt,
-          credentials.communityLinkSecret,
-        ),
-      );
-    }
-    return redirect(destinationUrl.toString());
+    // As duas URLs saem das funções de automationFlow para que a campanha e a
+    // assinatura sobrevivam também na entrega gratuita.
+    const destination = {
+      correlationId,
+      intent,
+      issuedAt: Math.floor(Date.now() / 1_000),
+      secret: credentials.communityLinkSecret,
+    };
+    return redirect(kind === 'product'
+      ? createStorefrontProductDestinationUrl(destination)
+      : createFreePromptDestinationUrl(destination));
   }
 
   if (kind === 'example') {
