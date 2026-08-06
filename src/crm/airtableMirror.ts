@@ -24,6 +24,12 @@ export interface AirtableLeadMirror {
   lastInbound?: string;
   lastOutbound?: string;
   postPermalink?: string;
+  /**
+   * Respondeu o follow-up que pergunta o que o cliente perguntou e ela não
+   * soube responder. É a mão levantada para a segunda etapa — entregar o site
+   * e receber por ele. Esta é a coluna que vira fila de atendimento.
+   */
+  maoLevantada?: boolean;
   updatedAt: string;
 }
 
@@ -105,6 +111,7 @@ export async function mirrorLeadToAirtable(lead: AirtableLeadMirror): Promise<vo
     'Última mensagem': lead.lastInbound?.slice(0, 1_000),
     'Última resposta': lead.lastOutbound?.slice(0, 1_000),
     Post: lead.postPermalink,
+    'Mão levantada': lead.maoLevantada ? true : undefined,
     Atualizado: lead.updatedAt,
   });
 }

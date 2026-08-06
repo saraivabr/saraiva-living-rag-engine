@@ -1,4 +1,3 @@
-import { createWebsiteProductCard } from './automationFlow.js';
 import type { InstagramFlowSession, InstagramInteractiveMessage } from './automationFlow.js';
 import type { LeadContext } from '../store/leadContextStore.js';
 
@@ -26,12 +25,17 @@ export interface AbandonmentTextCandidate {
   context: LeadContext;
   message: string;
   /**
-   * A oferta viaja no follow-up, não na entrega.
+   * Espaço reservado para a oferta da SEGUNDA ETAPA — entregar o site e
+   * receber por ele.
    *
-   * A entrega manda só o prompt gratuito: cobrar no mesmo fôlego gasta a boa
-   * vontade que a entrega acabou de criar. Uma hora depois, quando a pessoa já
-   * teve tempo de usar, a pergunta vai acompanhada do card — o texto não
-   * empurra nada, o card fica ali para quem estiver pronto.
+   * Fica vazio de propósito enquanto essa oferta não tiver página e conteúdo.
+   * Mandar card de Biblioteca aqui seria empurrar mais prompt para quem ainda
+   * não fez a primeira venda: a auditoria mostrou que 65% querem cliente, não
+   * ferramenta. Por ora o follow-up só pergunta, e quem responde entra na
+   * lista de mão levantada.
+   *
+   * O envio já está ligado no lambda: no dia em que a página existir, basta
+   * preencher este campo.
    */
   offerCard?: InstagramInteractiveMessage & { kind: 'link_card' };
 }
@@ -90,20 +94,21 @@ export function buildWebsitePromptFollowUpCandidate(
 
   return {
     context,
-    // A versão anterior fazia a pergunta e emendava o pitch na mesma mensagem.
-    // Ninguém responde pergunta retórica: de 1.279 conversas, só 18 tinham
-    // texto escrito à mão. Aqui a mensagem pergunta e PARA.
+    // A pergunta mira a SEGUNDA ETAPA: entregar o site e receber por ele.
     //
-    // A pergunta é sobre o PRÓXIMO PROJETO de propósito. O único produto que
-    // existe e entrega hoje é a Biblioteca — 24 prompts de Sites, CRMs,
-    // Sistemas e Automações. Quem responde "um CRM" ou "um sistema" acabou de
-    // descrever o que ela resolve, e o assistente pode conectar sem empurrar.
-    // Perguntar sobre a dificuldade de ENTREGA levaria a um produto que ainda
-    // não foi escrito.
+    // A auditoria de 1.279 conversas foi clara: 65% escolheram VENDER SITES e
+    // os sinais escritos à mão falam de cliente, não de ferramenta — "trazer
+    // clientes", "mais clientes", "prospectar clientes". Um deles nomeou a
+    // lacuna inteira: "como faço manutenção e como passo o site pro cliente
+    // ter acesso como dono? É só isso que eu quero saber pra fazer clientes.
+    // Os caras não ensinam."
+    //
+    // Perguntar "qual é o próximo projeto" empurraria mais prompt para quem
+    // ainda não fez a primeira venda. Quem responde ESTA pergunta está
+    // levantando a mão para a segunda etapa.
     message: session.path === 'build'
-      ? 'Conseguiu gerar o site com o prompt? Qual é o próximo projeto que o teu cliente vai te pedir?'
-      : 'Conseguiu gerar o site com o prompt? Qual é a próxima coisa que você quer montar na sua empresa?',
-    offerCard: createWebsiteProductCard(session),
+      ? 'Conseguiu gerar o site com o prompt? Me conta uma coisa: o que o cliente te perguntou que você não soube responder?'
+      : 'Conseguiu gerar o site com o prompt? Me conta uma coisa: o que travou na hora de colocar ele no ar?',
   };
 }
 

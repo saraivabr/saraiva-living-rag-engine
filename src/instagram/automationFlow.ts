@@ -71,6 +71,15 @@ export interface InstagramFlowSession {
   productCtaMessageId?: string;
   followUpSentAt?: string;
   followUpMessageId?: string;
+  /**
+   * Quando a pessoa RESPONDEU o follow-up.
+   *
+   * O follow-up pergunta o que o cliente perguntou e ela não soube responder —
+   * a dor da segunda etapa, entregar o site e receber por ele. Quem responde
+   * isso levantou a mão. Sem esta marca, a resposta se perde no meio da
+   * conversa e ninguém sabe quem tem a dor que a oferta resolve.
+   */
+  followUpRepliedAt?: string;
   followStatus?: FollowStatus;
   followRecheckAttempts?: number;
   recoveryPreparedAt?: string;

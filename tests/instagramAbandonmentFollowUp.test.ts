@@ -136,11 +136,15 @@ test('follow-up de Vender Sites é adaptado, único e não sai após clique na o
     promptDeliveredAt: '2026-07-31T11:00:00.000Z',
   };
   const candidate = buildWebsitePromptFollowUpCandidate(sites, { now, waitMs: 5 * 60 * 1_000 });
-  // A pergunta puxa o PRÓXIMO PROJETO, não a dificuldade de entrega: quem
-  // responde "um CRM" descreve o que a Biblioteca resolve. Perguntar sobre
-  // entrega levaria a um produto que ainda não existe.
-  assert.match(candidate?.message || '', /próximo projeto/i);
+  // A pergunta mira a SEGUNDA ETAPA — entregar o site e receber por ele.
+  // 65% das 1.279 conversas escolheram VENDER SITES e os sinais escritos à mão
+  // pedem cliente, não ferramenta. Perguntar "qual é o próximo projeto"
+  // empurraria mais prompt para quem ainda não fez a primeira venda.
+  assert.match(candidate?.message || '', /não soube responder/i);
+  assert.doesNotMatch(candidate?.message || '', /próximo projeto/i);
+  // Nada de preço nem de Biblioteca aqui: o follow-up pergunta e para.
   assert.doesNotMatch(candidate?.message || '', /R\$|Biblioteca/i);
+  assert.equal(candidate?.offerCard, undefined);
   sites.instagramFlow = { ...sites.instagramFlow, productOpenedAt: '2026-07-31T12:05:00.000Z' };
   assert.equal(buildWebsitePromptFollowUpCandidate(sites, { now, waitMs: 5 * 60 * 1_000 }), undefined);
   sites.instagramFlow = {
@@ -149,4 +153,21 @@ test('follow-up de Vender Sites é adaptado, único e não sai após clique na o
     followUpSentAt: '2026-07-31T12:05:00.000Z',
   };
   assert.equal(buildWebsitePromptFollowUpCandidate(sites, { now, waitMs: 5 * 60 * 1_000 }), undefined);
+});
+
+test('a segunda pergunta do funil muda conforme o caminho', () => {
+  // Quem vai VENDER site trava no cliente. Quem faz para a PRÓPRIA empresa
+  // trava em colocar no ar. É a mesma segunda etapa vista de dois lugares.
+  const proprio = context({ postId: '18130447453725127' });
+  proprio.instagramFlow = {
+    ...proprio.instagramFlow!,
+    campaign: 'sites_workshop',
+    stage: 'offering_product',
+    path: 'own',
+    promptDeliveredAt: '2026-07-31T11:00:00.000Z',
+  };
+  const candidato = buildWebsitePromptFollowUpCandidate(proprio, { now, waitMs: 5 * 60 * 1_000 });
+  assert.match(candidato?.message || '', /colocar ele no ar/i);
+  assert.doesNotMatch(candidato?.message || '', /R\$|Biblioteca/i);
+  assert.equal(candidato?.offerCard, undefined);
 });

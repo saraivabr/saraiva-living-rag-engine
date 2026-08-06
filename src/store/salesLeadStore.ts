@@ -18,6 +18,8 @@ export interface SalesLeadRecord {
   lastInbound: string;
   lastOutbound: string;
   interactions?: LeadInteraction[];
+  /** Respondeu o follow-up da segunda etapa: entregar o site e receber por ele. */
+  maoLevantada?: boolean;
 }
 
 export interface SalesLeadExport {
@@ -89,6 +91,7 @@ export async function saveSalesLead(record: SalesLeadRecord): Promise<void> {
     lastInbound: record.lastInbound,
     lastOutbound: record.lastOutbound,
     postPermalink: record.postPermalink,
+    maoLevantada: record.maoLevantada,
     updatedAt,
   }));
 }
