@@ -92,6 +92,7 @@ export function saraivaVoiceCacheHash(
 }
 
 export async function resolveElevenLabsApiKey(): Promise<string> {
+  if (process.env.ELEVENLABS_API_KEY?.trim()) return process.env.ELEVENLABS_API_KEY.trim();
   if (cachedApiKey) return cachedApiKey;
   const secretId = process.env.ELEVENLABS_SECRET_ID?.trim() || DEFAULT_SECRET_ID;
 

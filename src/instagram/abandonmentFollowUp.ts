@@ -81,8 +81,8 @@ export function buildWebsitePromptFollowUpCandidate(
   return {
     context,
     message: session.path === 'build'
-      ? 'Você já recebeu o prompt do vídeo. Quando puder, teste com um projeto. Se quiser criar versões para outros nichos e clientes, o Gerador está no botão que enviei.'
-      : 'Você já recebeu o prompt do vídeo. Quando puder, teste na sua empresa. Se quiser criar versões para outras páginas, o Gerador está no botão que enviei.',
+      ? 'Conseguiu abrir o prompt do vídeo? Teste primeiro em um projeto. Se quiser evitar recomeçar a cada cliente, a Biblioteca Secreta reúne 24 prompts completos e está no botão que enviei — acesso permanente por R$ 19,90.'
+      : 'Conseguiu abrir o prompt do vídeo? Teste primeiro na sua empresa. Se quiser evitar a página em branco nos próximos projetos, a Biblioteca Secreta reúne 24 prompts completos e está no botão que enviei — acesso permanente por R$ 19,90.',
   };
 }
 

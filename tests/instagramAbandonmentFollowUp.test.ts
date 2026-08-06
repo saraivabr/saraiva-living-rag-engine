@@ -117,10 +117,11 @@ test('reel de sites nunca recebe áudio e faz um follow-up textual após entrega
   assert.equal(buildAbandonmentAudioCandidate(sites, { now }), undefined);
   const candidate = buildWebsitePromptFollowUpCandidate(sites, { now, waitMs: 5 * 60 * 1_000 });
   assert.ok(candidate);
-  assert.match(candidate.message, /já recebeu o prompt do vídeo/i);
-  assert.match(candidate.message, /teste na sua empresa/i);
-  assert.match(candidate.message, /Gerador/i);
-  assert.doesNotMatch(candidate.message, /WhatsApp|culpa|perdendo clientes|urgente|qual é o seu negócio/i);
+  assert.match(candidate.message, /conseguiu abrir o prompt do vídeo/i);
+  assert.match(candidate.message, /teste primeiro na sua empresa/i);
+  assert.match(candidate.message, /Biblioteca Secreta.*24 prompts completos/i);
+  assert.match(candidate.message, /acesso permanente por R\$ 19,90/i);
+  assert.doesNotMatch(candidate.message, /Gerador|WhatsApp|culpa|perdendo clientes|urgente|qual é o seu negócio|últimas vagas|80% off|R\$ 97/i);
 });
 
 test('follow-up de Vender Sites é adaptado, único e não sai após clique na oferta', () => {
@@ -133,7 +134,8 @@ test('follow-up de Vender Sites é adaptado, único e não sai após clique na o
     promptDeliveredAt: '2026-07-31T11:00:00.000Z',
   };
   const candidate = buildWebsitePromptFollowUpCandidate(sites, { now, waitMs: 5 * 60 * 1_000 });
-  assert.match(candidate?.message || '', /outros nichos e clientes/i);
+  assert.match(candidate?.message || '', /recomeçar a cada cliente/i);
+  assert.match(candidate?.message || '', /Biblioteca Secreta/i);
   sites.instagramFlow = { ...sites.instagramFlow, productOpenedAt: '2026-07-31T12:05:00.000Z' };
   assert.equal(buildWebsitePromptFollowUpCandidate(sites, { now, waitMs: 5 * 60 * 1_000 }), undefined);
   sites.instagramFlow = {

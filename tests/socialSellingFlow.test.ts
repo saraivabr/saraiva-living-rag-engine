@@ -44,7 +44,7 @@ test('reel de sites registra a promessa exata do prompt gratuito', () => {
   assert.equal(promise?.kind, 'website_prompt');
   assert.match(promise?.label || '', /prompt usado no vídeo/i);
   assert.match(promise?.privateReply || '', /liberado gratuitamente/i);
-  assert.match(promise?.privateReply || '', /prompt-do-video/i);
+  assert.match(promise?.privateReply || '', /prompt\.saraiva\.ai/i);
   assert.match(promise?.publicReply || '', /Direct|inbox/i);
   assert.doesNotMatch(
     JSON.stringify(promise),
@@ -70,7 +70,7 @@ test('reel do prompt mantém a mesma entrega gratuita em retries', () => {
   assert.deepEqual(retry, first);
   assert.equal(first.variant, 'default');
   assert.match(first.publicReply, /Direct/i);
-  assert.match(first.privateReply, /prompt-do-video/i);
+  assert.match(first.privateReply, /prompt\.saraiva\.ai/i);
   assert.doesNotMatch(first.privateReply, /WhatsApp|Laboratório|comunidade|checkout/i);
   assert.ok(Buffer.byteLength(first.privateReply, 'utf8') <= 500);
 });
@@ -105,7 +105,7 @@ test('mensagens antigas de APOSTILA e PRONTO não reabrem checkout no reel de si
   assert.equal(guide.sales.offer, 'diagnostic');
   assert.equal(guide.sales.priceCents, undefined);
   assert.equal(guide.sales.checkoutUrl, undefined);
-  assert.match(guide.reply, /prompt-do-video/i);
+  assert.match(guide.reply, /prompt\.saraiva\.ai/i);
   assert.equal((guide.reply.match(/\?/g) || []).length, 0);
 
   const ready = buildSocialSellingTurn('PRONTO', promise);

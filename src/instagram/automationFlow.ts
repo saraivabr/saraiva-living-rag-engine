@@ -3,6 +3,11 @@ import {
   PROSPECTING_FLOW_MEDIA_ID,
   WEBSITE_PROMPT_MEDIA_ID,
 } from '../campaignTrigger.js';
+import {
+  buildFollowGateMessage,
+  FOLLOW_CONFIRMED_PAYLOAD,
+  type FollowStatus,
+} from './followGate.js';
 import type { ProfileFact } from './profilePersonalization.js';
 
 export const SARAIVA_FLOW_ID = 'saraiva-prospecting-v1';
@@ -14,6 +19,7 @@ export type InstagramFlowStage =
   | 'awaiting_intent'
   | 'awaiting_name'
   | 'awaiting_path'
+  | 'awaiting_follow'
   | 'awaiting_goal'
   | 'awaiting_ready_goal'
   | 'awaiting_business'
@@ -58,12 +64,15 @@ export interface InstagramFlowSession {
   communityOpenedAt?: string;
   promptDeliveredAt?: string;
   promptOpenedAt?: string;
+  promptMessageId?: string;
   promptCardMessageId?: string;
   productOfferedAt?: string;
   productOpenedAt?: string;
   productCtaMessageId?: string;
   followUpSentAt?: string;
   followUpMessageId?: string;
+  followStatus?: FollowStatus;
+  followRecheckAttempts?: number;
   recoveryPreparedAt?: string;
   recoverySentAt?: string;
   recoveryMessageId?: string;
@@ -138,6 +147,7 @@ export interface InstagramFlowOptions {
   transport?: 'meta' | 'zernio';
   conversationId?: string;
   trackingBaseUrl?: string;
+  followStatus?: FollowStatus;
 }
 
 export const SARAIVA_FLOW_PAYLOAD = {
@@ -155,6 +165,7 @@ export const SARAIVA_FLOW_PAYLOAD = {
   sitesOpen: 'FLOW:SITES:OPEN',
   sitesOwnBusiness: 'FLOW:SITES:INTENT:OWN',
   sitesSell: 'FLOW:SITES:INTENT:SELL',
+  followConfirmed: FOLLOW_CONFIRMED_PAYLOAD,
 } as const;
 
 const WEBSITE_INTENT_OPTIONS: InstagramQuickReply[] = [
@@ -162,10 +173,29 @@ const WEBSITE_INTENT_OPTIONS: InstagramQuickReply[] = [
   { title: 'VENDER SITES', payload: SARAIVA_FLOW_PAYLOAD.sitesSell },
 ];
 
+const WEBSITE_PROMPT_TEXT_BY_PATH: Record<InstagramFlowPath, string> = {
+  ready: `PROMPT DO VÍDEO — COPIE E COLE
+
+Crie um site profissional, mobile-first e pronto para publicar para [EMPRESA], do segmento [SEGMENTO], em [CIDADE]. Objetivo: [ORÇAMENTOS/VENDAS/AGENDAMENTOS]. Público: [PÚBLICO]. Diferencial: [DIFERENCIAL]. WhatsApp: [CONTATO].
+
+Entregue estrutura, copy e código funcional. Inclua: menu mobile; hero com promessa e CTA; provas sem inventar dados; problemas resolvidos; serviços e benefícios; como funciona; diferenciais; portfólio; avaliações reais ou placeholders; áreas atendidas; FAQ; CTA final; contato e páginas de serviço.
+
+Aplique SEO local, Schema.org, acessibilidade, velocidade, formulário e rastreamento de WhatsApp. Use Next.js, TypeScript e Tailwind quando possível. Não use lorem ipsum, frases genéricas, links falsos ou fatos inventados. Marque o que faltar como [PREENCHER]. Não pare no planejamento: entregue o site navegável e funcional.`,
+  build: `PROMPT DO VÍDEO — COPIE E COLE
+
+Crie um site mobile-first pronto para apresentar ao potencial cliente [EMPRESA], do segmento [SEGMENTO], em [CIDADE]. Objetivo: mostrar como o site pode gerar [ORÇAMENTOS/VENDAS/AGENDAMENTOS]. Público: [PÚBLICO]. Diferencial: [DIFERENCIAL]. WhatsApp: [CONTATO].
+
+Entregue estrutura, copy e código funcional. Inclua: menu mobile; hero com promessa e CTA; problemas resolvidos; serviços e benefícios; como funciona; diferenciais; portfólio; avaliações reais ou placeholders; áreas atendidas; FAQ; CTA final; contato e páginas de serviço.
+
+Aplique SEO local, Schema.org, acessibilidade, velocidade, formulário e rastreamento de WhatsApp. Use Next.js, TypeScript e Tailwind. Não invente resultados, avaliações, preços ou fatos. Marque o que depender do cliente como [VALIDAR COM CLIENTE]. Não pare no planejamento: entregue o site navegável e funcional.`,
+};
+
+export const WEBSITE_PROMPT_MESSAGE_MAX_CHARS = 900;
+
 export const WEBSITE_PRODUCT_BUTTON_OPTIONS = [
-  'VER GERADOR',
-  'ACESSAR GERADOR',
-  'CONHECER GERADOR',
+  'VER A BIBLIOTECA',
+  'ABRIR BIBLIOTECA',
+  'QUERO A BIBLIOTECA',
 ] as const;
 
 export const WEBSITE_PRODUCT_BUTTON_RECOMMENDED = WEBSITE_PRODUCT_BUTTON_OPTIONS[0];
@@ -208,7 +238,7 @@ export function createInstagramCommentFlow(
         updatedAt: now,
       },
       message: websiteRequestMessage(),
-      publicReply: 'Te chamei no Direct para entregar o prompt 👀',
+      publicReply: 'O prompt completo do vídeo está no seu Direct 👀',
       event: 'sites_flow_started',
       reasonCode: 'campaign_match',
     };
@@ -463,11 +493,13 @@ export function shouldAdvanceInstagramFlow(
       return true;
     }
     if (current.stage === 'technical_paused') return action === 'retry';
+    if (current.stage === 'awaiting_follow') {
+      return input.payload === SARAIVA_FLOW_PAYLOAD.followConfirmed;
+    }
     if (current.stage === 'awaiting_request') {
       return input.payload === SARAIVA_FLOW_PAYLOAD.sitesOpen
         || ['criar meu site', 'quero criar meu site'].includes(normalize(text));
     }
-    if (current.stage === 'offering_product' || current.stage === 'offering_community') return true;
     return current.stage === 'awaiting_intent' && Boolean(resolveWebsiteIntent(input.payload, text));
   }
   if (action === 'restart') return true;
@@ -504,12 +536,16 @@ export function resumeInstagramFlowMessage(
     if (current.stage === 'awaiting_intent') return websiteRequestMessage();
     if (current.stage === 'offering_product' || current.stage === 'offering_community') {
       if (!current.promptDeliveredAt) return websiteRequestMessage();
-      return websiteOfferReminder(current.path);
+      return websitePromptReminder();
     }
+    if (current.stage === 'completed' && current.promptDeliveredAt) return websitePromptReminder();
     if (current.stage === 'completed' && !current.promptDeliveredAt) return websiteRequestMessage();
   }
   if (current.stage === 'awaiting_request') return requestMessage();
   if (current.stage === 'awaiting_intent') return pathMessage(current.firstName);
+  if (current.stage === 'awaiting_follow') {
+    return websiteFollowGateMessage(current.followStatus || 'unknown', current.firstName);
+  }
   if (current.stage === 'awaiting_name') return { kind: 'text', text: 'Como posso te chamar?' };
   if (current.stage === 'awaiting_path') return pathMessage(current.firstName);
   if (current.stage === 'awaiting_goal') return goalMessage(current.path);
@@ -562,7 +598,7 @@ function requestMessage(): InstagramInteractiveMessage {
 function websiteRequestMessage(): InstagramInteractiveMessage {
   return {
     kind: 'quick_replies',
-    text: 'Pode deixar: vou te entregar o prompt do vídeo. Você quer usar para:',
+    text: 'Tenho o prompt completo do vídeo aqui. Você quer usar no site da sua empresa ou criar sites para clientes?',
     quickReplies: WEBSITE_INTENT_OPTIONS,
   };
 }
@@ -640,7 +676,7 @@ function asSentenceContinuation(value: string): string {
 
 export type TrackedFlowKind = 'example' | 'community' | 'prompt' | 'product';
 
-function trackedRedirectUrl(
+export function trackedRedirectUrl(
   kind: TrackedFlowKind,
   session: InstagramFlowSession,
   options: InstagramFlowOptions = {},
@@ -701,6 +737,40 @@ export function verifyTrackedFlowSignature(
   return timingSafeEqual(Buffer.from(expected, 'hex'), Buffer.from(signature, 'hex'));
 }
 
+interface StorefrontAttributionInput {
+  correlationId: string;
+  intent: 'ter' | 'aprender';
+  issuedAt: number;
+  secret: string;
+}
+
+// Mantidos como contrato de compatibilidade com o handler Lambda publicado.
+export function createStorefrontProductDestinationUrl(
+  input: StorefrontAttributionInput,
+): string {
+  if (!input.secret || input.secret.length < 32) {
+    throw new Error('instagram_attribution_secret_invalid');
+  }
+  const destination = new URL('https://prompt.saraiva.ai/quero-o-prompt');
+  destination.searchParams.set('correlationId', input.correlationId);
+  destination.searchParams.set('intent', input.intent);
+  destination.searchParams.set('campaign', 'quero_o_prompt');
+  destination.searchParams.set('sourceIntent', input.intent);
+  destination.searchParams.set('sourceIssuedAt', String(input.issuedAt));
+  destination.searchParams.set('sourceSignature', createHmac('sha256', input.secret)
+    .update(`quero_o_prompt:${input.intent}:${input.correlationId}:${input.issuedAt}`)
+    .digest('hex'));
+  return destination.toString();
+}
+
+export function createFreePromptDestinationUrl(
+  input: StorefrontAttributionInput,
+): string {
+  const destination = new URL(createStorefrontProductDestinationUrl(input));
+  destination.pathname = '/prompt-do-video';
+  return destination.toString();
+}
+
 function resolveAction(payload?: string, text?: string): 'open' | 'ready' | 'build' | 'retry' | 'restart' | undefined {
   if (payload === SARAIVA_FLOW_PAYLOAD.open) return 'open';
   if (payload === SARAIVA_FLOW_PAYLOAD.ready) return 'ready';
@@ -751,9 +821,42 @@ function resolveWebsiteIntent(
   if (payload === SARAIVA_FLOW_PAYLOAD.sitesOwnBusiness) return 'ready';
   if (payload === SARAIVA_FLOW_PAYLOAD.sitesSell) return 'build';
   const value = normalize(text);
+  if (
+    !value
+    || isNegatedOrUncertainWebsiteIntent(value)
+    || mentionsBothWebsiteIntents(value)
+    || looksLikeQuestion(text || '')
+  ) return undefined;
   if (['minha empresa', 'meu negocio', 'meu site', 'empresa propria'].includes(value)) return 'ready';
   if (['vender sites', 'criar para clientes', 'sites para clientes', 'meus clientes'].includes(value)) return 'build';
+  if (
+    /\b(?:vender|revender|oferecer|entregar)\b.{0,60}\b(?:sites?|isso|projetos?)\b.{0,40}\b(?:clientes?|empresas?|terceiros?)\b/u.test(value)
+    || /\b(?:criar|fazer|montar|desenvolver)\b.{0,50}\b(?:sites?|projetos?)\b.{0,35}\b(?:para|pra|pros?|as?)\s+(?:(?:um|uma|os|as|meus?|minhas?)\s+)?(?:clientes?|empresas?|terceiros?)\b/u.test(value)
+    || /\b(?:para|pra|pros?)\s+(?:os\s+)?meus?\s+clientes?\b/u.test(value)
+    || /^(?:e|seria)\s+(?:para|pra|pro)\s+(?:(?:um|uma|o|a|meu|minha)\s+)?cliente\b/u.test(value)
+    || /\btrabalho\s+(?:com|criando|fazendo|desenvolvendo)\b.{0,45}\bsites?\b.{0,30}\b(?:para|pra)?\s*clientes?\b/u.test(value)
+  ) return 'build';
+  if (
+    /\b(?:minha|meu)\s+(?:empresa|negocio|site|clinica|agencia|loja|escritorio|restaurante|projeto)\b/u.test(value)
+    || /\b(?:uso|projeto)\s+propri[oa]\b/u.test(value)
+    || /\b(?:usar|aplicar|criar|fazer|montar)\b.{0,50}\b(?:na|no|para|pra|pro)\s+(?:a\s+|o\s+)?(?:minha|meu)\b/u.test(value)
+  ) return 'ready';
   return undefined;
+}
+
+function isNegatedOrUncertainWebsiteIntent(value: string): boolean {
+  return /^(?:ainda\s+)?nao\b/u.test(value)
+    || /\bnao\s+(?:trabalho|atuo)\b.{0,80}\b(?:sites?|clientes?)\b/u.test(value)
+    || /\bnao\s+(?:quero|vou|pretendo)\s+(?:usar|aplicar|vender|revender|criar|fazer|montar|desenvolver|oferecer|entregar)\b/u.test(value)
+    || /\bnao\s+(?:e|seria)\s+(?:para|pra|pro|na|no)\b/u.test(value)
+    || /\b(?:nao|nem)\s+(?:para|pra|pro)\s+(?:(?:a|o)\s+)?(?:minha|meu|clientes?)\b/u.test(value)
+    || /\b(?:nao sei|nao decidi|sem certeza|em duvida|indecis[oa]|talvez|pode ser)\b/u.test(value);
+}
+
+function mentionsBothWebsiteIntents(value: string): boolean {
+  const ownBusiness = /\b(?:minha|meu)\s+(?:empresa|negocio|site|clinica|agencia|loja|escritorio|restaurante|projeto)\b|\b(?:uso|projeto)\s+propri[oa]\b/u.test(value);
+  const clientWork = /\b(?:vender|revender|oferecer|entregar|criar|fazer|montar|desenvolver)\b.{0,60}\b(?:sites?|isso|projetos?)?\b.{0,30}\b(?:para|pra|pros?)\s+(?:(?:um|uma|os|as|meus?|minhas?)\s+)?(?:clientes?|empresas?|terceiros?)\b|\b(?:vender sites?|sites? para clientes?)\b/u.test(value);
+  return ownBusiness && clientWork;
 }
 
 export function createWebsitePromptCard(
@@ -762,10 +865,10 @@ export function createWebsitePromptCard(
 ): InstagramInteractiveMessage & { kind: 'link_card' } {
   return {
     kind: 'link_card',
-    title: 'Prompt usado no vídeo',
+    title: 'Prompt completo do vídeo',
     subtitle: session.path === 'ready'
-      ? 'Use gratuitamente como ponto de partida para o site da sua empresa.'
-      : 'Use gratuitamente como ponto de partida para criar sites para potenciais clientes.',
+      ? 'Copie, troque os campos pelos fatos da sua empresa e use na IA que preferir.'
+      : 'Copie, troque os campos pelo briefing do cliente e use na IA que preferir.',
     buttons: [{
       type: 'web_url',
       title: 'COPIAR PROMPT',
@@ -780,10 +883,10 @@ export function createWebsiteProductCard(
 ): InstagramInteractiveMessage & { kind: 'link_card' } {
   return {
     kind: 'link_card',
-    title: 'Gerador de Prompts — R$ 9,97',
+    title: 'Biblioteca Secreta — 24 prompts',
     subtitle: session.path === 'ready'
-      ? 'Crie novos prompts para páginas, produtos, serviços e campanhas da sua empresa.'
-      : 'Crie novos prompts para diferentes nichos, empresas e potenciais clientes.',
+      ? 'Acesso permanente por R$ 19,90 para criar sem começar da página em branco.'
+      : 'Acesso permanente por R$ 19,90 para adaptar a diferentes clientes e projetos.',
     buttons: [{
       type: 'web_url',
       title: WEBSITE_PRODUCT_BUTTON_RECOMMENDED,
@@ -792,30 +895,71 @@ export function createWebsiteProductCard(
   };
 }
 
-function websiteContextMessage(path: InstagramFlowPath): InstagramInteractiveMessage {
+function websitePromptReminder(): InstagramInteractiveMessage {
   return {
     kind: 'text',
-    text: path === 'ready'
-      ? 'Perfeito. Este é o prompt do vídeo para você usar como ponto de partida no site da sua empresa 👇'
-      : 'Perfeito. Este é o prompt do vídeo para você usar como ponto de partida em sites de potenciais clientes 👇',
+    text: 'O prompt completo está nas mensagens acima. O único link é o botão da Biblioteca Secreta que enviei depois dele.',
   };
 }
 
-function websiteTransitionMessage(path: InstagramFlowPath): InstagramInteractiveMessage {
+export function createWebsitePromptTextMessages(
+  path: InstagramFlowPath = 'ready',
+  text = WEBSITE_PROMPT_TEXT_BY_PATH[path],
+): Array<InstagramInteractiveMessage & { kind: 'text' }> {
+  const normalized = text.replace(/\r\n/g, '\n').trim();
+  if (!normalized) throw new Error('website_prompt_message_empty');
+  if (normalized.length > WEBSITE_PROMPT_MESSAGE_MAX_CHARS) {
+    throw new Error('website_prompt_message_too_long');
+  }
+  return [{ kind: 'text', text: normalized }];
+}
+
+function websiteFollowGateMessage(
+  status: FollowStatus,
+  firstName?: string,
+): InstagramInteractiveMessage & { kind: 'quick_replies' } {
+  const gate = buildFollowGateMessage(status, {
+    firstName,
+    contentTitle: 'prompt completo do vídeo',
+  });
   return {
-    kind: 'text',
-    text: path === 'ready'
-      ? 'Esse modelo resolve o exemplo do vídeo. Para criar novos prompts para outras páginas e necessidades da sua empresa, você teria que adaptar a estrutura manualmente.'
-      : 'Esse modelo resolve o exemplo do vídeo. Para usar em outros nichos e clientes, você teria que adaptar e reescrever a estrutura manualmente.',
+    kind: 'quick_replies',
+    text: gate.message,
+    quickReplies: (gate.buttons || []).map((button) => ({
+      title: button.title,
+      payload: button.payload,
+    })),
   };
 }
 
-function websiteOfferReminder(path?: InstagramFlowPath): InstagramInteractiveMessage {
+function websiteFollowGateStep(
+  current: InstagramFlowSession,
+  path: InstagramFlowPath,
+  status: FollowStatus,
+  options: InstagramFlowOptions,
+  now: string,
+): InstagramFlowStep {
+  const rechecking = current.stage === 'awaiting_follow';
+  const session: InstagramFlowSession = {
+    ...current,
+    path,
+    firstName: sanitizeFirstName(options.firstName) || current.firstName,
+    username: options.username?.trim() || current.username,
+    profileFacts: options.profileFacts || current.profileFacts,
+    stage: 'awaiting_follow',
+    followStatus: status,
+    followRecheckAttempts: rechecking
+      ? (current.followRecheckAttempts || 0) + 1
+      : 0,
+    updatedAt: now,
+  };
   return {
-    kind: 'text',
-    text: path === 'build'
-      ? 'O prompt gratuito já está liberado acima. Teste com um projeto; se quiser criar versões para outros nichos e clientes, o Gerador está no botão que enviei.'
-      : 'O prompt gratuito já está liberado acima. Teste na sua empresa; se quiser criar versões para outras páginas, o Gerador está no botão que enviei.',
+    session,
+    message: websiteFollowGateMessage(status, session.firstName),
+    event: rechecking ? 'website_follow_rechecked' : 'website_follow_required',
+    reasonCode: status === 'not_following'
+      ? 'follow_required_before_content'
+      : 'follow_status_unavailable',
   };
 }
 
@@ -834,19 +978,18 @@ function websiteDeliveryStep(
     username: options.username?.trim() || current.username,
     profileFacts: options.profileFacts || current.profileFacts,
     stage: 'offering_product',
+    followStatus: 'following',
     promptDeliveredAt: now,
     productOfferedAt: now,
     updatedAt: now,
   };
   const messages: InstagramInteractiveMessage[] = [
-    websiteContextMessage(path),
-    createWebsitePromptCard(session, options),
-    websiteTransitionMessage(path),
+    ...createWebsitePromptTextMessages(path),
     createWebsiteProductCard(session, options),
   ];
   return {
     session,
-    message: messages[0],
+    message: messages[0]!,
     messages,
     event,
     reasonCode,
@@ -908,6 +1051,7 @@ function advanceWebsiteSitesFlow(
         communityOpenedAt: undefined,
         productOfferedAt: undefined,
         productCtaMessageId: undefined,
+        promptMessageId: undefined,
         promptCardMessageId: undefined,
         completedAt: undefined,
         updatedAt: now,
@@ -929,14 +1073,16 @@ function advanceWebsiteSitesFlow(
         reasonCode: 'technical_retry',
       };
     }
-    return websiteDeliveryStep(
-      current,
-      current.path,
-      options,
-      now,
-      'technical_retry_requested',
-      'technical_retry',
-    );
+    if (options.followStatus !== 'following') {
+      return websiteFollowGateStep(
+        current,
+        current.path,
+        options.followStatus || 'unknown',
+        options,
+        now,
+      );
+    }
+    return websiteDeliveryStep(current, current.path, options, now, 'technical_retry_requested', 'technical_retry');
   }
 
   if (current.stage === 'awaiting_request') {
@@ -954,11 +1100,55 @@ function advanceWebsiteSitesFlow(
   if (current.stage === 'awaiting_intent') {
     const path = resolveWebsiteIntent(input.payload, input.text);
     if (!path) return repeat(current, websiteRequestMessage(), now, 'intent_selection_required');
+    if (options.followStatus !== 'following') {
+      return websiteFollowGateStep(
+        current,
+        path,
+        options.followStatus || 'unknown',
+        options,
+        now,
+      );
+    }
     return websiteDeliveryStep(current, path, options, now);
   }
 
+  if (current.stage === 'awaiting_follow') {
+    if (input.payload !== SARAIVA_FLOW_PAYLOAD.followConfirmed || !current.path) {
+      return repeat(
+        current,
+        websiteFollowGateMessage(current.followStatus || 'unknown', current.firstName),
+        now,
+        'follow_confirmation_required',
+      );
+    }
+    if (options.followStatus !== 'following') {
+      return websiteFollowGateStep(
+        current,
+        current.path,
+        options.followStatus || 'unknown',
+        options,
+        now,
+      );
+    }
+    return websiteDeliveryStep(
+      current,
+      current.path,
+      options,
+      now,
+      'website_prompt_delivered_after_follow',
+      'follow_confirmed_before_content',
+    );
+  }
+
   if (current.stage === 'offering_product' || current.stage === 'offering_community') {
-    return repeat(current, websiteOfferReminder(current.path), now, 'product_cta_already_sent');
+    if (current.promptDeliveredAt) {
+      return repeat(current, websitePromptReminder(), now, 'prompt_link_already_sent');
+    }
+    return repeat(current, websiteRequestMessage(), now, 'intent_selection_required');
+  }
+
+  if (current.stage === 'completed' && current.promptDeliveredAt) {
+    return repeat(current, websitePromptReminder(), now, 'prompt_link_already_sent');
   }
 
   return repeat(current, websiteRequestMessage(), now, 'site_flow_state_recovered');
@@ -1004,7 +1194,8 @@ function normalize(value?: string): string {
 function looksLikeQuestion(value: string): boolean {
   const normalized = normalize(value);
   return value.includes('?')
-    || /^(?:como|quanto|onde|qual|quando|quem|o que|por que|porque|posso|pode|tem|isso|serve|funciona)\b/.test(normalized);
+    || /^(?:como|quanto|onde|qual|quando|quem|o que|por que|porque|posso|pode|tem|serve|funciona)\b/.test(normalized)
+    || /^isso\s+(?:serve|funciona|pode|tem)\b/.test(normalized);
 }
 
 function isButtonFlowMedia(mediaId: string): boolean {

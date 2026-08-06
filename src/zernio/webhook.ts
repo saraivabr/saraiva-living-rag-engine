@@ -3,6 +3,10 @@ import {
   PROSPECTING_FLOW_MEDIA_ID,
   WEBSITE_PROMPT_MEDIA_ID,
 } from '../campaignTrigger.js';
+import {
+  resolveFollowStatus,
+  type FollowStatus,
+} from '../instagram/followGate.js';
 
 export const ZERNIO_FLOW_PAYLOAD = {
   open: 'FLOW:SARAIVA:OPEN',
@@ -23,6 +27,7 @@ export interface ZernioInbound {
   senderId: string;
   senderName?: string;
   username?: string;
+  followStatus: FollowStatus;
   payload: string;
   text: string;
 }
@@ -136,6 +141,7 @@ export function parseZernioInbound(
     senderId,
     senderName: optionalString(sender.name),
     username: optionalString(sender.username),
+    followStatus: resolveFollowStatus(payload),
     payload: inboundPayload,
     text: stringValue(message.text)
       || stringValue(metadata.postbackTitle)

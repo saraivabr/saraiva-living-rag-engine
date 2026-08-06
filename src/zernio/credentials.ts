@@ -14,6 +14,15 @@ export interface ZernioCredentials {
 }
 
 export async function getZernioCredentials(): Promise<ZernioCredentials> {
+  if (process.env.ZERNIO_API_KEY?.trim() && process.env.ZERNIO_WEBHOOK_SECRET?.trim()) {
+    return {
+      apiKey: process.env.ZERNIO_API_KEY.trim(),
+      webhookSecret: process.env.ZERNIO_WEBHOOK_SECRET.trim(),
+      ...(process.env.INSTAGRAM_COMMUNITY_LINK_SECRET?.trim()
+        ? { communityLinkSecret: process.env.INSTAGRAM_COMMUNITY_LINK_SECRET.trim() }
+        : {}),
+    };
+  }
   if (cachedCredentials) return cachedCredentials;
   const secretId = process.env.ZERNIO_SECRET_ID?.trim();
   if (!secretId) throw new Error('zernio_secret_id_missing');

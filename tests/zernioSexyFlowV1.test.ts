@@ -25,10 +25,17 @@ import {
 import {
   applyZernioLifecycleToContext,
   isZernioLiveForSender,
+  shouldDeferToZernio,
 } from '../src/lambda.js';
 import type { LeadContext } from '../src/store/leadContextStore.js';
 
 const accountId = '6a1205a62b2567671a24e855';
+
+test('modo live deixa as mídias do fluxo exclusivamente no Zernio', () => {
+  assert.equal(shouldDeferToZernio(WEBSITE_PROMPT_MEDIA_ID, 'live'), true);
+  assert.equal(shouldDeferToZernio(WEBSITE_PROMPT_MEDIA_ID, 'shadow'), false);
+  assert.equal(shouldDeferToZernio('outra-midia', 'live'), false);
+});
 
 test('conversa arquivada é falha terminal e não deve entrar em retry', () => {
   assert.equal(isTerminalZernioConversationError(new Error(
@@ -79,7 +86,7 @@ function commentEvent(overrides: Record<string, unknown> = {}) {
   };
 }
 
-function messageEvent(input: { payload?: string; text?: string } = {}) {
+function messageEvent(input: { payload?: string; text?: string; isFollower?: boolean } = {}) {
   return {
     id: 'event-message-1',
     event: 'message.received',
@@ -93,6 +100,9 @@ function messageEvent(input: { payload?: string; text?: string } = {}) {
         id: 'instagram-user-1',
         name: 'Ana Silva',
         username: 'ana.silva',
+        instagramProfile: {
+          isFollower: input.isFollower,
+        },
       },
     },
     conversation: {
@@ -234,6 +244,47 @@ test('message.failed do card pausa a sessão e invalida o checkpoint de entrega'
   assert.equal(updated.automationJournal?.at(-1)?.result, 'technical_paused');
 });
 
+test('message.failed do texto do prompt invalida a entrega e pausa a sessão', () => {
+  const context: LeadContext = {
+    senderId: 'instagram-user-1',
+    postId: WEBSITE_PROMPT_MEDIA_ID,
+    promise: {
+      kind: 'sites_whatsapp_workshop',
+      label: 'Sites',
+      publicReply: '',
+      privateReply: '',
+    },
+    instagramFlow: {
+      id: 'saraiva-prospecting-v1',
+      campaign: 'sites_workshop',
+      stage: 'offering_product',
+      path: 'build',
+      correlationId: 'corr-failed-prompt',
+      promptDeliveredAt: '2026-07-31T12:01:00.000Z',
+      promptMessageId: 'prompt-text-mid',
+      productCtaMessageId: 'library-card-mid',
+      startedAt: '2026-07-31T12:00:00.000Z',
+      updatedAt: '2026-07-31T12:01:00.000Z',
+    },
+    updatedAt: '2026-07-31T12:01:00.000Z',
+  };
+  const updated = applyZernioLifecycleToContext(context, {
+    eventId: 'event-failed-prompt',
+    event: 'message.failed',
+    messageId: 'prompt-text-mid',
+    conversationId: 'conversation-platform-1',
+    accountId,
+    senderId: context.senderId,
+    occurredAt: '2026-07-31T12:02:00.000Z',
+  });
+
+  assert.equal(updated.instagramFlow?.stage, 'technical_paused');
+  assert.equal(updated.instagramFlow?.promptDeliveredAt, undefined);
+  assert.equal(updated.instagramFlow?.promptMessageId, undefined);
+  assert.equal(updated.instagramFlow?.productCtaMessageId, undefined);
+  assert.equal(updated.automationJournal?.at(-1)?.reasonCode, 'technical_alert');
+});
+
 test('message.failed do áudio de abandono libera somente uma nova tentativa', () => {
   const context: LeadContext = {
     senderId: 'instagram-user-1',
@@ -288,7 +339,7 @@ test('sessão nova usa o contrato e os dois caminhos prometidos no Reel', () => 
   ]);
 });
 
-test('sessão do reel de sites entrega o prompt grátis antes do Gerador de R$ 9,97', () => {
+test('sessão do reel de sites exige follow, envia o prompt em texto e só o link da Biblioteca', () => {
   const entry = createInstagramCommentFlow(WEBSITE_PROMPT_MEDIA_ID, {
     correlationId: 'corr-sites-zernio',
     transport: 'zernio',
@@ -299,17 +350,25 @@ test('sessão do reel de sites entrega o prompt grátis antes do Gerador de R$ 9
   if (entry.message.kind !== 'quick_replies') return;
   assert.deepEqual(entry.message.quickReplies.map((item) => item.title), ['MINHA EMPRESA', 'VENDER SITES']);
 
-  const delivery = advanceInstagramFlow(entry.session, {
+  const gated = advanceInstagramFlow(entry.session, {
     payload: 'FLOW:SITES:INTENT:SELL',
-  }, { firstName: 'Ana' })!;
+  }, { firstName: 'Ana', followStatus: 'not_following' })!;
+  assert.equal(gated.session.stage, 'awaiting_follow');
+  const delivery = advanceInstagramFlow(gated.session, {
+    payload: 'FLOW:SARAIVA:FOLLOW_CONFIRMED',
+  }, { firstName: 'Ana', followStatus: 'following' })!;
   assert.equal(delivery.session.stage, 'offering_product');
-  assert.equal(delivery.messages?.[1]?.kind, 'link_card');
-  assert.equal(delivery.messages?.[3]?.kind, 'link_card');
-  const serialized = JSON.stringify([entry, delivery]);
-  assert.ok(serialized.indexOf('COPIAR PROMPT') < serialized.indexOf('VER GERADOR'));
+  assert.equal(delivery.message.kind, 'text');
+  assert.equal(delivery.messages?.length, 2);
+  const serialized = JSON.stringify([entry, gated, delivery]);
+  assert.match(serialized, /JÁ SEGUI/);
+  assert.match(serialized, /PROMPT DO VÍDEO — COPIE E COLE/);
+  assert.match(serialized, /VER A BIBLIOTECA|\/instagram\/product\?/);
+  assert.doesNotMatch(serialized, /COPIAR PROMPT|\/instagram\/prompt\?/);
+  assert.equal((serialized.match(/https?:/g) || []).length, 1);
   assert.doesNotMatch(
     serialized,
-    /Cliente Pronto|Laboratório|WhatsApp|R\$19,90|qual é o seu negócio|cidade|questionário/i,
+    /Gerador|Cliente Pronto|Laboratório|qual é o seu negócio|questionário|últimas vagas|80% off|R\$ 97/i,
   );
 });
 

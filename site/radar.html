@@ -1,0 +1,669 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Radar Estratégico saraiva.ai — Inteligência & Roteiros Visuais</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-dark: #090a0f;
+      --panel-bg: rgba(18, 20, 29, 0.75);
+      --panel-border: rgba(255, 255, 255, 0.08);
+      --accent-purple: #7c3aed;
+      --accent-purple-glow: rgba(124, 58, 237, 0.35);
+      --accent-cyan: #06b6d4;
+      --accent-green: #10b981;
+      --text-main: #f3f4f6;
+      --text-muted: #9ca3af;
+      --card-bg: rgba(26, 29, 45, 0.6);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background-color: var(--bg-dark);
+      background-image: 
+        radial-gradient(at 0% 0%, rgba(124, 58, 237, 0.15) 0px, transparent 50%),
+        radial-gradient(at 100% 100%, rgba(6, 182, 212, 0.1) 0px, transparent 50%);
+      color: var(--text-main);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    header {
+      border-bottom: 1px solid var(--panel-border);
+      backdrop-filter: blur(16px);
+      background: rgba(9, 10, 15, 0.8);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      padding: 1rem 2rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .brand-logo {
+      width: 40px;
+      height: 40px;
+      background: linear-gradient(135deg, var(--accent-purple), var(--accent-cyan));
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: 'Outfit', sans-serif;
+      font-weight: 800;
+      font-size: 1.2rem;
+      box-shadow: 0 0 20px var(--accent-purple-glow);
+    }
+
+    .brand-title {
+      font-family: 'Outfit', sans-serif;
+      font-size: 1.25rem;
+      font-weight: 700;
+      letter-spacing: -0.5px;
+    }
+
+    .brand-tag {
+      font-size: 0.75rem;
+      background: rgba(124, 58, 237, 0.2);
+      color: #a78bfa;
+      padding: 0.2rem 0.6rem;
+      border-radius: 20px;
+      border: 1px solid rgba(124, 58, 237, 0.4);
+    }
+
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    .btn {
+      font-family: 'Inter', sans-serif;
+      font-weight: 600;
+      font-size: 0.875rem;
+      padding: 0.6rem 1.2rem;
+      border-radius: 10px;
+      border: none;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, var(--accent-purple), #6366f1);
+      color: #fff;
+      box-shadow: 0 4px 15px var(--accent-purple-glow);
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(124, 58, 237, 0.5);
+    }
+
+    .container {
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 2rem;
+      width: 100%;
+      flex: 1;
+      display: grid;
+      grid-template-columns: 320px 1fr;
+      gap: 2rem;
+    }
+
+    /* Sidebar */
+    .sidebar {
+      display: flex;
+      flex-direction: column;
+      gap: 1.5rem;
+    }
+
+    .card {
+      background: var(--panel-bg);
+      border: 1px solid var(--panel-border);
+      border-radius: 16px;
+      backdrop-filter: blur(12px);
+      padding: 1.5rem;
+    }
+
+    .card-title {
+      font-family: 'Outfit', sans-serif;
+      font-size: 1rem;
+      font-weight: 600;
+      margin-bottom: 1rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .creator-nav {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+
+    .creator-item {
+      padding: 0.85rem 1rem;
+      border-radius: 12px;
+      background: var(--card-bg);
+      border: 1px solid transparent;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .creator-item:hover, .creator-item.active {
+      border-color: var(--accent-purple);
+      background: rgba(124, 58, 237, 0.15);
+    }
+
+    .creator-info h4 {
+      font-size: 0.95rem;
+      font-weight: 600;
+    }
+
+    .creator-info p {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+    }
+
+    .badge-count {
+      background: rgba(255, 255, 255, 0.1);
+      font-size: 0.75rem;
+      padding: 0.2rem 0.5rem;
+      border-radius: 8px;
+    }
+
+    /* Main Content */
+    .main-content {
+      display: flex;
+      flex-direction: column;
+      gap: 2rem;
+    }
+
+    .profile-banner {
+      background: linear-gradient(135deg, rgba(124, 58, 237, 0.2), rgba(6, 182, 212, 0.1));
+      border: 1px solid rgba(124, 58, 237, 0.3);
+      border-radius: 20px;
+      padding: 1.75rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+
+    .profile-header-info {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+    }
+
+    .profile-header-info h2 {
+      font-family: 'Outfit', sans-serif;
+      font-size: 1.75rem;
+      font-weight: 700;
+    }
+
+    .profile-tags {
+      display: flex;
+      gap: 0.5rem;
+      margin-top: 0.25rem;
+    }
+
+    .tag {
+      font-size: 0.75rem;
+      background: rgba(255, 255, 255, 0.08);
+      padding: 0.25rem 0.75rem;
+      border-radius: 20px;
+      color: var(--accent-cyan);
+      border: 1px solid rgba(6, 182, 212, 0.3);
+    }
+
+    .profile-details-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1rem;
+      margin-top: 0.5rem;
+    }
+
+    .detail-box {
+      background: rgba(0, 0, 0, 0.25);
+      border-radius: 12px;
+      padding: 1rem;
+      border: 1px solid rgba(255, 255, 255, 0.05);
+    }
+
+    .detail-box h5 {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      margin-bottom: 0.35rem;
+    }
+
+    .detail-box p {
+      font-size: 0.85rem;
+      line-height: 1.4;
+    }
+
+    /* Radar Record Card */
+    .radar-card {
+      background: var(--panel-bg);
+      border: 1px solid var(--panel-border);
+      border-radius: 20px;
+      overflow: hidden;
+    }
+
+    .radar-card-header {
+      padding: 1.25rem 1.75rem;
+      border-bottom: 1px solid var(--panel-border);
+      background: rgba(255, 255, 255, 0.02);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .reel-meta {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    .reel-link {
+      color: var(--accent-cyan);
+      text-decoration: none;
+      font-size: 0.9rem;
+      font-weight: 500;
+      display: flex;
+      align-items: center;
+      gap: 0.35rem;
+    }
+
+    .reel-stats {
+      display: flex;
+      gap: 1rem;
+      font-size: 0.85rem;
+      color: var(--text-muted);
+    }
+
+    .tab-buttons {
+      display: flex;
+      background: rgba(0, 0, 0, 0.3);
+      padding: 0.25rem;
+      border-radius: 10px;
+    }
+
+    .tab-btn {
+      padding: 0.5rem 1rem;
+      border-radius: 8px;
+      border: none;
+      background: transparent;
+      color: var(--text-muted);
+      font-size: 0.85rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .tab-btn.active {
+      background: var(--accent-purple);
+      color: #fff;
+    }
+
+    .radar-card-body {
+      padding: 1.75rem;
+    }
+
+    .tab-content {
+      display: none;
+    }
+
+    .tab-content.active {
+      display: block;
+    }
+
+    /* Script View */
+    .script-container {
+      background: #0d0f17;
+      border-radius: 14px;
+      border: 1px solid rgba(124, 58, 237, 0.2);
+      padding: 1.5rem;
+      font-family: 'Inter', monospace;
+      white-space: pre-wrap;
+      line-height: 1.6;
+      font-size: 0.95rem;
+      color: #e2e8f0;
+      max-height: 550px;
+      overflow-y: auto;
+    }
+
+    .copy-bar {
+      display: flex;
+      justify-content: flex-end;
+      margin-bottom: 1rem;
+    }
+
+    .btn-secondary {
+      background: rgba(255, 255, 255, 0.1);
+      color: #fff;
+      border: 1px solid rgba(255, 255, 255, 0.15);
+    }
+
+    .btn-secondary:hover {
+      background: rgba(255, 255, 255, 0.2);
+    }
+
+    /* Loading Spinner */
+    .spinner {
+      width: 20px;
+      height: 20px;
+      border: 3px solid rgba(255, 255, 255, 0.3);
+      border-radius: 50%;
+      border-top-color: #fff;
+      animation: spin 0.8s linear infinite;
+      display: none;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    @media (max-width: 900px) {
+      .container {
+        grid-template-columns: 1fr;
+      }
+      .profile-details-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <div class="brand">
+      <div class="brand-logo">S</div>
+      <div>
+        <div class="brand-title">RADAR ESTRATÉGICO</div>
+        <div style="font-size: 0.75rem; color: var(--text-muted);">saraiva.ai • Inteligência de Viralização</div>
+      </div>
+      <span class="brand-tag">GPT-5.4-mini Engine</span>
+    </div>
+
+    <div class="header-actions">
+      <button class="btn btn-primary" id="btnRunAll">
+        <div class="spinner" id="btnSpinner"></div>
+        <span>⚡ Varredura em Tempo Real</span>
+      </button>
+    </div>
+  </header>
+
+  <div class="container">
+    <!-- Sidebar / Lista de Concorrentes -->
+    <div class="sidebar">
+      <div class="card">
+        <div class="card-title">Perfis Monitorados</div>
+        <div class="creator-nav" id="creatorList">
+          <!-- Injetado via JS -->
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">Métricas de Cobertura</div>
+        <div style="display: flex; flex-direction: column; gap: 0.75rem;">
+          <div style="display: flex; justify-content: space-between; font-size: 0.85rem;">
+            <span style="color: var(--text-muted);">Perfis Mapeados:</span>
+            <span style="font-weight: 700; color: var(--accent-green);" id="statProfilesCount">3</span>
+          </div>
+          <div style="display: flex; justify-content: space-between; font-size: 0.85rem;">
+            <span style="color: var(--text-muted);">Roteiros Gerados:</span>
+            <span style="font-weight: 700; color: var(--accent-purple);" id="statRecordsCount">0</span>
+          </div>
+          <div style="display: flex; justify-content: space-between; font-size: 0.85rem;">
+            <span style="color: var(--text-muted);">Motor de IA:</span>
+            <span style="font-weight: 600; color: var(--accent-cyan);">OpenAI GPT-5.4</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Conteúdo Principal / Dossiê & Roteiros -->
+    <div class="main-content">
+
+      <!-- Banner de Perfil -->
+      <div class="profile-banner" id="profileBanner">
+        <div class="profile-header-info">
+          <div>
+            <h2 id="profName">Selecione um Criador</h2>
+            <div class="profile-tags">
+              <span class="tag" id="profNiche">Nicho</span>
+              <span class="tag" style="color: #a78bfa; border-color: rgba(167, 139, 250, 0.3);" id="profUser">@username</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="profile-details-grid">
+          <div class="detail-box">
+            <h5>Trajetória & Autoridade</h5>
+            <p id="profBg">Background...</p>
+          </div>
+          <div class="detail-box">
+            <h5>Modelo de Negócios</h5>
+            <p id="profBiz">Modelo...</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Feed de Roteiros e Análises -->
+      <div id="radarFeed">
+        <!-- Injetado via JS -->
+      </div>
+
+    </div>
+  </div>
+
+  <script>
+    let appData = { profiles: {}, records: [] };
+    let currentFilter = 'all';
+
+    async function loadData() {
+      try {
+        const res = await fetch('/api/radar/data');
+        appData = await res.json();
+        renderSidebar();
+        renderActiveProfile();
+        renderFeed();
+      } catch (e) {
+        console.error('Erro ao carregar dados:', e);
+      }
+    }
+
+    function renderSidebar() {
+      const nav = document.getElementById('creatorList');
+      nav.innerHTML = `
+        <div class="creator-item ${currentFilter === 'all' ? 'active' : ''}" onclick="filterCreator('all')">
+          <div class="creator-info">
+            <h4>Todos os Criadores</h4>
+            <p>Visão geral unificada</p>
+          </div>
+          <span class="badge-count">${appData.records.length}</span>
+        </div>
+      `;
+
+      Object.keys(appData.profiles).forEach(user => {
+        const p = appData.profiles[user];
+        const count = appData.records.filter(r => r.concorrente.toLowerCase().includes(user.toLowerCase())).length;
+        nav.innerHTML += `
+          <div class="creator-item ${currentFilter === user ? 'active' : ''}" onclick="filterCreator('${user}')">
+            <div class="creator-info">
+              <h4>${p.name}</h4>
+              <p>@${p.username}</p>
+            </div>
+            <span class="badge-count">${count}</span>
+          </div>
+        `;
+      });
+
+      document.getElementById('statProfilesCount').innerText = Object.keys(appData.profiles).length;
+      document.getElementById('statRecordsCount').innerText = appData.records.length;
+    }
+
+    function filterCreator(user) {
+      currentFilter = user;
+      renderSidebar();
+      renderActiveProfile();
+      renderFeed();
+    }
+
+    function renderActiveProfile() {
+      const banner = document.getElementById('profileBanner');
+      if (currentFilter === 'all') {
+        document.getElementById('profName').innerText = "Visão Geral de Concorrentes";
+        document.getElementById('profNiche').innerText = "IA & Vendas Corporativas";
+        document.getElementById('profUser').innerText = "3 Perfis Mapeados";
+        document.getElementById('profBg').innerText = "Consolidação de inteligência competitiva dos principais players do nicho.";
+        document.getElementById('profBiz').innerText = "Modelagem psicanalítica e transposição para o ecossistema Saraiva.ai.";
+      } else {
+        const p = appData.profiles[currentFilter];
+        if (p) {
+          document.getElementById('profName').innerText = p.name;
+          document.getElementById('profNiche').innerText = p.niche;
+          document.getElementById('profUser').innerText = '@' + p.username;
+          document.getElementById('profBg').innerText = p.background;
+          document.getElementById('profBiz').innerText = p.businessModel;
+        }
+      }
+    }
+
+    function renderFeed() {
+      const feed = document.getElementById('radarFeed');
+      let filtered = appData.records;
+      if (currentFilter !== 'all') {
+        filtered = appData.records.filter(r => r.concorrente.toLowerCase().includes(currentFilter.toLowerCase()));
+      }
+
+      if (filtered.length === 0) {
+        feed.innerHTML = `
+          <div class="card" style="text-align: center; padding: 3rem; color: var(--text-muted);">
+            Nenhum Reel analisado para esta categoria ainda. Clique em "⚡ Varredura em Tempo Real" para disparar o motor!
+          </div>
+        `;
+        return;
+      }
+
+      feed.innerHTML = filtered.map((item, idx) => `
+        <div class="radar-card">
+          <div class="radar-card-header">
+            <div class="reel-meta">
+              <a href="${item.permalink}" target="_blank" class="reel-link">
+                ▶ Ver Reel no Instagram
+              </a>
+              <div class="reel-stats">
+                <span>Criador: <strong>@${item.concorrente}</strong></span>
+                <span>Data: ${new Date(item.date).toLocaleDateString('pt-BR')}</span>
+              </div>
+            </div>
+
+            <div class="tab-buttons">
+              <button class="tab-btn active" onclick="switchTab(${idx}, 'script')">🎬 Roteiro Visual (B-Roll)</button>
+              <button class="tab-btn" onclick="switchTab(${idx}, 'analysis')">🧠 Análise Psicanalítica</button>
+            </div>
+          </div>
+
+          <div class="radar-card-body">
+            <!-- Tab Roteiro -->
+            <div class="tab-content active" id="tab-script-${idx}">
+              <div class="copy-bar">
+                <button class="btn btn-secondary" onclick="copyScript('${idx}')">📋 Copiar Roteiro</button>
+              </div>
+              <div class="script-container" id="script-text-${idx}">${escapeHtml(item.modeledScript || 'Processando roteiro...')}</div>
+            </div>
+
+            <!-- Tab Análise -->
+            <div class="tab-content" id="tab-analysis-${idx}">
+              <div class="script-container">${escapeHtml(item.analysis || 'Sem análise disponível.')}</div>
+            </div>
+          </div>
+        </div>
+      `).join('<div style="height: 1.5rem;"></div>');
+    }
+
+    function switchTab(idx, tabType) {
+      const card = document.querySelectorAll('.radar-card')[idx];
+      if (!card) return;
+
+      const btns = card.querySelectorAll('.tab-btn');
+      btns.forEach(b => b.classList.remove('active'));
+
+      const scriptTab = document.getElementById(`tab-script-${idx}`);
+      const analysisTab = document.getElementById(`tab-analysis-${idx}`);
+
+      if (tabType === 'script') {
+        btns[0].classList.add('active');
+        scriptTab.classList.add('active');
+        analysisTab.classList.remove('active');
+      } else {
+        btns[1].classList.add('active');
+        analysisTab.classList.add('active');
+        scriptTab.classList.remove('active');
+      }
+    }
+
+    function copyScript(idx) {
+      const el = document.getElementById(`script-text-${idx}`);
+      if (!el) return;
+      navigator.clipboard.writeText(el.innerText);
+      alert('Roteiro copiado para a área de transferência!');
+    }
+
+    function escapeHtml(text) {
+      return text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+    }
+
+    // Botão de Disparo em Tempo Real
+    document.getElementById('btnRunAll').addEventListener('click', async () => {
+      const btn = document.getElementById('btnRunAll');
+      const spinner = document.getElementById('btnSpinner');
+      btn.disabled = true;
+      spinner.style.display = 'block';
+
+      try {
+        await fetch('/api/radar/trigger', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username: currentFilter === 'all' ? null : currentFilter })
+        });
+        await loadData();
+        alert('Varredura em tempo real concluída com sucesso!');
+      } catch (e) {
+        alert('Erro durante a varredura: ' + e);
+      } finally {
+        btn.disabled = false;
+        spinner.style.display = 'none';
+      }
+    });
+
+    // Iniciar
+    loadData();
+  </script>
+</body>
+</html>

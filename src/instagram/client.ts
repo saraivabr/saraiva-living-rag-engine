@@ -333,3 +333,9 @@ export function serializeInteractiveMessage(
     },
   };
 }
+
+export async function getBusinessDiscovery(targetUsername: string): Promise<any> {
+  const userId = await resolveUserId();
+  const fields = `business_discovery.username(${targetUsername}){followers_count,media_count,media.limit(50){id,comments_count,like_count,caption,media_url,permalink,timestamp,media_type,thumbnail_url}}`;
+  return get(userId, { fields });
+}

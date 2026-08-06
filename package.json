@@ -11,6 +11,11 @@
     "once": "tsx src/index.ts --once",
     "ops:instagram": "node scripts/check-instagram-ops.mjs",
     "ops:instagram:media": "node scripts/check-instagram-ops.mjs --check-media",
+    "radar": "npm run build && node scripts/radar/run-radar.mjs",
+    "radar:all": "npm run build && node scripts/radar/run-radar.mjs --all",
+    "radar:daemon": "npm run build && node scripts/radar/run-radar-daemon.mjs",
+    "radar:web": "npm run build && node scripts/radar/serve-radar.mjs",
+    "radar:setup": "node scripts/radar/setup-airtable.mjs",
     "schedule:instagram": "node scripts/schedule-instagram-batch.mjs",
     "backfill:media-context": "tsx src/backfillMediaContext.ts",
     "recover:website-prompt-leads": "tsx src/recoverWebsitePromptLeads.ts",
@@ -31,7 +36,9 @@
     "@aws-sdk/client-ssm": "^3.1070.0",
     "@aws-sdk/s3-request-presigner": "^3.1082.0",
     "@ffmpeg-installer/linux-x64": "^4.1.0",
-    "dotenv": "^16.4.7"
+    "@google/generative-ai": "^0.24.1",
+    "dotenv": "^16.4.7",
+    "openai": "^7.3.0"
   },
   "devDependencies": {
     "@types/node": "^22.10.2",

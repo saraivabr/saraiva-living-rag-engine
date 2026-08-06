@@ -3,7 +3,7 @@ import { normalizePostPromise, type PostPromise, type SocialSellingState } from 
 import type { InstagramFlowSession } from '../instagram/automationFlow.js';
 import type { ProfileFact } from '../instagram/profilePersonalization.js';
 
-const tableName = process.env.DYNAMODB_TABLE?.trim() || '';
+const tableName = process.env.DYNAMODB_TABLE?.trim() || 'respondedor-instagram-state';
 const storeAccount = process.env.STORE_ACCOUNT?.trim() || process.env.IG_USER_ID?.trim() || 'default';
 const dynamo = new DynamoDBClient({});
 

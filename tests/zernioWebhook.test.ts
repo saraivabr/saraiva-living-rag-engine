@@ -18,7 +18,10 @@ test('reconhece somente a rota dedicada do Zernio', () => {
   assert.equal(isZernioWebhookPath('/chatrace'), false);
 });
 
-function messageEvent(payload = 'FLOW:SARAIVA:OPEN') {
+function messageEvent(
+  payload = 'FLOW:SARAIVA:OPEN',
+  isFollower: boolean | 'unknown' = true,
+) {
   return {
     id: 'event-123',
     event: 'message.received',
@@ -34,6 +37,7 @@ function messageEvent(payload = 'FLOW:SARAIVA:OPEN') {
         id: 'instagram-user-123',
         name: 'Ana Silva',
         username: 'ana.silva',
+        instagramProfile: isFollower === 'unknown' ? {} : { isFollower },
       },
       sentAt: '2026-07-31T12:00:00.000Z',
       isRead: false,
@@ -79,6 +83,7 @@ test('aceita somente postback recebido no Instagram e na conta saraiva.ai', () =
     senderId: 'instagram-user-123',
     senderName: 'Ana Silva',
     username: 'ana.silva',
+    followStatus: 'following',
     payload: 'FLOW:SARAIVA:OPEN',
     text: 'QUERO VER',
   });
@@ -91,6 +96,12 @@ test('aceita somente postback recebido no Instagram e na conta saraiva.ai', () =
     ...messageEvent(),
     message: { ...messageEvent().message, direction: 'outgoing' },
   }, accountId), undefined);
+});
+
+test('preserva o status de follow informado pelo Zernio sem inferir ausente', () => {
+  assert.equal(parseZernioInbound(messageEvent('FLOW:SARAIVA:OPEN', true), accountId)?.followStatus, 'following');
+  assert.equal(parseZernioInbound(messageEvent('FLOW:SARAIVA:OPEN', false), accountId)?.followStatus, 'not_following');
+  assert.equal(parseZernioInbound(messageEvent('FLOW:SARAIVA:OPEN', 'unknown'), accountId)?.followStatus, 'unknown');
 });
 
 test('clique QUERO COPIAR gera os dois caminhos como postbacks clicáveis', () => {

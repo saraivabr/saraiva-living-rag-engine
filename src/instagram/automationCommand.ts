@@ -25,6 +25,7 @@ export interface InstagramAutomationOutcomeV1 {
     | 'awaiting_intent'
     | 'awaiting_name'
     | 'awaiting_path'
+    | 'awaiting_follow'
     | 'awaiting_goal'
     | 'awaiting_ready_goal'
     | 'awaiting_business'

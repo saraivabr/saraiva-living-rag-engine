@@ -1,3 +1,5 @@
+import { runAirtableInsightsSync, logInteractionToAirtableAsync } from './crm/syncInsightsRunner.js';
+
 import { runCycle } from './responder.js';
 import { createHash, createHmac, randomUUID, timingSafeEqual } from 'node:crypto';
 import {
@@ -102,6 +104,21 @@ import {
   type AgencySubscription,
 } from './payments/woovi.js';
 import {
+  PROMPT_LIBRARY_OFFER_KEY,
+  PROMPT_LIBRARY_PRICE_KEY,
+  PROMPT_LIBRARY_VALUE_CENTS,
+  createPromptLibraryAccessToken,
+  createPromptLibraryCharge,
+  getPromptLibraryCharge,
+  isPromptLibraryCorrelationId,
+  parseCompletedPromptLibraryPayment,
+  promptLibraryAccessUrl,
+  promptLibraryCorrelationId,
+  verifyPromptLibraryAccessToken,
+  verifyPromptLibraryWebhook,
+  type CompletedPromptLibraryPayment,
+} from './payments/promptLibrary.js';
+import {
   buildClientReadyKit,
   buildReadySitePrompt,
   businessPromptData,
@@ -139,6 +156,7 @@ interface LambdaEvent {
   action?: string;
   limit?: number;
   dryRun?: boolean;
+  usernames?: string[];
   shortcodes?: string[];
   slug?: string;
   imageUrl?: string;
@@ -312,6 +330,20 @@ interface WebsiteGuidePaymentRecord {
     generatedAt?: string;
     resetAt: string;
   }>;
+}
+
+interface PromptLibraryPaymentRecord {
+  correlationId: string;
+  senderId: string;
+  value: number;
+  status: string;
+  paymentLinkUrl: string;
+  createdAt: string;
+  lead: WebsiteGuideLeadProfile;
+  transactionId?: string;
+  paidAt?: string;
+  accessGrantedAt?: string;
+  analyticsSyncedAt?: string;
 }
 
 export const WEBSITE_GUIDE_GENERATION_LIMIT = 10;
@@ -531,8 +563,9 @@ const clientReadyPluginKey = 'instagram/saraiva-os/cliente-pronto-extension-v0.1
 const ZERNIO_ABANDONMENT_AUDIO_ACTIVATION_AT = Date.parse('2026-07-31T05:44:53.000Z');
 
 type ScheduledPublishResponse = { ok: boolean; slug: string; mediaId: string };
+type RadarResponse = { ok: boolean; finishedAt: string; usernamesProcessed?: string[]; results?: any[] };
 
-export async function handler(event?: LambdaEvent): Promise<CycleResponse | ScheduledPublishResponse | LambdaResponse | CalendarSyncSummary | SqsBatchResponse> {
+export async function handler(event?: LambdaEvent): Promise<CycleResponse | ScheduledPublishResponse | LambdaResponse | CalendarSyncSummary | SqsBatchResponse | RadarResponse> {
   if (event?.Records?.length) {
     return handleInstagramAutomationRecords(event.Records);
   }
@@ -551,6 +584,16 @@ export async function handler(event?: LambdaEvent): Promise<CycleResponse | Sche
   if (event?.action === 'publishVideo') {
     return publishScheduledVideo(event);
   }
+
+  if (event?.action === 'syncAirtableInsights') {
+    await runAirtableInsightsSync();
+    return {
+      ok: true,
+      finishedAt: new Date().toISOString(),
+    };
+  }
+
+
 
   if (event?.action === 'syncCalendarBio' || event?.action === 'syncCalendar') {
     return syncCalendarBio();
@@ -1588,15 +1631,23 @@ async function handleHttp(event: LambdaEvent): Promise<LambdaResponse> {
   const path = event.rawPath || event.path || event.requestContext?.http?.path || '';
 
   if (method === 'OPTIONS') {
-    return path.startsWith('/checkout/website-guide') ? storefrontEmpty(204) : empty(204);
+    return path.startsWith('/checkout/') ? storefrontEmpty(204) : empty(204);
   }
 
   if (path.startsWith('/api/planner')) {
     return handlePlannerHttp(event);
   }
 
+  if (path.startsWith('/checkout/prompt-library')) {
+    return handlePromptLibraryStorefrontHttp(event, method, path);
+  }
+
   if (path.startsWith('/checkout/website-guide')) {
-    return handleWebsiteGuideStorefrontHttp(event, method, path);
+    return storefrontJson(410, {
+      ok: false,
+      error: 'produto_encerrado',
+      redirectUrl: 'https://app.saraiva.ai/quero-o-prompt',
+    });
   }
 
   const trackedInstagramKind = path.match(/^\/instagram\/(example|community|prompt|product)$/)?.[1] as TrackedFlowKind | undefined;
@@ -1695,8 +1746,8 @@ async function handleInstagramTrackedRedirect(
       return text(404, 'flow not found');
     }
     const openedAt = new Date().toISOString();
-    const action = kind === 'prompt' ? 'open_free_prompt' : 'open_prompt_generator';
-    const result = kind === 'prompt' ? 'free_prompt_opened' : 'prompt_generator_opened';
+    const action = kind === 'prompt' ? 'open_free_prompt' : 'open_prompt_library';
+    const result = kind === 'prompt' ? 'free_prompt_opened' : 'prompt_library_opened';
     await saveLeadContext({
       ...context,
       instagramFlow: {
@@ -1715,12 +1766,30 @@ async function handleInstagramTrackedRedirect(
         reasonCode: result,
       }),
     });
-    const destinationUrl = new URL(kind === 'prompt'
-      ? 'https://app.saraiva.ai/prompt-do-video'
-      : 'https://app.saraiva.ai/quero-o-prompt');
+    const destinationUrl = new URL('https://app.saraiva.ai/quero-o-prompt');
     destinationUrl.searchParams.set('correlationId', correlationId);
     destinationUrl.searchParams.set('intent', intent);
-    if (kind === 'product') destinationUrl.searchParams.set('campaign', 'quero_o_prompt');
+    if (kind === 'product') {
+      const issuedAt = Math.floor(Date.now() / 1_000);
+      destinationUrl.searchParams.set('campaign', 'quero_o_prompt');
+      destinationUrl.searchParams.set('sourceIntent', intent);
+      destinationUrl.searchParams.set('sourceIssuedAt', String(issuedAt));
+function createStorefrontAttributionSignature(correlationId: string, intent: string, issuedAt: number, secret: string): string {
+  return createHmac('sha256', secret)
+    .update(`${correlationId}:${intent}:${issuedAt}`)
+    .digest('hex');
+}
+
+      destinationUrl.searchParams.set(
+        'sourceSignature',
+        createStorefrontAttributionSignature(
+          correlationId,
+          intent,
+          issuedAt,
+          credentials.communityLinkSecret,
+        ),
+      );
+    }
     return redirect(destinationUrl.toString());
   }
 
@@ -1842,12 +1911,17 @@ async function handleZernioHttp(
       eventId: input.eventId,
       inbound: input,
     }),
-    onMessage: async (input) => enqueueZernioAutomation({
-      version: 'zernio-1',
-      kind: 'message',
-      eventId: input.eventId,
-      inbound: input,
-    }),
+    onMessage: async (input) => {
+      // Loga a DM p/ Airtable em tempo real
+      logInteractionToAirtableAsync(input.text, input.senderId || 'user', input.eventId, 'DM').catch(console.error);
+
+      return enqueueZernioAutomation({
+        version: 'zernio-1',
+        kind: 'message',
+        eventId: input.eventId,
+        inbound: input,
+      });
+    },
     onLifecycle: async (input) => enqueueZernioAutomation({
       version: 'zernio-1',
       kind: 'lifecycle',
@@ -1975,6 +2049,8 @@ export function applyZernioLifecycleToContext(
     && input.messageId === session.initialMessageId;
   const failedCard = input.event === 'message.failed'
     && input.messageId === context.personalizedOffer?.cardMessageId;
+  const failedWebsitePrompt = input.event === 'message.failed'
+    && input.messageId === session.promptMessageId;
   const failedWebsiteCard = input.event === 'message.failed'
     && (
       input.messageId === session.promptCardMessageId
@@ -1986,7 +2062,7 @@ export function applyZernioLifecycleToContext(
     && input.messageId === session.abandonmentAudioMessageId;
   const failedWebsiteFollowUp = input.event === 'message.failed'
     && input.messageId === session.followUpMessageId;
-  const criticalFailure = failedInitial || failedCard || failedAudio || failedWebsiteCard;
+  const criticalFailure = failedInitial || failedCard || failedAudio || failedWebsitePrompt || failedWebsiteCard;
 
   return {
     ...context,
@@ -2002,10 +2078,12 @@ export function applyZernioLifecycleToContext(
         followUpMessageId: undefined,
         followUpSentAt: undefined,
       } : {}),
-      ...(failedWebsiteCard ? {
+      ...(failedWebsitePrompt || failedWebsiteCard ? {
+        promptMessageId: undefined,
         promptCardMessageId: undefined,
         productCtaMessageId: undefined,
       } : {}),
+      ...(failedWebsitePrompt ? { promptDeliveredAt: undefined } : {}),
       ...(criticalFailure ? { stage: 'technical_paused' as const } : {}),
       updatedAt: now,
     },
@@ -2416,8 +2494,9 @@ async function processZernioMessage(
       firstName: profileBrief.firstName,
       username: profileBrief.username,
       profileFacts: profileBrief.facts,
+      followStatus: input.followStatus,
   };
-  let generativeSource: 'bedrock' | 'fallback' | undefined;
+  let generativeSource: 'motor' | 'bedrock' | 'fallback' | undefined;
   let generativeFallbackReason: string | undefined;
   const flowStep: InstagramFlowStep | undefined = shouldAdvanceInstagramFlow(currentSession, flowInput)
     ? advanceInstagramFlow(currentSession, flowInput, flowOptions)
@@ -2433,7 +2512,7 @@ async function processZernioMessage(
           session: { ...currentSession, updatedAt: new Date().toISOString() },
           message: conversational.message,
           event: 'conversation_recovered',
-          reasonCode: conversational.source === 'bedrock'
+          reasonCode: conversational.source !== 'fallback'
             ? 'generative_reply_with_flow_resume'
             : 'deterministic_reply_with_flow_resume',
           offer: undefined,
@@ -2487,7 +2566,11 @@ async function processZernioMessage(
   }
 
   const flowMessages = flowStep.messages?.length ? flowStep.messages : [flowStep.message];
-  if (flowStep.session.campaign === 'sites_workshop' && flowStep.messages?.length) {
+  if (
+    flowStep.session.campaign === 'sites_workshop'
+    && flowStep.session.promptDeliveredAt
+    && flowStep.session.promptDeliveredAt !== currentSession.promptDeliveredAt
+  ) {
     if (!process.env.INSTAGRAM_COMMUNITY_LINK_SECRET?.trim()) {
       throw new Error('instagram_link_secret_missing');
     }
@@ -2582,11 +2665,13 @@ async function processZernioMessage(
   }
   const messageId = messageIds.at(-1) || '';
   const outboundMessages = flowMessages.map((message) => summarizeInteractiveMessage(message));
-  const persistedFlowSession = flowStep.session.campaign === 'sites_workshop' && messageIds.length === 4
-    ? {
+  const persistedFlowSession = flowStep.session.campaign === 'sites_workshop'
+    && flowStep.session.promptDeliveredAt
+    && messageIds.length > 1
+      ? {
         ...flowStep.session,
-        promptCardMessageId: messageIds[1],
-        productCtaMessageId: messageIds[3],
+        promptMessageId: messageIds[0],
+        productCtaMessageId: messageIds.at(-1),
       }
     : flowStep.session;
   await saveLeadContext({
@@ -3885,6 +3970,15 @@ async function handleWebhookPayload(
       try {
         const context = await getLeadContext(senderId);
         if (
+          context?.instagramFlow?.transport === 'zernio'
+          && shouldDeferToZernio(context.postId)
+        ) {
+          console.info('Direct ignorado no Graph porque o fluxo pertence ao Zernio', {
+            postId: context.postId,
+          });
+          continue;
+        }
+        if (
           config.behavior.commentCampaignMediaIds.length > 0
           && (!context?.postId || !config.behavior.commentCampaignMediaIds.includes(context.postId))
         ) {
@@ -3924,6 +4018,7 @@ async function handleWebhookPayload(
               firstName: profileBrief?.firstName,
               username: profileBrief?.username,
               profileFacts: profileBrief?.facts,
+              followStatus: context.instagramFlow.followStatus,
             })
           : undefined;
         if (flowStep && context) {
@@ -3973,7 +4068,11 @@ async function handleWebhookPayload(
             };
             outboundText = `${personalizedOffer.script}\n${summarizeInteractiveMessage(flowStep.offer.card)}`;
           } else {
-            if (flowStep.session.campaign === 'sites_workshop' && flowStep.messages?.length) {
+            if (
+              flowStep.session.campaign === 'sites_workshop'
+              && flowStep.session.promptDeliveredAt
+              && flowStep.session.promptDeliveredAt !== context.instagramFlow?.promptDeliveredAt
+            ) {
               if (!process.env.INSTAGRAM_COMMUNITY_LINK_SECRET?.trim()) {
                 throw new Error('instagram_link_secret_missing');
               }
@@ -4001,11 +4100,15 @@ async function handleWebhookPayload(
             for (const message of flowMessages) {
               sentMessageIds.push(await sendDirectInteractive(senderId, message));
             }
-            if (flowStep.session.campaign === 'sites_workshop' && sentMessageIds.length === 4) {
+            if (
+              flowStep.session.campaign === 'sites_workshop'
+              && flowStep.session.promptDeliveredAt
+              && sentMessageIds.length > 1
+            ) {
               persistedSession = {
                 ...flowStep.session,
-                promptCardMessageId: sentMessageIds[1],
-                productCtaMessageId: sentMessageIds[3],
+                promptMessageId: sentMessageIds[0],
+                productCtaMessageId: sentMessageIds.at(-1),
               };
             }
           }
@@ -4278,6 +4381,9 @@ async function handleCommentWebhookChange(
   if (value.parent_id) return 0;
   if (!['comments', 'live_comments'].includes(field)) return 0;
 
+  // Envia p/ Airtable de forma não bloqueante (Promessa solta / background)
+  logInteractionToAirtableAsync(value.text, value.from?.username || 'user', value.id, 'Comentário').catch(console.error);
+
   if (
     config.behavior.commentCampaignMediaIds.length > 0
     && !config.behavior.commentCampaignMediaIds.includes(value.media.id)
@@ -4294,6 +4400,13 @@ async function handleCommentWebhookChange(
       commentId: value.id,
       mediaId: value.media.id,
       username: value.from?.username,
+    });
+    return 0;
+  }
+
+  if (shouldDeferToZernio(value.media.id)) {
+    console.info('Comentario ignorado no Graph porque a midia pertence ao Zernio', {
+      mediaId: value.media.id,
     });
     return 0;
   }
@@ -4475,8 +4588,15 @@ function isZernioFlowMedia(mediaId?: string): boolean {
     || mediaId === WEBSITE_PROMPT_MEDIA_ID;
 }
 
+export function shouldDeferToZernio(
+  mediaId?: string,
+  mode = process.env.ZERNIO_SEXYFLOW_MODE?.trim() || 'shadow',
+): boolean {
+  return mode === 'live' && isZernioFlowMedia(mediaId);
+}
+
 async function resolveCommerceReply(
-  senderId: string,
+  _senderId: string,
   inboundText: string,
   turn: ReturnType<typeof buildSocialSellingTurn>,
   fallbackReply: string,
@@ -4487,25 +4607,12 @@ async function resolveCommerceReply(
   ) {
     return { reply: fallbackReply, source: 'bedrock_or_fallback' };
   }
-  const orderId = await websiteGuideOrderIdForSender(senderId);
-  const correlationId = websiteGuideCorrelationId(senderId, new Date(), orderId);
-  const charge = await createWebsiteGuideCharge({
-    appId: process.env.WOOVI_APP_ID || '',
-    senderId,
-    orderId,
-    redirectUrl: `${(process.env.WEBSITE_GUIDE_STOREFRONT_URL || 'https://loja.saraiva.ai').replace(/\/+$/, '')}/obrigado?pedido=${encodeURIComponent(correlationId)}`,
-    baseUrl: process.env.WOOVI_BASE_URL,
-  });
-  await saveWebsiteGuidePayment(senderId, charge);
-  await putWebsiteGuideCheckoutIntent({
-    senderId,
-    orderId,
-    correlationId: charge.correlationId,
-    updatedAt: new Date().toISOString(),
-  });
   return {
-    reply: buildWebsiteGuideCheckoutReply(charge),
-    source: 'woovi',
+    reply: [
+      'A oferta antiga foi encerrada. A Biblioteca Secreta tem 24 prompts prontos para Sites, CRMs, Sistemas e Automações por R$ 19,90 no Pix.',
+      'https://app.saraiva.ai/quero-o-prompt',
+    ].join('\n\n'),
+    source: 'bedrock_or_fallback',
   };
 }
 
@@ -4580,6 +4687,304 @@ function cleanWebsiteGuideLeadText(value: unknown, maxLength: number): string {
   return typeof value === 'string'
     ? value.replace(/\s+/g, ' ').trim().slice(0, maxLength)
     : '';
+}
+
+async function handlePromptLibraryStorefrontHttp(
+  event: LambdaEvent,
+  method: string,
+  path: string,
+): Promise<LambdaResponse> {
+  if (path.endsWith('/lead-checkout')) {
+    return handlePromptLibraryLeadCheckout(event, method);
+  }
+  if (path.endsWith('/access')) {
+    return handlePromptLibraryAccess(event, method);
+  }
+  return storefrontJson(404, { ok: false, error: 'route_not_found' });
+}
+
+async function handlePromptLibraryLeadCheckout(
+  event: LambdaEvent,
+  method: string,
+): Promise<LambdaResponse> {
+  if (method !== 'POST') {
+    return storefrontJson(405, { ok: false, error: 'method_not_allowed' });
+  }
+  if (!tableName) {
+    return storefrontJson(503, { ok: false, error: 'payment_store_unavailable' });
+  }
+  const accessSecret = process.env.PROMPT_LIBRARY_ACCESS_SECRET?.trim() || '';
+  if (accessSecret.length < 32) {
+    return storefrontJson(503, { ok: false, error: 'access_secret_not_configured' });
+  }
+  const payload = parseWebsiteGuideBody(event);
+  let lead: WebsiteGuideLeadProfile;
+  try {
+    lead = normalizeWebsiteGuideLead(payload);
+  } catch (error) {
+    return storefrontJson(400, { ok: false, error: (error as Error).message });
+  }
+  const session = cleanWebsiteGuideLeadText(payload.session, 80).toLowerCase();
+  const purchase = cleanWebsiteGuideLeadText(payload.purchase, 80).toLowerCase();
+  if (!/^[a-z0-9-]{16,80}$/.test(session)) {
+    return storefrontJson(400, { ok: false, error: 'sessao_invalida' });
+  }
+  if (!/^[a-f0-9-]{16,80}$/.test(purchase)) {
+    return storefrontJson(400, { ok: false, error: 'compra_invalida' });
+  }
+
+  try {
+    const senderId = `store:${session}`;
+    const correlationId = promptLibraryCorrelationId(senderId, purchase);
+    const token = createPromptLibraryAccessToken(correlationId, accessSecret);
+    const accessUrl = promptLibraryAccessUrl({
+      baseUrl: promptLibraryStorefrontUrl(),
+      correlationId,
+      token,
+    });
+    const existing = await getPromptLibraryPayment(correlationId);
+    if (hasPromptLibraryAccess(existing)) {
+      return storefrontJson(200, { ok: true, checkoutUrl: accessUrl });
+    }
+    if (existing?.paymentLinkUrl && existing.status.toUpperCase() !== 'COMPLETED') {
+      return storefrontJson(200, { ok: true, checkoutUrl: existing.paymentLinkUrl });
+    }
+
+    const charge = await createPromptLibraryCharge({
+      appId: process.env.WOOVI_APP_ID || '',
+      correlationId,
+      redirectUrl: accessUrl,
+      baseUrl: process.env.WOOVI_BASE_URL,
+    });
+    await putPromptLibraryPayment({
+      correlationId,
+      senderId,
+      value: charge.value,
+      status: charge.status,
+      paymentLinkUrl: charge.paymentLinkUrl,
+      createdAt: new Date().toISOString(),
+      lead,
+      transactionId: charge.transactionId,
+      paidAt: charge.paidAt,
+    });
+    return storefrontJson(200, { ok: true, checkoutUrl: charge.paymentLinkUrl });
+  } catch (error) {
+    console.warn('prompt_library_checkout_failed', {
+      error: (error as Error).message,
+    });
+    return storefrontJson(502, {
+      ok: false,
+      error: 'nao_foi_possivel_abrir_o_pix',
+    });
+  }
+}
+
+async function handlePromptLibraryAccess(
+  event: LambdaEvent,
+  method: string,
+): Promise<LambdaResponse> {
+  if (method !== 'GET') {
+    return storefrontJson(405, { ok: false, error: 'method_not_allowed' });
+  }
+  const correlationId = String(event.queryStringParameters?.pedido || '').trim();
+  const token = String(event.queryStringParameters?.token || '').trim();
+  const tokenValid = verifyPromptLibraryAccessToken({
+    correlationId,
+    token,
+    currentSecret: process.env.PROMPT_LIBRARY_ACCESS_SECRET || '',
+    previousSecret: process.env.PROMPT_LIBRARY_ACCESS_SECRET_PREVIOUS,
+  });
+  if (!tokenValid) {
+    return storefrontJson(403, { ok: false, accessGranted: false, status: 'INVALID' });
+  }
+
+  let record = await getPromptLibraryPayment(correlationId);
+  if (!record) {
+    return storefrontJson(404, { ok: false, accessGranted: false, status: 'NOT_FOUND' });
+  }
+  if (!hasPromptLibraryAccess(record)) {
+    try {
+      const charge = await getPromptLibraryCharge({
+        appId: process.env.WOOVI_APP_ID || '',
+        correlationId,
+        baseUrl: process.env.WOOVI_BASE_URL,
+      });
+      if (charge.status.toUpperCase() === 'COMPLETED') {
+        record = await completePromptLibraryPayment(record, {
+          correlationId,
+          value: charge.value,
+          transactionId: charge.transactionId,
+          paidAt: charge.paidAt,
+        });
+      } else if (record.status !== charge.status) {
+        record = { ...record, status: charge.status };
+        await putPromptLibraryPayment(record);
+      }
+    } catch (error) {
+      console.warn('prompt_library_access_refresh_failed', {
+        correlationId,
+        error: (error as Error).message,
+      });
+    }
+  }
+
+  const accessGranted = hasPromptLibraryAccess(record);
+  if (accessGranted) {
+    await syncPromptLibraryFunnelEvent({
+      eventKey: `library_opened:${correlationId}`,
+      eventName: 'library_opened',
+      correlationId,
+      occurredAt: new Date().toISOString(),
+    });
+  }
+  return storefrontJson(200, {
+    ok: true,
+    paid: Boolean(record.paidAt),
+    accessGranted,
+    status: record.status,
+  });
+}
+
+function promptLibraryStorefrontUrl(): string {
+  return (process.env.PROMPT_LIBRARY_STOREFRONT_URL || 'https://app.saraiva.ai')
+    .replace(/\/+$/, '');
+}
+
+function hasPromptLibraryAccess(
+  record?: Pick<PromptLibraryPaymentRecord, 'status' | 'paidAt' | 'accessGrantedAt'>,
+): boolean {
+  return Boolean(
+    record
+    && record.status.toUpperCase() === 'COMPLETED'
+    && record.paidAt
+    && record.accessGrantedAt,
+  );
+}
+
+async function getPromptLibraryPayment(
+  correlationId: string,
+): Promise<PromptLibraryPaymentRecord | undefined> {
+  if (!tableName || !isPromptLibraryCorrelationId(correlationId)) return undefined;
+  const response = await dynamo.send(new GetItemCommand({
+    TableName: tableName,
+    Key: {
+      pk: { S: `${storeAccount}#prompt-library-payments` },
+      sk: { S: correlationId },
+    },
+    ConsistentRead: true,
+  }));
+  const raw = response.Item?.data?.S;
+  if (!raw) return undefined;
+  try {
+    return JSON.parse(raw) as PromptLibraryPaymentRecord;
+  } catch {
+    return undefined;
+  }
+}
+
+async function putPromptLibraryPayment(record: PromptLibraryPaymentRecord): Promise<void> {
+  if (!tableName) throw new Error('payment_store_unavailable');
+  await dynamo.send(new PutItemCommand({
+    TableName: tableName,
+    Item: {
+      pk: { S: `${storeAccount}#prompt-library-payments` },
+      sk: { S: record.correlationId },
+      status: { S: record.status },
+      updatedAt: { S: new Date().toISOString() },
+      data: { S: JSON.stringify(record) },
+    },
+  }));
+}
+
+async function completePromptLibraryPayment(
+  record: PromptLibraryPaymentRecord,
+  payment: CompletedPromptLibraryPayment,
+): Promise<PromptLibraryPaymentRecord> {
+  if (hasPromptLibraryAccess(record)) return record;
+  if (
+    payment.correlationId !== record.correlationId
+    || payment.value !== PROMPT_LIBRARY_VALUE_CENTS
+  ) {
+    throw new Error('prompt_library_payment_mismatch');
+  }
+  const now = new Date().toISOString();
+  const paidAt = payment.paidAt || record.paidAt || now;
+  const accessGrantedAt = record.accessGrantedAt || now;
+  const completed: PromptLibraryPaymentRecord = {
+    ...record,
+    status: 'COMPLETED',
+    transactionId: payment.transactionId || record.transactionId,
+    paidAt,
+    accessGrantedAt,
+  };
+  await putPromptLibraryPayment(completed);
+  await syncPromptLibraryFunnelEvent({
+    eventKey: `purchase_completed:${record.correlationId}`,
+    eventName: 'purchase_completed',
+    correlationId: record.correlationId,
+    occurredAt: paidAt,
+    transactionId: completed.transactionId,
+  });
+  await syncPromptLibraryFunnelEvent({
+    eventKey: `access_granted:${record.correlationId}`,
+    eventName: 'access_granted',
+    correlationId: record.correlationId,
+    occurredAt: accessGrantedAt,
+    transactionId: completed.transactionId,
+  });
+  return completed;
+}
+
+async function syncPromptLibraryFunnelEvent(input: {
+  eventKey: string;
+  eventName: string;
+  correlationId: string;
+  occurredAt: string;
+  transactionId?: string;
+}): Promise<void> {
+  const secret = process.env.FUNNEL_HMAC_SECRET?.trim() || '';
+  if (!secret) return;
+  const endpoint = process.env.FUNNEL_EVENT_ENDPOINT?.trim()
+    || 'https://app.saraiva.ai/api/internal/funnel/events';
+  const body = JSON.stringify({
+    eventKey: input.eventKey,
+    eventName: input.eventName,
+    correlationId: input.correlationId,
+    campaign: 'quero_o_prompt',
+    intent: 'ter',
+    source: 'woovi',
+    productKey: 'prompt_library',
+    priceKey: PROMPT_LIBRARY_PRICE_KEY,
+    occurredAt: input.occurredAt,
+    timestamp: Date.now(),
+    provider: 'woovi',
+    amountCents: PROMPT_LIBRARY_VALUE_CENTS,
+    transactionId: input.transactionId,
+    payload: { offerKey: PROMPT_LIBRARY_OFFER_KEY },
+  });
+  const signature = createHmac('sha256', secret).update(body).digest('hex');
+  try {
+    const response = await fetch(endpoint, {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json',
+        'x-funnel-hmac-sha256': signature,
+      },
+      body,
+      signal: AbortSignal.timeout(8_000),
+    });
+    if (!response.ok) {
+      console.warn('prompt_library_funnel_sync_rejected', {
+        eventName: input.eventName,
+        status: response.status,
+      });
+    }
+  } catch (error) {
+    console.warn('prompt_library_funnel_sync_failed', {
+      eventName: input.eventName,
+      error: (error as Error).message,
+    });
+  }
 }
 
 async function handleWebsiteGuideFreeAccess(
@@ -5772,6 +6177,53 @@ async function handleWooviHttp(
   rawBody: string,
 ): Promise<LambdaResponse> {
   const headers = event.headers || {};
+  let payload: unknown;
+  try {
+    payload = rawBody ? JSON.parse(rawBody) : {};
+  } catch {
+    return json(400, { ok: false, error: 'invalid json' });
+  }
+
+  const promptLibraryPayment = parseCompletedPromptLibraryPayment(payload);
+  if (promptLibraryPayment) {
+    const authorized = verifyPromptLibraryWebhook({
+      rawBody,
+      wooviSignature: header(headers, 'x-webhook-signature'),
+      hmacSignature: header(headers, 'x-openpix-signature'),
+      hmacSecret: process.env.WOOVI_WEBHOOK_HMAC_SECRET,
+    });
+    if (!authorized) {
+      console.warn('prompt_library_webhook_rejected');
+      return json(401, { ok: false });
+    }
+    const record = await getPromptLibraryPayment(promptLibraryPayment.correlationId);
+    if (!record || record.value !== PROMPT_LIBRARY_VALUE_CENTS) {
+      console.warn('prompt_library_payment_without_local_order', {
+        correlationId: promptLibraryPayment.correlationId,
+      });
+      return json(200, { ok: true, handled: false });
+    }
+    const duplicate = hasPromptLibraryAccess(record);
+    const completed = await completePromptLibraryPayment(record, promptLibraryPayment);
+    if (duplicate) {
+      await syncPromptLibraryFunnelEvent({
+        eventKey: `purchase_completed:${completed.correlationId}`,
+        eventName: 'purchase_completed',
+        correlationId: completed.correlationId,
+        occurredAt: completed.paidAt || new Date().toISOString(),
+        transactionId: completed.transactionId,
+      });
+      await syncPromptLibraryFunnelEvent({
+        eventKey: `access_granted:${completed.correlationId}`,
+        eventName: 'access_granted',
+        correlationId: completed.correlationId,
+        occurredAt: completed.accessGrantedAt || new Date().toISOString(),
+        transactionId: completed.transactionId,
+      });
+    }
+    return json(200, { ok: true, handled: true, duplicate });
+  }
+
   const authorized = verifyWooviWebhook({
     rawBody,
     signature: header(headers, 'x-openpix-signature'),
@@ -5785,13 +6237,6 @@ async function handleWooviHttp(
     console.warn('Webhook Woovi recusado: autenticacao invalida');
     return json(401, { ok: false });
   }
-
-  let payload: unknown;
-  try {
-    payload = rawBody ? JSON.parse(rawBody) : {};
-  } catch {
-    return json(400, { ok: false, error: 'invalid json' });
-  }
   const payment = parseCompletedGuidePayment(payload);
   if (!payment) {
     return json(200, { ok: true, handled: false });
@@ -5803,19 +6248,20 @@ async function handleWooviHttp(
     });
     return json(200, { ok: true, handled: false });
   }
-  if (record.deliveredAt || (record.senderId.startsWith('store:') && record.paidAt)) {
+  if (record.paidAt) {
     return json(200, { ok: true, handled: true, duplicate: true });
   }
-
-  await completeWebsiteGuidePayment(record, {
-    transactionId: payment.transactionId,
-    paidAt: payment.paidAt,
+  await putWebsiteGuidePayment({
+    ...record,
+    status: 'COMPLETED',
+    transactionId: payment.transactionId || record.transactionId,
+    paidAt: payment.paidAt || new Date().toISOString(),
   });
   return json(200, {
     ok: true,
     handled: true,
     duplicate: false,
-    channel: record.senderId.startsWith('store:') ? 'storefront' : 'instagram',
+    archivedProduct: true,
   });
 }
 

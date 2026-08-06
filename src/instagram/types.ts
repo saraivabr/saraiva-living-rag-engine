@@ -6,6 +6,8 @@ export interface IgMedia {
   media_type?: string;
   permalink?: string;
   timestamp?: string;
+  like_count?: number;
+  comments_count?: number;
 }
 
 export interface IgComment {
