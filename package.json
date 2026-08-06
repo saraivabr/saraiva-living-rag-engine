@@ -16,6 +16,7 @@
     "@aws-sdk/client-secrets-manager": "^3.1096.0",
     "@aws-sdk/client-sqs": "^3.1100.0",
     "@aws-sdk/s3-request-presigner": "^3.1082.0",
+    "@ffmpeg-installer/linux-x64": "^4.1.0",
     "dotenv": "^16.4.7"
   },
   "devDependencies": {
