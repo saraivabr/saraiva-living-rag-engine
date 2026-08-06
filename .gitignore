@@ -13,3 +13,11 @@ scratch/
 
 # Criativos gerados: binários pesados, o valor está no prompt e no módulo.
 criativos/
+
+# Radar de pauta (saidas geradas)
+content/radar/.raw-*.json
+content/radar/.err-*.log
+content/radar/radar.log
+
+# Espacos de trabalho dos agentes do Maestri: efemeros, por sessao.
+.maestri/
