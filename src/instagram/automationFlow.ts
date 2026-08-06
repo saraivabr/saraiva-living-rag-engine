@@ -192,6 +192,9 @@ Aplique SEO local, Schema.org, acessibilidade, velocidade, formulário e rastrea
 
 export const WEBSITE_PROMPT_MESSAGE_MAX_CHARS = 900;
 
+/** Confirmações de follow aceitas antes de liberar o conteúdo mesmo sem o isFollower da Graph API. */
+export const FOLLOW_GATE_MAX_RECHECKS = 1;
+
 export const WEBSITE_PRODUCT_BUTTON_OPTIONS = [
   'VER A BIBLIOTECA',
   'ABRIR BIBLIOTECA',
@@ -1121,7 +1124,12 @@ function advanceWebsiteSitesFlow(
         'follow_confirmation_required',
       );
     }
-    if (options.followStatus !== 'following') {
+    // A Graph API só devolve isFollower em parte dos eventos; sem isso o status
+    // fica 'unknown' e a pessoa que JÁ seguiu seria barrada para sempre. Quem
+    // confirmou o follow FOLLOW_GATE_MAX_RECHECKS vezes passa: barrar um
+    // seguidor real custa mais do que entregar um prompt gratuito a mais.
+    const podeRechecar = (current.followRecheckAttempts || 0) < FOLLOW_GATE_MAX_RECHECKS;
+    if (options.followStatus !== 'following' && podeRechecar) {
       return websiteFollowGateStep(
         current,
         current.path,
