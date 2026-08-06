@@ -1,3 +1,4 @@
+import { DIAGNOSTIC_FORK_QUESTION } from '../socialSelling/diagnosticFork.js';
 import type { PostPromise, SocialSellingState } from '../socialSelling/flow.js';
 import {
   WEBSITE_GUIDE_PRODUCT,
@@ -142,7 +143,7 @@ export function buildSalesSnapshot(
 }
 
 export function diagnosticQuestion(): string {
-  return 'qual tarefa da sua empresa mais depende de voce ou da sua equipe fazendo manualmente: atendimento, follow-up, vendas, conteudo, financeiro ou organizacao interna?';
+  return DIAGNOSTIC_FORK_QUESTION;
 }
 
 export function workshopCheckoutReply(): string {

@@ -1,4 +1,10 @@
 import {
+  DIAGNOSTIC_FORK_QUESTION,
+  PAIN_FORK_QUESTION,
+  isForkQuestion,
+  matchDiagnosticFork,
+} from './diagnosticFork.js';
+import {
   buildSalesSnapshot,
   diagnosticQuestion,
   isVoiceAiWorkshopPromise,
@@ -668,13 +674,13 @@ function nextQuestionFor(kind: PromiseKind, state?: SocialSellingState): string 
   }
 
   if (!state?.useCase) {
-    return 'voce quer aplicar isso em atendimento, vendas, follow-up, agenda, conteudo ou automacao interna?';
+    return DIAGNOSTIC_FORK_QUESTION;
   }
   if (!state.segment) {
     return `em que tipo de operacao voce quer aplicar isso: clinica, imobiliaria, agencia, ecommerce, curso, servico local ou outro?`;
   }
   if (!state.pain) {
-    return 'qual e o sintoma principal hoje: lead esfria, cliente repete contexto, demora na resposta, falta follow-up ou time sobrecarregado?';
+    return PAIN_FORK_QUESTION;
   }
   if (!state.urgency) {
     return 'isso e algo pra resolver agora ou voce esta mapeando possibilidade?';
@@ -712,7 +718,7 @@ function nextQuestionFor(kind: PromiseKind, state?: SocialSellingState): string 
     case 'empresa_agentica_live':
       return diagnosticQuestion();
     default:
-      return 'voce quer ajuda mais com atendimento, vendas, conteudo ou automacao?';
+      return DIAGNOSTIC_FORK_QUESTION;
   }
 }
 
@@ -722,7 +728,7 @@ function updateSocialSellingState(
   previous?: SocialSellingState,
 ): SocialSellingState {
   const lower = text.toLowerCase();
-  const signal = extractSignals(lower);
+  const signal = extractSignals(lower, previous?.lastQuestion);
   const turns = (previous?.turns ?? 0) + 1;
   const next: SocialSellingState = {
     ...previous,
@@ -752,7 +758,10 @@ function updateSocialSellingState(
   return next;
 }
 
-function extractSignals(lower: string): Partial<SocialSellingState> & { intent: string } {
+function extractSignals(
+  lower: string,
+  lastQuestion?: string,
+): Partial<SocialSellingState> & { intent: string } {
   const signal: Partial<SocialSellingState> & { intent: string } = { intent: 'reply' };
 
   if (hasOptOutIntent(lower)) {
@@ -781,6 +790,15 @@ function extractSignals(lower: string): Partial<SocialSellingState> & { intent: 
     signal.useCase = 'aprender sites';
   }
 
+  // A bifurcacao binaria responde useCase e pain no mesmo turno. Vem antes da
+  // varredura generica porque 91,8% dos leads so mandam uma mensagem.
+  const fork = matchDiagnosticFork(lower, { forkWasAsked: isForkQuestion(lastQuestion) });
+  if (fork) {
+    if (!signal.useCase) signal.useCase = fork.useCase;
+    signal.pain = fork.pain;
+    if (fork.urgency) signal.urgency = fork.urgency;
+  }
+
   if (!signal.useCase && has(lower, ['atendimento', 'suporte', 'sac', 'responder cliente', 'cliente esperando'])) signal.useCase = 'atendimento';
   if (!signal.useCase && has(lower, ['vendas', 'lead', 'proposta', 'comercial', 'fechar cliente'])) signal.useCase = 'vendas';
   if (!signal.useCase && has(lower, ['follow-up', 'follow up', 'retorno', 'recuperar lead', 'lead esfria'])) signal.useCase = 'follow-up';
@@ -797,12 +815,14 @@ function extractSignals(lower: string): Partial<SocialSellingState> & { intent: 
   if (has(lower, ['curso', 'mentoria', 'infoproduto', 'aluno', 'escola', 'faculdade'])) signal.segment = 'educacao';
   if (has(lower, ['restaurante', 'barbearia', 'advocacia', 'escritorio', 'escritório'])) signal.segment = 'servico local';
 
-  if (has(lower, ['demora', 'lento', 'nao responde', 'não responde'])) signal.pain = 'demora na resposta';
-  if (has(lower, ['lead esfria', 'perco lead', 'perdendo lead', 'some'])) signal.pain = 'lead esfriando';
-  if (has(lower, ['repete contexto', 'sem contexto', 'historico', 'histórico'])) signal.pain = 'contexto perdido';
-  if (has(lower, ['follow', 'retorno', 'esquece', 'lembrar'])) signal.pain = 'follow-up fraco';
-  if (has(lower, ['time sobrecarregado', 'muita mensagem', 'demanda alta'])) signal.pain = 'time sobrecarregado';
-  if (has(lower, ['depende de mim', 'depende muito de mim', 'eu que faco', 'eu que faço', 'manual', 'repetitiva', 'repetitivo'])) signal.pain = 'dono dependente ou tarefa manual repetitiva';
+  // A dor lida pela bifurcacao tem prioridade: ela veio de uma pergunta direta,
+  // nao de palavra solta no meio da frase.
+  if (!signal.pain && has(lower, ['demora', 'lento', 'nao responde', 'não responde'])) signal.pain = 'demora na resposta';
+  if (!signal.pain && has(lower, ['lead esfria', 'perco lead', 'perdendo lead', 'some'])) signal.pain = 'lead esfriando';
+  if (!signal.pain && has(lower, ['repete contexto', 'sem contexto', 'historico', 'histórico'])) signal.pain = 'contexto perdido';
+  if (!signal.pain && has(lower, ['follow', 'retorno', 'esquece', 'lembrar'])) signal.pain = 'follow-up fraco';
+  if (!signal.pain && has(lower, ['time sobrecarregado', 'muita mensagem', 'demanda alta'])) signal.pain = 'time sobrecarregado';
+  if (!signal.pain && has(lower, ['depende de mim', 'depende muito de mim', 'eu que faco', 'eu que faço', 'manual', 'repetitiva', 'repetitivo'])) signal.pain = 'dono dependente ou tarefa manual repetitiva';
 
   if (has(lower, ['urgente', 'agora', 'essa semana', 'hoje', 'pra ontem', 'perdendo dinheiro'])) signal.urgency = 'alta';
   if (has(lower, ['mes que vem', 'mês que vem', 'futuro', 'estudando', 'vendo possibilidade'])) signal.urgency = 'baixa';

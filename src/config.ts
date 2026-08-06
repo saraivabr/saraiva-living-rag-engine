@@ -96,7 +96,7 @@ export const config = {
       [
         'vi teu comentario no post e preferi te chamar por aqui pra nao te responder de forma generica.',
         '',
-        'me diz uma coisa: hoje voce quer ajuda mais com atendimento, vendas, conteudo ou automacao interna?',
+        'me diz uma coisa: o que mais te tirou o sono essa semana, cliente que ficou sem resposta ou mes sem previsao de faturamento?',
         '',
         'se fizer sentido, eu te mando um diagnostico gratis com o primeiro fluxo de IA que eu montaria no teu caso.',
       ].join('\n'),

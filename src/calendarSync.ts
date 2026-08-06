@@ -3,6 +3,7 @@ import { CreateInvalidationCommand, CloudFrontClient } from '@aws-sdk/client-clo
 import { DynamoDBClient, QueryCommand, type AttributeValue } from '@aws-sdk/client-dynamodb';
 import { GetObjectCommand, PutObjectCommand, S3Client } from '@aws-sdk/client-s3';
 import { config } from './config.js';
+import { evaluateContentPolicy } from './content/contentPolicy.js';
 import { resolvePostPromise } from './socialSelling/flow.js';
 
 interface CalendarDocument {
@@ -228,6 +229,12 @@ export async function syncCalendarBio(): Promise<CalendarSyncSummary> {
       post.localTime = post.localTime || toLocalTime(media.timestamp);
       post.status = 'publicado';
       post.metrics = postMetrics;
+      post.policy = evaluateContentPolicy({
+        mediaProductType: postMetrics.mediaProductType,
+        publishAt: postMetrics.publishedAt,
+        caption: post.caption,
+        hashtags: post.hashtags,
+      });
       delete post.metricsError;
       delete post.metricsUnavailable;
       updated++;
