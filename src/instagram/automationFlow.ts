@@ -477,7 +477,10 @@ export function advanceInstagramFlow(
   ) {
     return {
       session: { ...current, stage: 'completed', updatedAt: now, completedAt: now },
-      message: { kind: 'text', text: 'Qual parte você vai colocar pra rodar primeiro?' },
+      message: {
+        kind: 'text',
+        text: 'Pronto, está tudo aí em cima. Se travar em qualquer ponto, me escreve aqui que eu respondo.',
+      },
       event: 'offer_completed',
       reasonCode: 'offer_delivered',
     };
@@ -498,9 +501,12 @@ export function advanceInstagramFlow(
     };
   }
 
+  // Último recurso do fluxo. A versão anterior repetia "Quer rever os caminhos?"
+  // a cada mensagem — uma pessoa recebeu isso três vezes seguidas, inclusive
+  // depois de dar boa noite e de fazer uma pergunta técnica de verdade.
   return repeat(current, {
     kind: 'quick_replies',
-    text: 'Quer rever os caminhos?',
+    text: 'Me conta em uma frase o que você quer resolver que eu sigo daqui. Se preferir recomeçar do zero, toca abaixo.',
     quickReplies: [{ title: 'REVER OPÇÕES', payload: SARAIVA_FLOW_PAYLOAD.restart }],
   }, now, 'completed_session');
 }
@@ -596,7 +602,7 @@ export function resumeInstagramFlowMessage(
   if (current.stage === 'technical_paused') return retryMessage();
   return {
     kind: 'quick_replies',
-    text: 'Quer rever os caminhos?',
+    text: 'Me conta em uma frase o que você quer resolver que eu sigo daqui. Se preferir recomeçar do zero, toca abaixo.',
     quickReplies: [{ title: 'REVER OPÇÕES', payload: SARAIVA_FLOW_PAYLOAD.restart }],
   };
 }
@@ -627,10 +633,15 @@ function requestMessage(): InstagramInteractiveMessage {
   };
 }
 
+/**
+ * Usada só nos caminhos de recuperação, quando a sessão perdeu o rumo e o
+ * sistema não sabe qual versão mandar. O verbo é "vou mandar", não "você
+ * quer" — a entrega já está decidida, falta só saber qual das duas.
+ */
 function websiteRequestMessage(): InstagramInteractiveMessage {
   return {
     kind: 'quick_replies',
-    text: 'Tenho o prompt completo do vídeo aqui. Você quer usar no site da sua empresa ou criar sites para clientes?',
+    text: 'Vou te mandar o prompt do vídeo agora. Ele é para o site da sua própria empresa ou para você apresentar a um cliente?',
     quickReplies: WEBSITE_INTENT_OPTIONS,
   };
 }
@@ -891,34 +902,20 @@ function mentionsBothWebsiteIntents(value: string): boolean {
   return ownBusiness && clientWork;
 }
 
-export function createWebsitePromptCard(
-  session: InstagramFlowSession,
-  options: InstagramFlowOptions = {},
-): InstagramInteractiveMessage & { kind: 'link_card' } {
-  return {
-    kind: 'link_card',
-    title: 'Prompt completo do vídeo',
-    subtitle: session.path === 'ready'
-      ? 'Copie, troque os campos pelos fatos da sua empresa e use na IA que preferir.'
-      : 'Copie, troque os campos pelo briefing do cliente e use na IA que preferir.',
-    buttons: [{
-      type: 'web_url',
-      title: 'COPIAR PROMPT',
-      url: trackedRedirectUrl('prompt', session, options),
-    }],
-  };
-}
-
 export function createWebsiteProductCard(
   session: InstagramFlowSession,
   options: InstagramFlowOptions = {},
 ): InstagramInteractiveMessage & { kind: 'link_card' } {
+  // O card viaja no follow-up, uma hora depois da entrega. Por isso ele fala do
+  // PRÓXIMO projeto, não deste: quem recebeu o prompt de site já resolveu o
+  // site. A dor seguinte é o cliente pedir um CRM, um sistema, uma automação —
+  // que é exatamente o que as outras 23 estruturas cobrem.
   return {
     kind: 'link_card',
     title: 'Biblioteca Secreta — 24 prompts',
     subtitle: session.path === 'ready'
-      ? 'Acesso permanente por R$ 19,90 para criar sem começar da página em branco.'
-      : 'Acesso permanente por R$ 19,90 para adaptar a diferentes clientes e projetos.',
+      ? 'Você recebeu 1. Os outros 23 cobrem CRM, sistema e automação. R$ 19,90, acesso permanente.'
+      : 'Você recebeu 1. Os outros 23 cobrem CRM, sistema e automação para os próximos clientes. R$ 19,90.',
     buttons: [{
       type: 'web_url',
       title: WEBSITE_PRODUCT_BUTTON_RECOMMENDED,
@@ -927,10 +924,17 @@ export function createWebsiteProductCard(
   };
 }
 
+/**
+ * Resposta para quem já recebeu e volta perguntando onde está.
+ *
+ * A versão anterior dizia "o único link é o botão da Biblioteca Secreta que
+ * enviei depois dele" — e virou mentira quando a oferta saiu da entrega.
+ * Mandar a pessoa procurar um botão que não existe é pior do que não responder.
+ */
 function websitePromptReminder(): InstagramInteractiveMessage {
   return {
     kind: 'text',
-    text: 'O prompt completo está nas mensagens acima. O único link é o botão da Biblioteca Secreta que enviei depois dele.',
+    text: 'O prompt está logo aqui em cima, na mensagem que te mandei. Copia ele inteiro, cola numa conversa nova do ChatGPT em modo Work e menciona @Sites.',
   };
 }
 
@@ -1043,12 +1047,19 @@ function websiteDeliveryStep(
  * traz esse passo a passo desde sempre, o Direct não trazia.
  */
 function websiteUsageMessage(path: InstagramFlowPath): InstagramInteractiveMessage {
+  // 65% de quem escolheu quer atender cliente, e 79% são pessoa física, não
+  // agência. O medo aqui não é técnico, é de não dar conta na frente do
+  // cliente. Por isso a mensagem diz o passo E diz que não precisa programar.
   const outra = path === 'build'
-    ? 'Se for para o site da sua própria empresa, toca abaixo que eu mando a versão certa.'
-    : 'Se for para criar sites para clientes, toca abaixo que eu mando a versão certa.';
+    ? 'Se o site for para a sua própria empresa, toca abaixo que eu mando a versão certa.'
+    : 'Se for para apresentar a um cliente, toca abaixo que eu mando a versão certa.';
   return {
     kind: 'quick_replies',
-    text: `Cole no ChatGPT em modo Work e mencione @Sites. Troque os campos entre colchetes pelos dados reais antes de rodar.\n\n${outra}`,
+    text: [
+      'Como usar: abre uma conversa nova no ChatGPT, escolhe o modo Work e menciona @Sites.',
+      'Cola o prompt inteiro e troca os campos entre colchetes pelos dados reais. Não precisa programar nada.',
+      outra,
+    ].join('\n\n'),
     quickReplies: [{
       title: path === 'build' ? 'MINHA EMPRESA' : 'VENDER SITES',
       payload: path === 'build'

@@ -623,9 +623,11 @@ test('pedido pelo local do conteúdo aponta para a mensagem anterior sem duplica
   assert.equal(called, false);
   assert.equal(reply.message.kind, 'text');
   if (reply.message.kind !== 'text') return;
-  assert.match(reply.message.text, /prompt completo.*mensagens acima/i);
-  assert.match(reply.message.text, /botão.*Biblioteca/i);
-  assert.doesNotMatch(reply.message.text, /https?:\/\//i);
+  assert.match(reply.message.text, /prompt está logo aqui em cima/i);
+  assert.match(reply.message.text, /ChatGPT.*modo Work/i);
+  // O lembrete não pode citar um botão da Biblioteca: ela não vai mais junto
+  // da entrega, e mandar procurar o que não existe é pior que não responder.
+  assert.doesNotMatch(reply.message.text, /botão|Biblioteca|https?:\/\//i);
 });
 
 test('opt-out explícito encerra o fluxo sem confundir frases normais', () => {
@@ -717,7 +719,7 @@ test('sessão antiga que ofereceu comunidade não afirma que entregou o prompt',
   );
 });
 
-test('sessão entregue lembra o prompt em texto e o botão único da Biblioteca', () => {
+test('sessão entregue lembra onde o prompt está, sem citar botão que não existe', () => {
   const delivered = {
     ...createInstagramCommentFlow(WEBSITE_PROMPT_MEDIA_ID, {
       now: startedAt,
@@ -731,9 +733,12 @@ test('sessão entregue lembra o prompt em texto e o botão único da Biblioteca'
   assert.equal(repeated.reasonCode, 'prompt_link_already_sent');
   assert.equal(repeated.message.kind, 'text');
   if (repeated.message.kind !== 'text') return;
-  assert.match(repeated.message.text, /prompt completo.*mensagens acima/i);
-  assert.match(repeated.message.text, /botão.*Biblioteca/i);
-  assert.doesNotMatch(repeated.message.text, /Gerador|últimas vagas|lote|80% off|R\$ 97|https?:\/\//i);
+  assert.match(repeated.message.text, /prompt está logo aqui em cima/i);
+  assert.match(repeated.message.text, /@Sites/);
+  assert.doesNotMatch(
+    repeated.message.text,
+    /botão|Biblioteca|Gerador|últimas vagas|lote|80% off|R\$|https?:\/\//i,
+  );
 });
 
 test('reel de prospecção usa nome confiável no acesso direto', () => {
