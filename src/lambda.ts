@@ -7,13 +7,8 @@ import {
   DynamoDBClient,
   GetItemCommand,
   PutItemCommand,
-  QueryCommand,
-  type AttributeValue,
-  type QueryCommandInput,
 } from '@aws-sdk/client-dynamodb';
-import { GetObjectCommand, S3Client } from '@aws-sdk/client-s3';
 import { SendMessageCommand, SQSClient } from '@aws-sdk/client-sqs';
-import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import {
   getAccountUsername,
   getComments,
@@ -80,15 +75,7 @@ import {
   PROSPECTING_FLOW_MEDIA_ID,
   WEBSITE_PROMPT_MEDIA_ID,
 } from './campaignTrigger.js';
-import {
-  getWebsiteGuideCharge,
-  isWebsiteGuideCheckoutIntent,
-  parseCompletedGuidePayment,
-  verifyWooviWebhook,
-  WEBSITE_GUIDE_PRODUCT,
-  isSupportedWebsiteGuideValue,
-  type WooviChargeStatus,
-} from './payments/woovi.js';
+import { isWebsiteGuideCheckoutIntent } from './payments/woovi.js';
 import {
   PROMPT_LIBRARY_OFFER_KEY,
   PROMPT_LIBRARY_PRICE_KEY,
@@ -104,10 +91,6 @@ import {
   verifyPromptLibraryWebhook,
   type CompletedPromptLibraryPayment,
 } from './payments/promptLibrary.js';
-import type {
-  BusinessPromptData,
-  ClientReadyKit,
-} from './automation/sitePromptAutomation.js';
 import { getZernioCredentials } from './zernio/credentials.js';
 import { handleZernioWebhook } from './zernio/handler.js';
 import {
@@ -249,44 +232,6 @@ interface CommentCampaignPreview {
   }>;
 }
 
-interface WebsiteGuidePaymentRecord {
-  correlationId: string;
-  senderId: string;
-  value: number;
-  status: string;
-  paymentLinkUrl: string;
-  createdAt: string;
-  accessType?: 'free' | 'paid' | 'subscription';
-  accessGrantedAt?: string;
-  upgradedFrom?: string;
-  generationLimit?: number;
-  lead?: WebsiteGuideLeadProfile;
-  transactionId?: string;
-  paidAt?: string;
-  deliveredAt?: string;
-  generationCount?: number;
-  automation?: {
-    status: 'RUNNING' | 'COMPLETED' | 'FAILED';
-    inputHash: string;
-    businessInput: string;
-    locationInput?: string;
-    startedAt?: string;
-    lockExpiresAt?: string;
-    business?: BusinessPromptData;
-    prompt?: string;
-    kit?: ClientReadyKit;
-    generatedAt?: string;
-    error?: string;
-  };
-  automationHistory?: Array<{
-    status: string;
-    businessName?: string;
-    businessInput?: string;
-    generatedAt?: string;
-    resetAt: string;
-  }>;
-}
-
 interface PromptLibraryPaymentRecord {
   correlationId: string;
   senderId: string;
@@ -402,16 +347,9 @@ interface InstagramMessagingAccess {
 }
 
 const dynamo = new DynamoDBClient({});
-const s3 = new S3Client({});
 const sqs = new SQSClient({});
 const tableName = process.env.DYNAMODB_TABLE?.trim() || '';
 const storeAccount = process.env.STORE_ACCOUNT?.trim() || 'saraiva-os';
-const websiteGuideBucket = process.env.WEBSITE_GUIDE_S3_BUCKET?.trim()
-  || process.env.PLANNER_S3_BUCKET?.trim()
-  || 'app-dino-coworking-clinic-880690593918';
-const websiteGuideKey = process.env.WEBSITE_GUIDE_S3_KEY?.trim()
-  || 'products/sites-chatgpt/apostila-sites-chatgpt-v1.pdf';
-const clientReadyPluginKey = 'instagram/saraiva-os/cliente-pronto-extension-v0.1.0.zip';
 const ZERNIO_ABANDONMENT_AUDIO_ACTIVATION_AT = Date.parse('2026-07-31T05:44:53.000Z');
 
 type ScheduledPublishResponse = { ok: boolean; slug: string; mediaId: string };
@@ -516,14 +454,6 @@ export async function handler(event?: LambdaEvent): Promise<CycleResponse | Sche
     };
   }
 
-  if (event?.action === 'pollWebsiteGuidePayments') {
-    return {
-      ok: true,
-      finishedAt: new Date().toISOString(),
-      websiteGuidePayments: await pollWebsiteGuidePayments(),
-    };
-  }
-
   if (event?.action === 'listUnansweredLeads') {
     return {
       ok: true,
@@ -566,7 +496,6 @@ export async function handler(event?: LambdaEvent): Promise<CycleResponse | Sche
   try {
     const abandonmentAudioFollowUps = await runZernioAbandonmentAudioFollowUps();
     const abandonmentTextFollowUps = await runWebsitePromptTextFollowUps();
-    const websiteGuidePayments = await pollWebsiteGuidePayments();
     await runCycle();
     const calendarSync = await syncCalendarAfterCycle(false);
     return {
@@ -574,7 +503,6 @@ export async function handler(event?: LambdaEvent): Promise<CycleResponse | Sche
       finishedAt: new Date().toISOString(),
       abandonmentAudioFollowUps,
       abandonmentTextFollowUps,
-      websiteGuidePayments,
       ...(calendarSync ? { calendarSync } : {}),
     };
   } catch (error) {
@@ -3790,118 +3718,6 @@ function parseWebsiteGuideBody(event: LambdaEvent): Record<string, unknown> {
     : {};
 }
 
-async function pollWebsiteGuidePayments(limit = 25): Promise<WebsiteGuidePaymentPollSummary> {
-  if (!tableName || !process.env.WOOVI_APP_ID?.trim()) {
-    return { checked: 0, completed: 0, failed: 0 };
-  }
-  const requested = Math.max(1, Math.min(limit, 50));
-  const records: WebsiteGuidePaymentRecord[] = [];
-  let exclusiveStartKey: QueryCommandInput['ExclusiveStartKey'];
-  do {
-    const response = await dynamo.send(new QueryCommand({
-      TableName: tableName,
-      KeyConditionExpression: 'pk = :pk',
-      ExpressionAttributeValues: {
-        ':pk': { S: `${storeAccount}#website-guide-payments` },
-      },
-      ConsistentRead: true,
-      Limit: 50,
-      ExclusiveStartKey: exclusiveStartKey,
-    }));
-    for (const item of response.Items || []) {
-      const raw = item.data?.S;
-      if (!raw) continue;
-      try {
-        const record = JSON.parse(raw) as WebsiteGuidePaymentRecord;
-        if (!['COMPLETED', 'EXPIRED'].includes(record.status.toUpperCase())) {
-          records.push(record);
-        }
-      } catch {
-        continue;
-      }
-      if (records.length >= requested) break;
-    }
-    exclusiveStartKey = response.LastEvaluatedKey;
-  } while (exclusiveStartKey && records.length < requested);
-  let completed = 0;
-  let failed = 0;
-  for (const record of records) {
-    try {
-      const charge = await getWebsiteGuideCharge({
-        appId: process.env.WOOVI_APP_ID,
-        correlationId: record.correlationId,
-        baseUrl: process.env.WOOVI_BASE_URL,
-      });
-      const updated = await reconcileWebsiteGuideCharge(record, charge);
-      if (updated.status.toUpperCase() === 'COMPLETED') completed++;
-    } catch (error) {
-      failed++;
-      console.warn('Falha ao reconciliar pagamento Woovi', {
-        correlationId: record.correlationId,
-        error: (error as Error).message,
-      });
-    }
-  }
-  return { checked: records.length, completed, failed };
-}
-
-async function reconcileWebsiteGuideCharge(
-  record: WebsiteGuidePaymentRecord,
-  charge: WooviChargeStatus,
-): Promise<WebsiteGuidePaymentRecord> {
-  if (charge.status.toUpperCase() !== 'COMPLETED') {
-    if (charge.status !== record.status) {
-      const updated = { ...record, status: charge.status };
-      await putWebsiteGuidePayment(updated);
-      return updated;
-    }
-    return record;
-  }
-  return completeWebsiteGuidePayment(record, {
-    transactionId: charge.transactionId,
-    paidAt: charge.paidAt,
-  });
-}
-
-async function getWebsiteGuidePayment(
-  correlationId: string,
-): Promise<WebsiteGuidePaymentRecord | undefined> {
-  if (!tableName) return undefined;
-  const response = await dynamo.send(new GetItemCommand({
-    TableName: tableName,
-    Key: {
-      pk: { S: `${storeAccount}#website-guide-payments` },
-      sk: { S: correlationId },
-    },
-    ConsistentRead: true,
-  }));
-  const raw = response.Item?.data?.S;
-  if (!raw) return undefined;
-  try {
-    return JSON.parse(raw) as WebsiteGuidePaymentRecord;
-  } catch {
-    return undefined;
-  }
-}
-
-async function putWebsiteGuidePayment(record: WebsiteGuidePaymentRecord): Promise<void> {
-  await dynamo.send(new PutItemCommand({
-    TableName: tableName,
-    Item: websiteGuidePaymentItem(record),
-  }));
-}
-
-function websiteGuidePaymentItem(record: WebsiteGuidePaymentRecord): Record<string, AttributeValue> {
-  return {
-    pk: { S: `${storeAccount}#website-guide-payments` },
-    sk: { S: record.correlationId },
-    status: { S: record.status },
-    senderId: { S: record.senderId },
-    updatedAt: { S: new Date().toISOString() },
-    data: { S: JSON.stringify(record) },
-  };
-}
-
 async function handleWooviHttp(
   event: LambdaEvent,
   rawBody: string,
@@ -3954,157 +3770,9 @@ async function handleWooviHttp(
     return json(200, { ok: true, handled: true, duplicate });
   }
 
-  const authorized = verifyWooviWebhook({
-    rawBody,
-    signature: header(headers, 'x-openpix-signature'),
-    hmacSecret: process.env.WOOVI_WEBHOOK_HMAC_SECRET,
-    authorization: header(headers, 'authorization'),
-    expectedAuthorization: process.env.WOOVI_WEBHOOK_AUTH,
-  });
-  if (!authorized) {
-    console.warn('Webhook Woovi recusado: autenticacao invalida');
-    return json(401, { ok: false });
-  }
-  const payment = parseCompletedGuidePayment(payload);
-  if (!payment) {
-    return json(200, { ok: true, handled: false });
-  }
-  const record = await getWebsiteGuidePayment(payment.correlationId);
-  if (!record || !isSupportedWebsiteGuideValue(record.value)) {
-    console.warn('Pagamento Woovi sem pedido local correspondente', {
-      correlationId: payment.correlationId,
-    });
-    return json(200, { ok: true, handled: false });
-  }
-  if (record.paidAt) {
-    return json(200, { ok: true, handled: true, duplicate: true });
-  }
-  await putWebsiteGuidePayment({
-    ...record,
-    status: 'COMPLETED',
-    transactionId: payment.transactionId || record.transactionId,
-    paidAt: payment.paidAt || new Date().toISOString(),
-  });
-  return json(200, {
-    ok: true,
-    handled: true,
-    duplicate: false,
-    archivedProduct: true,
-  });
-}
-
-async function completeWebsiteGuidePayment(
-  record: WebsiteGuidePaymentRecord,
-  payment: { transactionId?: string; paidAt?: string },
-): Promise<WebsiteGuidePaymentRecord> {
-  if (record.deliveredAt || (record.senderId.startsWith('store:') && record.paidAt)) {
-    return record;
-  }
-  const completed: WebsiteGuidePaymentRecord = {
-    ...record,
-    status: 'COMPLETED',
-    transactionId: payment.transactionId || record.transactionId,
-    paidAt: payment.paidAt || record.paidAt || new Date().toISOString(),
-  };
-
-  if (record.senderId.startsWith('store:')) {
-    await putWebsiteGuidePayment(completed);
-    await notifyOwnerSafely(
-      record.senderId,
-      'Pagamento Woovi confirmado na loja',
-      'Download liberado automaticamente na pagina de obrigado.',
-      `Venda confirmada: ${WEBSITE_GUIDE_PRODUCT} por ${formatBrl(record.value)}.`,
-    );
-    return completed;
-  }
-
-  const [downloadUrl, pluginUrl] = await Promise.all([
-    createWebsiteGuideDownloadUrl(),
-    createClientReadyPluginDownloadUrl(),
-  ]);
-  const storefrontUrl = (process.env.WEBSITE_GUIDE_STOREFRONT_URL || 'https://loja.saraiva.ai')
-    .replace(/\/+$/, '');
-  const deliveryMessage = [
-    'Pagamento confirmado. ✅',
-    '',
-    'Sua Extensao Cliente Pronto esta liberada aqui:',
-    `${storefrontUrl}/obrigado?pedido=${encodeURIComponent(record.correlationId)}`,
-    '',
-    'Download direto da extensao:',
-    pluginUrl,
-    '',
-    'Instale no Chrome, abra uma empresa no Google Maps e use o seu WhatsApp Web ja conectado. Revise a mensagem antes de enviar.',
-    '',
-    'A compra inclui 10 prospeccoes completas. Abra uma empresa no Maps, gere o material, revise a abordagem e repita com as proximas oportunidades.',
-    '',
-    'Bonus — apostila pratica em PDF:',
-    downloadUrl,
-    '',
-    'Os links ficam disponiveis por 7 dias.',
-  ].join('\n');
-  await sendDirectMessage(record.senderId, deliveryMessage);
-  completed.deliveredAt = new Date().toISOString();
-  await putWebsiteGuidePayment(completed);
-  const context = await getLeadContext(record.senderId);
-  if (context) {
-    await saveLeadContext({
-      senderId: context.senderId,
-      commentId: context.commentId,
-      username: context.username,
-      postId: context.postId,
-      postPermalink: context.postPermalink,
-      promise: context.promise,
-      socialSelling: context.socialSelling,
-      instagramFlow: context.instagramFlow,
-      profileFacts: context.profileFacts,
-      automationJournal: context.automationJournal,
-      personalizedOffer: context.personalizedOffer,
-      interactions: [
-        ...(context.interactions || []),
-        { at: completed.deliveredAt, direction: 'out', text: deliveryMessage },
-      ],
-    });
-  }
-  await notifyOwnerSafely(
-    record.senderId,
-    'Pagamento Woovi confirmado',
-    'Apostila entregue automaticamente no Direct.',
-    `Venda confirmada: ${WEBSITE_GUIDE_PRODUCT} por ${formatBrl(record.value)}.`,
-  );
-  return completed;
-}
-
-function formatBrl(valueCents: number): string {
-  return new Intl.NumberFormat('pt-BR', {
-    style: 'currency',
-    currency: 'BRL',
-  }).format(valueCents / 100);
-}
-
-async function createWebsiteGuideDownloadUrl(): Promise<string> {
-  return getSignedUrl(
-    s3,
-    new GetObjectCommand({
-      Bucket: websiteGuideBucket,
-      Key: websiteGuideKey,
-      ResponseContentDisposition: 'attachment; filename="apostila-sites-chatgpt.pdf"',
-      ResponseContentType: 'application/pdf',
-    }),
-    { expiresIn: 7 * 24 * 60 * 60 },
-  );
-}
-
-async function createClientReadyPluginDownloadUrl(): Promise<string> {
-  return getSignedUrl(
-    s3,
-    new GetObjectCommand({
-      Bucket: websiteGuideBucket,
-      Key: clientReadyPluginKey,
-      ResponseContentDisposition: 'attachment; filename="cliente-pronto-chrome-v0.1.0.zip"',
-      ResponseContentType: 'application/zip',
-    }),
-    { expiresIn: 7 * 24 * 60 * 60 },
-  );
+  // Único produto ativo no Woovi. Qualquer outro payload é aceito e ignorado,
+  // para a Woovi não ficar reenviando o webhook indefinidamente.
+  return json(200, { ok: true, handled: false });
 }
 
 async function previewCommentCampaign(mediaId: string): Promise<CommentCampaignPreview> {
