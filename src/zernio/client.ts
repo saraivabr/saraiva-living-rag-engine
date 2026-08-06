@@ -287,7 +287,11 @@ export async function sendZernioPrivateReply(
     body: {
       accountId: input.accountId,
       message: input.message,
-      buttons: input.buttons,
+      // O Zernio recusa `buttons: []` com "Too small: expected array to have
+      // >=1 items" e derruba a entrega inteira — inclusive a resposta pública
+      // no comentário. Mensagem sem botão é legítima (a entrega imediata do
+      // prompt não tem botão nenhum), então o campo simplesmente não vai.
+      ...(input.buttons?.length ? { buttons: input.buttons } : {}),
     },
     fetchImpl: input.fetchImpl,
   });
