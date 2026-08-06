@@ -101,12 +101,13 @@ export const CAMPANHAS: readonly Campanha[] = Object.freeze([
       url: 'https://saraiva.ai',
     },
     pendencias: [
-      'O post promete uma automação de prospecção e a conversa entrega convite '
-      + 'para o Laboratório. São coisas diferentes: ou a comunidade passa a '
-      + 'entregar a automação nomeada, ou a promessa do post muda.',
-      'O funil nunca marca entrega: não existe promptDeliveredAt neste caminho, '
-      + 'então não dá para medir quantos receberam o que foi prometido.',
-      'O caminho feliz termina no laço "Quer rever os caminhos?".',
+      'DECISÃO SUA: o post promete uma automação de prospecção e a conversa '
+      + 'entrega convite para o Laboratório. São coisas diferentes. Ou a '
+      + 'comunidade passa a entregar a automação nomeada, ou o post muda a '
+      + 'promessa. Nenhuma das duas é decisão de engenharia.',
+      'O card da comunidade é enviado, mas a sessão não grava marca de entrega. '
+      + 'Sem isso não dá para medir quantos receberam — foi essa cegueira que '
+      + 'deixou 24 pessoas presas no portão de seguidor sem ninguém perceber.',
     ],
   },
 ]);

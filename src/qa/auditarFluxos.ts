@@ -1,6 +1,7 @@
 import {
   advanceInstagramFlow,
   createInstagramCommentFlow,
+  shouldAdvanceInstagramFlow,
   SARAIVA_FLOW_PAYLOAD,
   type InstagramFlowSession,
   type InstagramInteractiveMessage,
@@ -104,9 +105,25 @@ export function auditarCampanha(
 
   let sessao: InstagramFlowSession = entrada.session;
   for (const etapa of caminho) {
+    const gatilho = { payload: etapa.payload, text: etapa.texto };
+
+    // O lambda.ts consulta shouldAdvanceInstagramFlow ANTES de avançar a
+    // máquina de estados: quando ela recusa, quem responde é o Motor. Pular
+    // esse portão faz o QA acusar laços que não existem em produção.
+    if (!shouldAdvanceInstagramFlow(sessao, gatilho)) {
+      passos.push({
+        entrada: etapa.rotulo,
+        mensagens: ['→ resposta gerada pelo Motor (IA conversacional), fora da máquina de estados'],
+        estagio: sessao.stage,
+        entregou: Boolean(sessao.promptDeliveredAt),
+        ofertou: Boolean(sessao.productOfferedAt),
+      });
+      continue;
+    }
+
     const passo = advanceInstagramFlow(
       sessao,
-      { payload: etapa.payload, text: etapa.texto },
+      gatilho,
       { followStatus: opcoes.seguidor === false ? 'not_following' : 'following', firstName: 'Ana' },
     );
     if (!passo) {
@@ -138,13 +155,33 @@ export function auditarCampanha(
 
   // --- as verificações que importam ---
 
-  const entregouEmAlgumPasso = passos.some((p) => p.entregou);
+  // O que conta como "entregue" depende do tipo declarado no catálogo. Cobrar
+  // promptDeliveredAt de uma campanha de comunidade seria exigir o campo do
+  // funil errado e acusar problema onde não existe.
+  const declarada = campanhaPorMedia(mediaId);
+  const tipoEntrega = declarada?.promessa.entrega ?? 'texto-no-direct';
+  const entregouEmAlgumPasso = tipoEntrega === 'texto-no-direct'
+    ? passos.some((p) => p.entregou)
+    : passos.some((p) => p.mensagens.some((m) => m.startsWith('CARD:')));
+
   if (!entregouEmAlgumPasso) {
     achados.push({
       gravidade: 'ALTO',
       campanha,
-      problema: 'Percorreu o caminho feliz inteiro e nunca marcou a entrega.',
+      problema: `Caminho feliz inteiro sem entrega do tipo "${tipoEntrega}".`,
       evidencia: `último estágio: ${sessao.stage}`,
+    });
+  }
+
+  // Marcar a entrega é o que torna o funil mensurável. Sem isso, não dá para
+  // dizer quantos receberam o que o post prometeu — foi assim que 24 pessoas
+  // ficaram presas no portão de seguidor sem ninguém perceber.
+  if (entregouEmAlgumPasso && !passos.some((p) => p.entregou)) {
+    achados.push({
+      gravidade: 'MEDIO',
+      campanha,
+      problema: 'Entrega acontece mas não fica marcada na sessão: funil não mensurável.',
+      evidencia: `tipo "${tipoEntrega}" nunca grava promptDeliveredAt`,
     });
   }
 
