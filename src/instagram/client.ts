@@ -60,7 +60,7 @@ async function parseError(res: Response): Promise<never> {
 }
 
 async function get<T>(path: string, params?: Record<string, string>): Promise<T> {
-  const res = await fetch(buildUrl(path, params));
+  const res = await fetch(buildUrl(path, params), { signal: AbortSignal.timeout(15_000) });
   if (!res.ok) return parseError(res);
   return (await res.json()) as T;
 }
@@ -85,6 +85,9 @@ async function post<T>(path: string, params: Record<string, string>): Promise<T>
       }));
     });
     req.on('error', reject);
+    req.setTimeout(15_000, () => {
+      req.destroy(new Error('Graph API: request timed out'));
+    });
     req.end(body);
   });
   if (response.status < 200 || response.status >= 300) {

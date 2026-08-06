@@ -5128,9 +5128,7 @@ async function handleWooviHttp(
     rawBody,
     signature: header(headers, 'x-openpix-signature'),
     hmacSecret: process.env.WOOVI_WEBHOOK_HMAC_SECRET,
-    authorization: header(headers, 'authorization')
-      || event.queryStringParameters?.authorization
-      || event.queryStringParameters?.auth,
+    authorization: header(headers, 'authorization'),
     expectedAuthorization: process.env.WOOVI_WEBHOOK_AUTH,
   });
   if (!authorized) {
