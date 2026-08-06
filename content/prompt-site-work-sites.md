@@ -14,17 +14,17 @@ Crie agora um site completo, profissional e pronto para publicação para o segu
 
 ## DADOS DO NEGÓCIO
 
-Scarlett Makeup
+[PREENCHER: nome do negócio].
 
-Tipo: loja de cosméticos.
+Tipo: [PREENCHER: ramo de atuação, ex. loja de cosméticos, barbearia, clínica].
 
-Endereço: Estr. da Colônia Mário Reimberg Christe, 137 — Parelheiros, São Paulo — SP, 04892-000.
+Endereço: [PREENCHER: rua, número, bairro, cidade — UF, CEP].
 
-Telefone e WhatsApp: (11) 95203-8038.
+Telefone e WhatsApp: [PREENCHER: número com DDD].
 
-Atendimento: entrega disponível.
+Atendimento: [PREENCHER: entrega, retirada, atendimento no local, região atendida].
 
-Horário: [PREENCHER: horário completo de atendimento; a informação disponível indica abertura às 9h na terça-feira].
+Horário: [PREENCHER: horário completo de atendimento].
 
 Instagram: [PREENCHER: URL ou @ do Instagram].
 

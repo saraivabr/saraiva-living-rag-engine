@@ -80,9 +80,13 @@ export function buildWebsitePromptFollowUpCandidate(
 
   return {
     context,
+    // A versão anterior fazia a pergunta e emendava o pitch na mesma mensagem.
+    // Ninguém responde pergunta retórica: de 1.279 conversas, só 18 tinham
+    // texto escrito à mão. Aqui a mensagem pergunta e PARA — a resposta da
+    // pessoa é que revela a objeção e abre a oferta certa.
     message: session.path === 'build'
-      ? 'Conseguiu abrir o prompt do vídeo? Teste primeiro em um projeto. Se quiser evitar recomeçar a cada cliente, a Biblioteca Secreta reúne 24 prompts completos e está no botão que enviei — acesso permanente por R$ 19,90.'
-      : 'Conseguiu abrir o prompt do vídeo? Teste primeiro na sua empresa. Se quiser evitar a página em branco nos próximos projetos, a Biblioteca Secreta reúne 24 prompts completos e está no botão que enviei — acesso permanente por R$ 19,90.',
+      ? 'Conseguiu gerar o site com o prompt? Me conta uma coisa: o que o cliente te perguntou que você não soube responder?'
+      : 'Conseguiu gerar o site com o prompt? Me conta uma coisa: o que travou na hora de colocar no ar?',
   };
 }
 
