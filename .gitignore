@@ -4,5 +4,9 @@ dist
 .env.*
 lambda.zip
 brain_report.json
+report.json
+response.json
+.radar_history.json
 *.log
 .DS_Store
+scratch/
