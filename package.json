@@ -1,27 +1,10 @@
 {
   "name": "respondedor-instagram",
   "version": "1.0.0",
-  "description": "Responde comentários do Instagram automaticamente usando IA (Claude) + Graph API da Meta",
+  "description": "Respondedor de Instagram (comentários e Direct) rodando como AWS Lambda: webhook da Meta, funil de vendas e integrações Zernio/Woovi/Airtable.",
   "type": "module",
   "scripts": {
     "build": "tsc",
-    "start": "node dist/index.js",
-    "dev": "tsx watch src/index.ts",
-    "demo:prospeccao": "npm run build && node scripts/serve-prospeccao.mjs",
-    "once": "tsx src/index.ts --once",
-    "ops:instagram": "node scripts/check-instagram-ops.mjs",
-    "ops:instagram:media": "node scripts/check-instagram-ops.mjs --check-media",
-    "radar": "npm run build && node scripts/radar/run-radar.mjs",
-    "radar:all": "npm run build && node scripts/radar/run-radar.mjs --all",
-    "radar:daemon": "npm run build && node scripts/radar/run-radar-daemon.mjs",
-    "radar:web": "npm run build && node scripts/radar/serve-radar.mjs",
-    "radar:setup": "node scripts/radar/setup-airtable.mjs",
-    "schedule:instagram": "node scripts/schedule-instagram-batch.mjs",
-    "backfill:media-context": "tsx src/backfillMediaContext.ts",
-    "recover:website-prompt-leads": "tsx src/recoverWebsitePromptLeads.ts",
-    "audit:website-prompt-comments": "tsx src/auditWebsitePromptComments.ts",
-    "reconcile:website-prompt-comments": "tsx src/reconcileWebsitePromptComments.ts",
-    "seed": "node dist/seed.js",
     "typecheck": "tsc --noEmit",
     "test": "tsx --test tests/**/*.test.ts"
   },
@@ -32,12 +15,8 @@
     "@aws-sdk/client-s3": "^3.1075.0",
     "@aws-sdk/client-secrets-manager": "^3.1096.0",
     "@aws-sdk/client-sqs": "^3.1100.0",
-    "@aws-sdk/client-ssm": "^3.1070.0",
     "@aws-sdk/s3-request-presigner": "^3.1082.0",
-    "@ffmpeg-installer/linux-x64": "^4.1.0",
-    "@google/generative-ai": "^0.24.1",
-    "dotenv": "^16.4.7",
-    "openai": "^7.3.0"
+    "dotenv": "^16.4.7"
   },
   "devDependencies": {
     "@types/node": "^22.10.2",
