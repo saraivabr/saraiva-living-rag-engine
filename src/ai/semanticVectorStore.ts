@@ -64,16 +64,21 @@ function fallbackSimpleVector(text: string): number[] {
 
 export class SemanticVectorStore {
   private chunks: SemanticVectorChunk[] = [];
+  private readonly embed: (text: string) => Promise<number[]>;
+
+  constructor(embed: (text: string) => Promise<number[]> = generateEmbedding) {
+    this.embed = embed;
+  }
 
   async addChunk(id: string, topic: string, content: string, metadata?: Record<string, string>): Promise<SemanticVectorChunk> {
-    const vector = await generateEmbedding(content);
+    const vector = await this.embed(content);
     const chunk: SemanticVectorChunk = { id, topic, content, vector, metadata };
     this.chunks.push(chunk);
     return chunk;
   }
 
   async searchSimilar(queryText: string, topK = 3): Promise<Array<SemanticVectorChunk & { similarity: number }>> {
-    const queryVector = await generateEmbedding(queryText);
+    const queryVector = await this.embed(queryText);
     const scored = this.chunks.map((chunk) => {
       const similarity = chunk.vector ? cosineSimilarity(queryVector, chunk.vector) : 0;
       return { ...chunk, similarity };

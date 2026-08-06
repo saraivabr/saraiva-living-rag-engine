@@ -7,7 +7,20 @@ import {
 } from '../src/ai/semanticVectorStore.js';
 
 test('Banco de Dados Semântico: vetoriza e recupera conteúdo por similaridade', async () => {
-  const store = new SemanticVectorStore();
+  // Embedding determinístico e isolado de rede: cada texto vira um vetor cuja direção
+  // reflete o tópico ("sites" vs "prospecção"), sem depender do AWS Bedrock estar acessível.
+  const topicVectors: Record<string, number[]> = {
+    'Aprenda a criar sites profissionais utilizando ChatGPT e prompts-base.': [1, 0],
+    'Como buscar clientes qualificados no Google Maps e automatizar a prospecção.': [0, 1],
+    'Como fazer um site com inteligência artificial?': [0.9, 0.1],
+  };
+  const fakeEmbed = async (text: string) => {
+    const vector = topicVectors[text];
+    assert.ok(vector, `embedding fake não configurado para: ${text}`);
+    return vector;
+  };
+
+  const store = new SemanticVectorStore(fakeEmbed);
 
   await store.addChunk(
     'CHUNK-001',
