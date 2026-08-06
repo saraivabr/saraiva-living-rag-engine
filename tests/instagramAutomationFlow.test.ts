@@ -43,91 +43,86 @@ test('reel de prospecção preserva o acesso direto atualmente publicado', () =>
   assert.equal(entry.publicReply, 'Te enviei o acesso no Direct 👀');
 });
 
-test('reel de sites confirma a entrega e bifurca somente entre empresa própria e vender sites', () => {
+test('reel de sites entrega o prompt no primeiro contato, sem pergunta antes', () => {
   const entry = createInstagramCommentFlow(WEBSITE_PROMPT_MEDIA_ID, {
     now: startedAt,
     correlationId: 'corr-sites',
   })!;
+  // O post promete o prompt; a primeira mensagem entrega o prompt. Perguntar
+  // antes custava dois terços das pessoas: de 209 no fluxo, 76 respondiam a
+  // bifurcação e só 52 chegavam a receber.
   assert.equal(entry.session.campaign, 'sites_workshop');
-  assert.equal(entry.session.stage, 'awaiting_intent');
-  assert.equal(entry.message.kind, 'quick_replies');
-  if (entry.message.kind !== 'quick_replies') return;
-  assert.match(entry.message.text, /tenho o prompt completo do vídeo aqui/i);
-  assert.deepEqual(entry.message.quickReplies.map((item) => item.title), [
-    'MINHA EMPRESA',
-    'VENDER SITES',
-  ]);
-  assert.ok(entry.message.quickReplies.every((item) => item.title.length <= 20));
+  assert.equal(entry.session.stage, 'offering_product');
+  assert.ok(entry.session.promptDeliveredAt, 'a entrega tem de ficar marcada');
+  assert.equal(entry.session.path, 'build');
+  assert.equal(entry.message.kind, 'text');
+  assert.match(JSON.stringify(entry), /PROMPT DO VÍDEO — COPIE E COLE/);
+  assert.match(entry.publicReply, /prompt completo do vídeo.*Direct/i);
+  // O guarda mira vazamento de OUTRA oferta. "cidade" e "WhatsApp" fazem parte
+  // do prompt entregue ([CIDADE], rastreamento de WhatsApp) e não são leak.
   assert.doesNotMatch(
     JSON.stringify(entry),
-    /qual (?:é|e) o seu negócio|cidade|nicho|nível atual|Cliente Pronto|Laboratório|WhatsApp/i,
+    /qual (?:é|e) o seu negócio|nível atual|Cliente Pronto|Laboratório|comunidade|Gerador/i,
   );
-  assert.match(entry.publicReply, /prompt completo do vídeo.*Direct/i);
 });
 
-test('caminho Minha Empresa bloqueia a entrega até confirmar que a pessoa segue', () => {
+test('a entrega gratuita não leva preço, oferta nem link nenhum', () => {
   const entry = createInstagramCommentFlow(WEBSITE_PROMPT_MEDIA_ID, {
     now: startedAt,
-    correlationId: 'corr-sites-offer',
+    correlationId: 'corr-sites-limpa',
   })!;
+  const serialized = JSON.stringify(entry);
+  // Cobrar no mesmo fôlego da entrega gasta a boa vontade que a entrega criou.
+  // A oferta viaja no follow-up, uma hora depois.
+  assert.equal(entry.session.productOfferedAt, undefined);
+  assert.equal((serialized.match(/https?:/g) || []).length, 0);
+  assert.doesNotMatch(serialized, /R\$|Biblioteca|VER A BIBLIOTECA|19,90/i);
+  assert.doesNotMatch(serialized, /\/instagram\/(?:prompt|product)\?|COPIAR PROMPT/);
+  assert.throws(() => buildSaraivaAudioScript(entry.session), /sites_workshop_audio_forbidden/);
+});
+
+test('a entrega ensina onde colar o prompt', () => {
+  const entry = createInstagramCommentFlow(WEBSITE_PROMPT_MEDIA_ID, {
+    now: startedAt,
+    correlationId: 'corr-sites-uso',
+  })!;
+  const uso = entry.messages?.at(-1);
+  assert.equal(uso?.kind, 'quick_replies');
+  if (uso?.kind !== 'quick_replies') return;
+  assert.match(uso.text, /ChatGPT.*modo Work/i);
+  assert.match(uso.text, /@Sites/);
+  assert.ok(uso.quickReplies.every((b) => b.title.length <= 20));
+});
+
+test('quem recebeu uma versão e pede a outra recebe a outra', () => {
+  const entry = createInstagramCommentFlow(WEBSITE_PROMPT_MEDIA_ID, {
+    now: startedAt,
+    correlationId: 'corr-sites-troca',
+  })!;
+  assert.equal(entry.session.path, 'build');
   assert.equal(shouldAdvanceInstagramFlow(entry.session, {
     payload: 'FLOW:SITES:INTENT:OWN',
   }), true);
-  const delivery = advanceInstagramFlow(entry.session, {
+
+  const troca = advanceInstagramFlow(entry.session, {
     payload: 'FLOW:SITES:INTENT:OWN',
-  }, { firstName: 'Ana', followStatus: 'not_following' })!;
-  assert.equal(delivery.session.stage, 'awaiting_follow');
-  assert.equal(delivery.session.path, 'ready');
-  assert.equal(delivery.event, 'website_follow_required');
-  assert.equal(delivery.message.kind, 'quick_replies');
-  if (delivery.message.kind !== 'quick_replies') return;
-  assert.deepEqual(delivery.message.quickReplies, [{
-    title: 'JÁ SEGUI',
-    payload: 'FLOW:SARAIVA:FOLLOW_CONFIRMED',
-  }]);
-  assert.doesNotMatch(JSON.stringify(delivery), /\/instagram\/(?:prompt|product)\?/);
+  }, { firstName: 'Ana' })!;
+  assert.equal(troca.session.path, 'ready');
+  assert.equal(troca.session.stage, 'offering_product');
+  assert.equal(troca.reasonCode, 'other_variant_requested');
+  assert.match(JSON.stringify(troca), /pronto para publicar/i);
+  assert.equal((JSON.stringify(troca).match(/https?:/g) || []).length, 0);
 });
 
-test('seguir confirmado envia o prompt em texto e somente o link da Biblioteca', () => {
+test('pedir a mesma versão de novo não reentrega: quem responde é o assistente', () => {
   const entry = createInstagramCommentFlow(WEBSITE_PROMPT_MEDIA_ID, {
     now: startedAt,
-    correlationId: 'corr-sites-sell',
+    correlationId: 'corr-sites-mesma',
   })!;
-  const gated = advanceInstagramFlow(entry.session, {
+  // path já é 'build'; tocar VENDER SITES não é troca, é redundância.
+  assert.equal(shouldAdvanceInstagramFlow(entry.session, {
     payload: 'FLOW:SITES:INTENT:SELL',
-  }, { followStatus: 'not_following' })!;
-  const delivery = advanceInstagramFlow(gated.session, {
-    payload: 'FLOW:SARAIVA:FOLLOW_CONFIRMED',
-  }, { followStatus: 'following' })!;
-  assert.equal(delivery.session.path, 'build');
-  assert.equal(delivery.session.stage, 'offering_product');
-  assert.equal(delivery.event, 'website_prompt_delivered_after_follow');
-  assert.equal(delivery.message.kind, 'text');
-  assert.equal(delivery.messages?.length, 2);
-  assert.ok(delivery.messages?.slice(0, -1).every((message) => message.kind === 'text'));
-  assert.equal(delivery.messages?.at(-1)?.kind, 'link_card');
-  const serialized = JSON.stringify(delivery);
-  assert.match(serialized, /PROMPT DO VÍDEO — COPIE E COLE/);
-  assert.match(serialized, /VER A BIBLIOTECA/);
-  assert.match(serialized, /\/instagram\/product\?/);
-  assert.doesNotMatch(serialized, /\/instagram\/prompt\?|COPIAR PROMPT/);
-  assert.equal((serialized.match(/https?:/g) || []).length, 1);
-  assert.throws(() => buildSaraivaAudioScript(delivery.session), /sites_workshop_audio_forbidden/);
-});
-
-test('status de follow ausente pede nova verificação sem acusar que a pessoa não segue', () => {
-  const entry = createInstagramCommentFlow(WEBSITE_PROMPT_MEDIA_ID, {
-    now: startedAt,
-    correlationId: 'corr-sites-unknown-follow',
-  })!;
-  const gated = advanceInstagramFlow(entry.session, {
-    payload: 'FLOW:SITES:INTENT:OWN',
-  }, { followStatus: 'unknown' })!;
-  assert.equal(gated.session.stage, 'awaiting_follow');
-  assert.equal(gated.message.kind, 'quick_replies');
-  if (gated.message.kind !== 'quick_replies') return;
-  assert.match(gated.message.text, /não consegui confirmar/i);
-  assert.doesNotMatch(gated.message.text, /você não (?:me )?segue/i);
+  }), false);
 });
 
 test('botão recomendado do produto é claro e as três opções respeitam 20 caracteres', () => {
@@ -153,9 +148,10 @@ test('mantém os destinos assinados esperados pelo handler Lambda publicado', ()
   assert.match(product.searchParams.get('sourceSignature') || '', /^[a-f0-9]{64}$/);
 });
 
-test('pergunta livre antes da escolha responde e reapresenta somente as duas intenções', async () => {
+test('pergunta livre logo após a entrega vira ajuda prática, não nova venda', async () => {
   const entry = createInstagramCommentFlow(WEBSITE_PROMPT_MEDIA_ID, { now: startedAt })!;
   let trustedContext = '';
+  // Não é escolha de caminho: quem responde é o assistente.
   assert.equal(shouldAdvanceInstagramFlow(entry.session, {
     text: 'preciso saber programar?',
   }), false);
@@ -170,32 +166,31 @@ test('pergunta livre antes da escolha responde e reapresenta somente as duas int
       };
     },
   });
-  assert.equal(reply.message.kind, 'quick_replies');
-  if (reply.message.kind !== 'quick_replies') return;
-  assert.match(reply.message.text, /não/i);
-  assert.deepEqual(reply.message.quickReplies.map((button) => button.title), ['MINHA EMPRESA', 'VENDER SITES']);
-  assert.doesNotMatch(trustedContext, /Biblioteca|24 prompts|R\$|19,90|desconto|off|promoção|garantia/i);
-  assert.match(trustedContext, /Não use a expressão Gerador de Prompts/i);
-  assert.equal(entry.session.stage, 'awaiting_intent');
+  assert.equal(reply.message.kind, 'text');
+  assert.match(JSON.stringify(reply), /não/i);
+  // A entrega já aconteceu, então o contexto é o do assistente pós-entrega —
+  // e ele proíbe repetir a oferta por conta própria.
+  assert.match(trustedContext, /já recebeu gratuitamente o prompt/i);
+  assert.match(trustedContext, /Não force uma nova venda/i);
 });
 
-test('texto livre identifica uso na própria empresa sem depender do botão', () => {
+test('texto livre pede a versão da própria empresa sem depender do botão', () => {
   const entry = createInstagramCommentFlow(WEBSITE_PROMPT_MEDIA_ID, { now: startedAt })!;
+  // A entrega padrão é a de clientes; pedir a da própria empresa por escrito
+  // vale tanto quanto tocar o botão.
   const input = { text: 'Quero usar isso para criar o site da minha clínica' };
   assert.equal(shouldAdvanceInstagramFlow(entry.session, input), true);
-  const gated = advanceInstagramFlow(entry.session, input, { followStatus: 'not_following' })!;
-  assert.equal(gated.session.path, 'ready');
-  assert.equal(gated.session.stage, 'awaiting_follow');
+  const troca = advanceInstagramFlow(entry.session, input, {})!;
+  assert.equal(troca.session.path, 'ready');
+  assert.equal(troca.session.stage, 'offering_product');
+  assert.match(JSON.stringify(troca), /pronto para publicar/i);
 });
 
-test('texto livre identifica criação de sites para clientes sem depender do botão', () => {
+test('quem descreve o caminho que já recebeu cai no assistente, não reentrega', () => {
   const entry = createInstagramCommentFlow(WEBSITE_PROMPT_MEDIA_ID, { now: startedAt })!;
   const input = { text: 'Trabalho criando sites e quero oferecer isso para meus clientes' };
-  assert.equal(shouldAdvanceInstagramFlow(entry.session, input), true);
-  const delivery = advanceInstagramFlow(entry.session, input, { followStatus: 'following' })!;
-  assert.equal(delivery.session.path, 'build');
-  assert.equal(delivery.session.stage, 'offering_product');
-  assert.equal(delivery.messages?.length, 2);
+  // path já é 'build'. Reentregar o mesmo prompt seria ruído.
+  assert.equal(shouldAdvanceInstagramFlow(entry.session, input), false);
 });
 
 test('pergunta com contexto de negócio não é confundida com escolha de caminho', () => {
@@ -223,25 +218,27 @@ test('negação nunca é tratada como intenção positiva', () => {
   }
 });
 
-test('entende respostas conversacionais comuns nos dois caminhos', () => {
+test('entende respostas conversacionais nos dois caminhos', () => {
   const entry = createInstagramCommentFlow(WEBSITE_PROMPT_MEDIA_ID, { now: startedAt })!;
+
+  // A entrega padrão é 'build'. Descrever a própria empresa é pedir a troca.
   for (const text of ['Isso é para minha empresa', 'É para o meu negócio']) {
-    const step = advanceInstagramFlow(entry.session, { text }, { followStatus: 'following' })!;
     assert.equal(shouldAdvanceInstagramFlow(entry.session, { text }), true, text);
+    const step = advanceInstagramFlow(entry.session, { text }, {})!;
     assert.equal(step.session.path, 'ready', text);
   }
+
+  // Descrever o que já recebeu não reentrega: quem responde é o assistente.
   for (const text of [
     'É para um cliente',
     'Quero fazer um site para um cliente',
     'Trabalho com sites para clientes',
   ]) {
-    const step = advanceInstagramFlow(entry.session, { text }, { followStatus: 'following' })!;
-    assert.equal(shouldAdvanceInstagramFlow(entry.session, { text }), true, text);
-    assert.equal(step.session.path, 'build', text);
+    assert.equal(shouldAdvanceInstagramFlow(entry.session, { text }), false, text);
   }
 });
 
-test('resposta longa preserva inteira a pergunta obrigatória da etapa', async () => {
+test('resposta longa demais cai na contingência curta em vez de estourar', async () => {
   const entry = createInstagramCommentFlow(WEBSITE_PROMPT_MEDIA_ID, { now: startedAt })!;
   const reply = await generateConversationalFlowReply({
     inboundText: 'preciso saber programar?',
@@ -251,10 +248,10 @@ test('resposta longa preserva inteira a pergunta obrigatória da etapa', async (
       source: 'motor',
     }),
   });
-  assert.equal(reply.message.kind, 'quick_replies');
-  if (reply.message.kind !== 'quick_replies') return;
-  assert.ok(reply.message.text.length <= 320);
-  assert.match(reply.message.text, /Você quer usar no site da sua empresa ou criar sites para clientes\?$/i);
+  assert.equal(reply.message.kind, 'text');
+  if (reply.message.kind !== 'text') return;
+  // O Direct não é lugar de parágrafo longo; o guard corta antes de enviar.
+  assert.ok(reply.message.text.length <= 320, `${reply.message.text.length} caracteres`);
 });
 
 test('após a entrega o assistente responde a adaptação sem repetir prompt, botões ou link', async () => {
@@ -554,7 +551,7 @@ test('não repete oferta comercial após a entrega quando a pessoa pede ajuda pr
 
 test('bloqueia oferta precoce e repetida mesmo quando o modelo usa paráfrases', async () => {
   const entry = createInstagramCommentFlow(WEBSITE_PROMPT_MEDIA_ID, { now: startedAt })!;
-  const beforeDelivery = await generateConversationalFlowReply({
+  const logoApos = await generateConversationalFlowReply({
     inboundText: 'isso serve para clínica?',
     session: entry.session,
     generateReply: async () => ({
@@ -562,11 +559,7 @@ test('bloqueia oferta precoce e repetida mesmo quando o modelo usa paráfrases',
       source: 'motor',
     }),
   });
-  assert.equal(beforeDelivery.message.kind, 'quick_replies');
-  if (beforeDelivery.message.kind === 'quick_replies') {
-    assert.doesNotMatch(beforeDelivery.message.text, /produto pago|versão paga|plano|compra/i);
-    assert.match(beforeDelivery.message.text, /site da sua empresa ou criar sites para clientes\?$/i);
-  }
+  assert.doesNotMatch(JSON.stringify(logoApos), /produto pago|versão paga|plano|compra/i);
 
   const delivery = advanceInstagramFlow(entry.session, {
     payload: 'FLOW:SITES:INTENT:OWN',
@@ -664,9 +657,11 @@ test('falha de entrega retoma o prompt em texto e o único link da Biblioteca', 
   assert.equal(retried.messages?.length, 2);
   const serialized = JSON.stringify(retried.messages);
   assert.match(serialized, /PROMPT DO VÍDEO — COPIE E COLE/);
-  assert.match(serialized, /VER A BIBLIOTECA/);
-  assert.doesNotMatch(serialized, /\/instagram\/prompt\?|COPIAR PROMPT|Laboratório|áudio/i);
-  assert.equal((serialized.match(/https?:/g) || []).length, 1);
+  assert.match(serialized, /ChatGPT.*modo Work/i);
+  // Retentativa reentrega o gratuito. Nenhum link, nenhum preço: a oferta é do
+  // follow-up, não da entrega — nem na primeira vez nem na segunda.
+  assert.doesNotMatch(serialized, /\/instagram\/(?:prompt|product)\?|COPIAR PROMPT|Laboratório|áudio|R\$/i);
+  assert.equal((serialized.match(/https?:/g) || []).length, 0);
 });
 
 test('sessão histórica sem fluxo só é retomada após novo inbound e volta à bifurcação correta', () => {
@@ -700,6 +695,8 @@ test('sessão antiga que ofereceu comunidade não afirma que entregou o prompt',
     path: 'build' as const,
     destinationUrl: 'https://example.invalid/old-community',
     communityCtaMessageId: 'old-card',
+    // Sessão daquela época não tinha entrega carimbada — a entrada de hoje tem.
+    promptDeliveredAt: undefined,
   };
   assert.equal(shouldAdvanceInstagramFlow(legacy, { text: 'oi' }), true);
   const recovered = advanceInstagramFlow(legacy, { text: 'oi' }, { now: startedAt })!;

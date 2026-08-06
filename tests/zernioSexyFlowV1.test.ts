@@ -339,33 +339,29 @@ test('sessão nova usa o contrato e os dois caminhos prometidos no Reel', () => 
   ]);
 });
 
-test('sessão do reel de sites exige follow, envia o prompt em texto e só o link da Biblioteca', () => {
+test('sessão do reel de sites pelo Zernio entrega o prompt de imediato, sem portão', () => {
   const entry = createInstagramCommentFlow(WEBSITE_PROMPT_MEDIA_ID, {
     correlationId: 'corr-sites-zernio',
     transport: 'zernio',
   })!;
   assert.equal(entry.session.campaign, 'sites_workshop');
-  assert.equal(entry.session.stage, 'awaiting_intent');
-  assert.equal(entry.message.kind, 'quick_replies');
-  if (entry.message.kind !== 'quick_replies') return;
-  assert.deepEqual(entry.message.quickReplies.map((item) => item.title), ['MINHA EMPRESA', 'VENDER SITES']);
+  assert.equal(entry.session.stage, 'offering_product');
+  assert.equal(entry.session.transport, 'zernio');
+  assert.ok(entry.session.promptDeliveredAt);
+  assert.equal(entry.message.kind, 'text');
+  assert.equal(entry.messages?.length, 2);
 
-  const gated = advanceInstagramFlow(entry.session, {
-    payload: 'FLOW:SITES:INTENT:SELL',
-  }, { firstName: 'Ana', followStatus: 'not_following' })!;
-  assert.equal(gated.session.stage, 'awaiting_follow');
-  const delivery = advanceInstagramFlow(gated.session, {
-    payload: 'FLOW:SARAIVA:FOLLOW_CONFIRMED',
-  }, { firstName: 'Ana', followStatus: 'following' })!;
-  assert.equal(delivery.session.stage, 'offering_product');
-  assert.equal(delivery.message.kind, 'text');
-  assert.equal(delivery.messages?.length, 2);
-  const serialized = JSON.stringify([entry, gated, delivery]);
-  assert.match(serialized, /JÁ SEGUI/);
+  const troca = advanceInstagramFlow(entry.session, {
+    payload: 'FLOW:SITES:INTENT:OWN',
+  }, { firstName: 'Ana' })!;
+  assert.equal(troca.session.path, 'ready');
+
+  const serialized = JSON.stringify([entry, troca]);
   assert.match(serialized, /PROMPT DO VÍDEO — COPIE E COLE/);
-  assert.match(serialized, /VER A BIBLIOTECA|\/instagram\/product\?/);
-  assert.doesNotMatch(serialized, /COPIAR PROMPT|\/instagram\/prompt\?/);
-  assert.equal((serialized.match(/https?:/g) || []).length, 1);
+  // O Reel prometeu sem condição: nada de portão, nada de preço na entrega.
+  assert.doesNotMatch(serialized, /JÁ SEGUI|exclusivo para quem acompanha/i);
+  assert.doesNotMatch(serialized, /COPIAR PROMPT|\/instagram\/(?:prompt|product)\?|VER A BIBLIOTECA/);
+  assert.equal((serialized.match(/https?:/g) || []).length, 0);
   assert.doesNotMatch(
     serialized,
     /Gerador|Cliente Pronto|Laboratório|qual é o seu negócio|questionário|últimas vagas|80% off|R\$ 97/i,

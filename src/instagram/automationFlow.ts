@@ -229,20 +229,29 @@ export function createInstagramCommentFlow(
   const now = (options.now || new Date()).toISOString();
   const correlationId = options.correlationId || anonymousCorrelation(mediaId, now);
   if (mediaId === WEBSITE_PROMPT_MEDIA_ID) {
+    // O post promete o prompt. A primeira mensagem entrega o prompt.
+    //
+    // Antes vinha uma pergunta ("empresa ou clientes?") e, para quem não era
+    // seguidor, um portão. Medido no DynamoDB: de 209 que entraram no fluxo,
+    // 76 responderam a pergunta e só 52 receberam — dois terços sumiam antes
+    // da entrega. Pedir antes de dar custa mais do que a qualificação vale.
+    //
+    // O caminho padrão é 'build' porque 65% de quem escolheu apertou VENDER
+    // SITES; quem quer a outra versão pede no botão que vai junto.
+    const base: InstagramFlowSession = {
+      id: SARAIVA_FLOW_ID,
+      campaign: 'sites_workshop',
+      stage: 'awaiting_intent',
+      correlationId,
+      transport: options.transport,
+      conversationId: options.conversationId,
+      startedAt: now,
+      updatedAt: now,
+    };
+    const entrega = websiteDeliveryStep(base, 'build', options, now, 'sites_flow_started');
     return {
-      session: {
-        id: SARAIVA_FLOW_ID,
-        campaign: 'sites_workshop',
-        stage: 'awaiting_intent',
-        correlationId,
-        transport: options.transport,
-        conversationId: options.conversationId,
-        startedAt: now,
-        updatedAt: now,
-      },
-      message: websiteRequestMessage(),
+      ...entrega,
       publicReply: 'O prompt completo do vídeo está no seu Direct 👀',
-      event: 'sites_flow_started',
       reasonCode: 'campaign_match',
     };
   }
@@ -272,7 +281,21 @@ export function recoverInstagramFlowSessionForInbound(
 ): InstagramFlowSession | undefined {
   if (current) return current;
   if (mediaId !== WEBSITE_PROMPT_MEDIA_ID) return undefined;
-  return createInstagramCommentFlow(mediaId, options)?.session;
+  const nova = createInstagramCommentFlow(mediaId, options)?.session;
+  if (!nova) return undefined;
+  // A entrada agora já entrega o prompt e carimba promptDeliveredAt. Uma sessão
+  // RECUPERADA não pode herdar esse carimbo: quem chega por aqui é gente de
+  // conversa antiga, que nunca recebeu nada. Afirmar entrega que não houve faz
+  // o sistema mandar "o prompt está nas mensagens acima" para quem não tem
+  // mensagem nenhuma acima.
+  return {
+    ...nova,
+    stage: 'awaiting_intent',
+    path: undefined,
+    promptDeliveredAt: undefined,
+    productOfferedAt: undefined,
+    followStatus: undefined,
+  };
 }
 
 export function advanceInstagramFlow(
@@ -502,6 +525,12 @@ export function shouldAdvanceInstagramFlow(
     if (current.stage === 'awaiting_request') {
       return input.payload === SARAIVA_FLOW_PAYLOAD.sitesOpen
         || ['criar meu site', 'quero criar meu site'].includes(normalize(text));
+    }
+    // Pedido da outra versão depois de já ter recebido uma: a máquina resolve,
+    // não o Motor. Sem isto o botão que acompanha a entrega não faria nada.
+    if (current.promptDeliveredAt && current.stage === 'offering_product') {
+      const outra = resolveWebsiteIntent(input.payload, text);
+      return Boolean(outra) && outra !== current.path;
     }
     return current.stage === 'awaiting_intent' && Boolean(resolveWebsiteIntent(input.payload, text));
   }
@@ -966,6 +995,14 @@ function websiteFollowGateStep(
   };
 }
 
+/**
+ * Entrega o prompt prometido. Sem oferta junto.
+ *
+ * Antes, esta função mandava o prompt e o card de R$ 19,90 no mesmo passo:
+ * a pessoa recebia o gratuito e o preço no mesmo fôlego. Cobrar no minuto da
+ * entrega gasta a boa vontade que a entrega acabou de criar. A oferta agora
+ * sai no follow-up, depois que a pessoa teve tempo de usar o que recebeu.
+ */
 function websiteDeliveryStep(
   current: InstagramFlowSession,
   path: InstagramFlowPath,
@@ -983,12 +1020,11 @@ function websiteDeliveryStep(
     stage: 'offering_product',
     followStatus: 'following',
     promptDeliveredAt: now,
-    productOfferedAt: now,
     updatedAt: now,
   };
   const messages: InstagramInteractiveMessage[] = [
     ...createWebsitePromptTextMessages(path),
-    createWebsiteProductCard(session, options),
+    websiteUsageMessage(path),
   ];
   return {
     session,
@@ -996,6 +1032,29 @@ function websiteDeliveryStep(
     messages,
     event,
     reasonCode,
+  };
+}
+
+/**
+ * Como usar o que acabou de chegar, e a saída para quem quer a outra versão.
+ *
+ * O prompt chega como um bloco denso de instruções. Sem estas três linhas, a
+ * pessoa fica com o texto na mão sem saber onde colar — a página de entrega
+ * traz esse passo a passo desde sempre, o Direct não trazia.
+ */
+function websiteUsageMessage(path: InstagramFlowPath): InstagramInteractiveMessage {
+  const outra = path === 'build'
+    ? 'Se for para o site da sua própria empresa, toca abaixo que eu mando a versão certa.'
+    : 'Se for para criar sites para clientes, toca abaixo que eu mando a versão certa.';
+  return {
+    kind: 'quick_replies',
+    text: `Cole no ChatGPT em modo Work e mencione @Sites. Troque os campos entre colchetes pelos dados reais antes de rodar.\n\n${outra}`,
+    quickReplies: [{
+      title: path === 'build' ? 'MINHA EMPRESA' : 'VENDER SITES',
+      payload: path === 'build'
+        ? SARAIVA_FLOW_PAYLOAD.sitesOwnBusiness
+        : SARAIVA_FLOW_PAYLOAD.sitesSell,
+    }],
   };
 }
 
@@ -1076,15 +1135,8 @@ function advanceWebsiteSitesFlow(
         reasonCode: 'technical_retry',
       };
     }
-    if (options.followStatus !== 'following') {
-      return websiteFollowGateStep(
-        current,
-        current.path,
-        options.followStatus || 'unknown',
-        options,
-        now,
-      );
-    }
+    // Retentativa depois de falha técnica reentrega direto. Barrar aqui seria
+    // cobrar o follow de quem já tentou receber e o sistema é que falhou.
     return websiteDeliveryStep(current, current.path, options, now, 'technical_retry_requested', 'technical_retry');
   }
 
@@ -1103,15 +1155,10 @@ function advanceWebsiteSitesFlow(
   if (current.stage === 'awaiting_intent') {
     const path = resolveWebsiteIntent(input.payload, input.text);
     if (!path) return repeat(current, websiteRequestMessage(), now, 'intent_selection_required');
-    if (options.followStatus !== 'following') {
-      return websiteFollowGateStep(
-        current,
-        path,
-        options.followStatus || 'unknown',
-        options,
-        now,
-      );
-    }
+    // Sem portão de seguidor no caminho do gratuito. O Reel prometeu "comenta
+    // e eu mando" — sem condição. Cobrar o follow depois da promessa é mudar o
+    // combinado no meio, e custava uma volta inteira: a pessoa tocava JÁ SEGUI,
+    // era barrada de novo, e só passava na segunda tentativa.
     return websiteDeliveryStep(current, path, options, now);
   }
 
@@ -1149,6 +1196,20 @@ function advanceWebsiteSitesFlow(
   }
 
   if (current.stage === 'offering_product' || current.stage === 'offering_community') {
+    // Quem já recebeu uma versão e pede a outra recebe a outra. É o botão que
+    // vai junto da entrega, e é a única qualificação que sobrou no fluxo —
+    // feita DEPOIS de entregar, quando não custa mais nada.
+    const outra = resolveWebsiteIntent(input.payload, input.text);
+    if (outra && current.promptDeliveredAt && outra !== current.path) {
+      return websiteDeliveryStep(
+        current,
+        outra,
+        options,
+        now,
+        'website_prompt_variant_delivered',
+        'other_variant_requested',
+      );
+    }
     if (current.promptDeliveredAt) {
       return repeat(current, websitePromptReminder(), now, 'prompt_link_already_sent');
     }

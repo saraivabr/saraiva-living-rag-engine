@@ -1,4 +1,5 @@
-import type { InstagramFlowSession } from './automationFlow.js';
+import { createWebsiteProductCard } from './automationFlow.js';
+import type { InstagramFlowSession, InstagramInteractiveMessage } from './automationFlow.js';
 import type { LeadContext } from '../store/leadContextStore.js';
 
 const WAITING_STAGES = new Set<InstagramFlowSession['stage']>([
@@ -24,6 +25,15 @@ export interface AbandonmentAudioCandidate {
 export interface AbandonmentTextCandidate {
   context: LeadContext;
   message: string;
+  /**
+   * A oferta viaja no follow-up, não na entrega.
+   *
+   * A entrega manda só o prompt gratuito: cobrar no mesmo fôlego gasta a boa
+   * vontade que a entrega acabou de criar. Uma hora depois, quando a pessoa já
+   * teve tempo de usar, a pergunta vai acompanhada do card — o texto não
+   * empurra nada, o card fica ali para quem estiver pronto.
+   */
+  offerCard?: InstagramInteractiveMessage & { kind: 'link_card' };
 }
 
 export function buildAbandonmentAudioCandidate(
@@ -93,6 +103,7 @@ export function buildWebsitePromptFollowUpCandidate(
     message: session.path === 'build'
       ? 'Conseguiu gerar o site com o prompt? Qual é o próximo projeto que o teu cliente vai te pedir?'
       : 'Conseguiu gerar o site com o prompt? Qual é a próxima coisa que você quer montar na sua empresa?',
+    offerCard: createWebsiteProductCard(session),
   };
 }
 

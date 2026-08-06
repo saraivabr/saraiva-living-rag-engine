@@ -2488,6 +2488,21 @@ async function runWebsitePromptTextFollowUps(): Promise<AbandonmentAudioFollowUp
         message: { kind: 'text', text: candidate.message },
         reconcileSince: latest.updatedAt,
       });
+      // A oferta sai aqui, uma hora depois da entrega — não junto dela. O texto
+      // acima só pergunta; o card fica ao lado para quem já estiver pronto.
+      if (candidate.offerCard) {
+        await sendZernioInteractive({
+          apiKey: credentials.apiKey,
+          accountId,
+          conversationId: latest.instagramFlow.conversationId!,
+          message: candidate.offerCard,
+        }).catch((error: unknown) => {
+          console.warn('website_prompt_follow_up_offer_failed', {
+            correlationId: latest.instagramFlow!.correlationId,
+            error: (error as Error).message.slice(0, 200),
+          });
+        });
+      }
       const sentAt = new Date().toISOString();
       await saveLeadContext({
         ...latest,
@@ -2495,6 +2510,7 @@ async function runWebsitePromptTextFollowUps(): Promise<AbandonmentAudioFollowUp
           ...latest.instagramFlow,
           followUpSentAt: sentAt,
           followUpMessageId: messageId,
+          ...(candidate.offerCard ? { productOfferedAt: sentAt } : {}),
           updatedAt: sentAt,
         },
         automationJournal: [

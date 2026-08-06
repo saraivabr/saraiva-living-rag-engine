@@ -55,66 +55,67 @@ test('a entrega falha fechada se o prompt estiver vazio ou ultrapassar o limite'
   );
 });
 
-test('a jornada completa entrega o prompt em texto e um único site da Biblioteca', () => {
-  for (const payload of [
-    'FLOW:SITES:INTENT:OWN',
-    'FLOW:SITES:INTENT:SELL',
-  ] as const) {
-    const entry = createInstagramCommentFlow(WEBSITE_PROMPT_MEDIA_ID, {
-      correlationId: `corr-${payload}`,
-    })!;
-    assert.equal(entry.session.stage, 'awaiting_intent');
-    assert.equal(entry.message.kind, 'quick_replies');
-    if (entry.message.kind !== 'quick_replies') return;
-    assert.deepEqual(entry.message.quickReplies.map((button) => button.title), [
-      'MINHA EMPRESA',
-      'VENDER SITES',
-    ]);
+test('a jornada entrega o prompt no primeiro contato, sem link e sem preço', () => {
+  const entry = createInstagramCommentFlow(WEBSITE_PROMPT_MEDIA_ID, {
+    correlationId: 'corr-entrada',
+  })!;
+  assert.equal(entry.session.stage, 'offering_product');
+  assert.equal(entry.session.path, 'build');
+  assert.ok(entry.session.promptDeliveredAt);
+  assert.equal(entry.session.productOfferedAt, undefined);
+  assert.equal(entry.messages?.length, 2);
 
-    const delivered = advanceInstagramFlow(
-      entry.session,
-      { payload },
-      { followStatus: 'following', trackingBaseUrl: 'https://app.saraiva.ai' },
-    )!;
-    assert.equal(delivered.session.stage, 'offering_product');
-    assert.equal(delivered.message.kind, 'text');
-    assert.equal(delivered.messages?.length, 2);
-    const [promptMessage, libraryCard] = delivered.messages!;
-    assert.equal(promptMessage!.kind, 'text');
-    if (promptMessage!.kind !== 'text') return;
-    assert.doesNotMatch(promptMessage!.text, /https?:/);
-    assert.equal(libraryCard!.kind, 'link_card');
-    if (libraryCard!.kind !== 'link_card') return;
-    assert.equal(libraryCard!.buttons.length, 1);
-    const libraryButton = libraryCard!.buttons[0]!;
-    assert.equal(libraryButton.title, 'VER A BIBLIOTECA');
-    assert.equal(libraryButton.type, 'web_url');
-    if (libraryButton.type !== 'web_url') return;
-    const libraryUrl = new URL(libraryButton.url);
-    assert.equal(libraryUrl.host, 'app.saraiva.ai');
-    assert.equal(libraryUrl.pathname, '/instagram/product');
-    if (payload === 'FLOW:SITES:INTENT:OWN') {
-      assert.match(promptMessage!.text, /pronto para publicar/);
-      assert.doesNotMatch(promptMessage!.text, /potencial cliente/);
-    } else {
-      assert.match(promptMessage!.text, /potencial cliente/);
-      assert.match(promptMessage!.text, /\[VALIDAR COM CLIENTE\]/);
-    }
-    const messages = JSON.stringify(delivered.messages);
-    assert.match(messages, /PROMPT DO VÍDEO — COPIE E COLE/);
-    assert.doesNotMatch(messages, /COPIAR PROMPT|\/instagram\/prompt\?/);
-    assert.equal((messages.match(/https?:/g) || []).length, 1);
-    assert.doesNotMatch(messages, /Gerador|Laboratório|comunidade|consultoria|Cliente Pronto|R\$ 497|últimas vagas|80% off|lote/i);
-  }
+  const [prompt, uso] = entry.messages!;
+  assert.equal(prompt!.kind, 'text');
+  if (prompt!.kind !== 'text') return;
+  assert.match(prompt!.text, /^PROMPT DO VÍDEO — COPIE E COLE/);
+  assert.match(prompt!.text, /potencial cliente/);
+  assert.match(prompt!.text, /\[VALIDAR COM CLIENTE\]/);
+  assert.doesNotMatch(prompt!.text, /https?:/);
+
+  assert.equal(uso!.kind, 'quick_replies');
+  if (uso!.kind !== 'quick_replies') return;
+  assert.match(uso!.text, /ChatGPT.*modo Work/i);
+
+  // A entrega é só a entrega. Preço e link são do follow-up, uma hora depois.
+  const serialized = JSON.stringify(entry.messages);
+  assert.equal((serialized.match(/https?:/g) || []).length, 0);
+  assert.doesNotMatch(serialized, /R\$|19,90|Biblioteca|VER A BIBLIOTECA/i);
+  assert.doesNotMatch(serialized, /COPIAR PROMPT|\/instagram\/(?:prompt|product)\?/);
+  assert.doesNotMatch(serialized, /Gerador|Laboratório|comunidade|consultoria|Cliente Pronto|últimas vagas|80% off|lote/i);
+});
+
+test('quem pede a outra versão recebe a outra, também sem link', () => {
+  const entry = createInstagramCommentFlow(WEBSITE_PROMPT_MEDIA_ID, {
+    correlationId: 'corr-troca',
+  })!;
+  const troca = advanceInstagramFlow(
+    entry.session,
+    { payload: 'FLOW:SITES:INTENT:OWN' },
+    { trackingBaseUrl: 'https://app.saraiva.ai' },
+  )!;
+  assert.equal(troca.session.path, 'ready');
+  const [prompt] = troca.messages!;
+  assert.equal(prompt!.kind, 'text');
+  if (prompt!.kind !== 'text') return;
+  assert.match(prompt!.text, /pronto para publicar/);
+  assert.doesNotMatch(prompt!.text, /potencial cliente/);
+  assert.equal((JSON.stringify(troca.messages).match(/https?:/g) || []).length, 0);
 });
 
 test('todos os botões do funil respeitam o limite estrito de vinte caracteres', () => {
   const entry = createInstagramCommentFlow(WEBSITE_PROMPT_MEDIA_ID)!;
-  if (entry.message.kind !== 'quick_replies') assert.fail('quick replies ausentes');
-  const titles = [
-    ...entry.message.quickReplies.map((button) => button.title),
-    'JÁ SEGUI',
-    'VER A BIBLIOTECA',
-  ];
+  // Os botões agora vêm na mensagem de uso, não na primeira. O limite de 20
+  // caracteres é regra dura do Instagram: acima disso o botão é recusado.
+  const titles: string[] = ['JÁ SEGUI', 'VER A BIBLIOTECA'];
+  for (const message of entry.messages || [entry.message]) {
+    if (message.kind === 'quick_replies') {
+      titles.push(...message.quickReplies.map((button) => button.title));
+    }
+    if (message.kind === 'link_card') {
+      titles.push(...message.buttons.map((button) => button.title));
+    }
+  }
+  assert.ok(titles.length > 2, 'nenhum botão encontrado na entrega');
   assert.ok(titles.every((title) => title.length <= 20), titles.join(', '));
 });

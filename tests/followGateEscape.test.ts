@@ -9,6 +9,13 @@ import {
 } from '../src/instagram/automationFlow.js';
 import { WEBSITE_PROMPT_MEDIA_ID } from '../src/campaignTrigger.js';
 
+/**
+ * Sessão de alguém preso no portão de seguidor.
+ *
+ * O portão saiu do caminho novo — quem comenta hoje recebe o prompt direto.
+ * Estas sessões são de antes: gente que escolheu um caminho, foi barrada e
+ * ficou presa. A saída de emergência precisa continuar funcionando para elas.
+ */
 function sessaoNoPortao(tentativas: number): InstagramFlowSession {
   const inicial = createInstagramCommentFlow(WEBSITE_PROMPT_MEDIA_ID)!.session;
   return {
@@ -17,6 +24,7 @@ function sessaoNoPortao(tentativas: number): InstagramFlowSession {
     path: 'build',
     followStatus: 'unknown',
     followRecheckAttempts: tentativas,
+    promptDeliveredAt: undefined,
   };
 }
 

@@ -95,12 +95,16 @@ export function auditarCampanha(
     };
   }
 
+  // A entrada também pode mandar várias mensagens (entrega + instrução de uso).
   passos.push({
     entrada: 'comenta a palavra-chave',
-    mensagens: [`PÚBLICO: ${entrada.publicReply}`, textoDe(entrada.message)],
+    mensagens: [
+      `PÚBLICO: ${entrada.publicReply}`,
+      ...(entrada.messages || [entrada.message]).map(textoDe),
+    ],
     estagio: entrada.session.stage,
-    entregou: false,
-    ofertou: false,
+    entregou: Boolean(entrada.session.promptDeliveredAt),
+    ofertou: Boolean(entrada.session.productOfferedAt),
   });
 
   let sessao: InstagramFlowSession = entrada.session;
@@ -417,7 +421,9 @@ export { campanhaPorMedia };
 
 export const CAMINHOS_PADRAO = {
   [WEBSITE_PROMPT_MEDIA_ID]: [
-    { rotulo: 'toca VENDER SITES', payload: SARAIVA_FLOW_PAYLOAD.sitesSell },
+    // A entrega já sai no primeiro contato. O que resta testar é a troca de
+    // versão: quem recebeu a de clientes e pede a da própria empresa.
+    { rotulo: 'toca MINHA EMPRESA', payload: SARAIVA_FLOW_PAYLOAD.sitesOwnBusiness },
   ],
   [PROSPECTING_FLOW_MEDIA_ID]: [
     { rotulo: 'toca VER ESTRUTURA', payload: SARAIVA_FLOW_PAYLOAD.open },
