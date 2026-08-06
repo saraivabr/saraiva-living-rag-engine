@@ -91,13 +91,15 @@ curl -s -o /dev/null -w "%{http_code}\n" "$BASE/instagram/prompt?intent=ter&corr
 
 ## Rollback
 
-O pacote anterior ao deploy de 06/08/2026 está guardado:
+Guarde o pacote anterior **antes** de publicar. Os que existem hoje, do mais
+recente para o mais antigo:
 
-```
-s3://respondedor-instagram-audio-880690593918/rollback/lambda-pre-f60fbfe-20260806.zip
-sha256 local  7c3ed548fcaeee4f…
-CodeSha256    fD7VSPyu7k/qPPOmWNkY9oeFi8h5ut8UinaOJ/c1jo4=
-```
+| Arquivo em `s3://…/rollback/` | Corresponde a | CodeSha256 |
+|---|---|---|
+| `lambda-f60fbfe-20260806.zip` | `f60fbfe` | `l7N5y0BOqenAujzim+vlYYSZVRl/ih7diVYyiG5ILz4=` |
+| `lambda-pre-f60fbfe-20260806.zip` | anterior a `f60fbfe` | `fD7VSPyu7k/qPPOmWNkY9oeFi8h5ut8UinaOJ/c1jo4=` |
+
+Em produção agora: `afe9e37` · `RhF81NYKVI2bsSMgmvgnM6ds+XZDrPcVBlqI61+q9qI=`
 
 Para voltar:
 
@@ -105,7 +107,8 @@ Para voltar:
 aws lambda update-function-code \
   --function-name respondedor-instagram-saraiva-os \
   --s3-bucket respondedor-instagram-audio-880690593918 \
-  --s3-key rollback/lambda-pre-f60fbfe-20260806.zip
+  --s3-key rollback/<arquivo escolhido>
+aws lambda wait function-updated --function-name respondedor-instagram-saraiva-os
 ```
 
-Confirme que o `CodeSha256` voltou ao valor acima.
+Confirme que o `CodeSha256` voltou ao valor da tabela.
