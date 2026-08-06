@@ -1255,6 +1255,31 @@ async function handleHttp(event: LambdaEvent): Promise<LambdaResponse> {
   return json(200, { ok: true, handled });
 }
 
+/**
+ * Para onde o clique rastreado leva a pessoa.
+ *
+ * 'prompt' é a entrega gratuita prometida no Reel; 'product' é a Biblioteca
+ * paga. Mandar os dois para a mesma página cobra por algo anunciado de graça —
+ * já aconteceu duas vezes, e das duas o erro morava exatamente aqui, no fio
+ * entre o handler e as funções de destino.
+ *
+ * Está separada do handler porque o handler toca Secrets Manager, DynamoDB e
+ * SQS, e essa decisão não precisa de nada disso para ser conferida.
+ */
+export function resolveTrackedDestination(
+  kind: 'prompt' | 'product',
+  input: {
+    correlationId: string;
+    intent: 'ter' | 'aprender';
+    issuedAt: number;
+    secret: string;
+  },
+): string {
+  return kind === 'product'
+    ? createStorefrontProductDestinationUrl(input)
+    : createFreePromptDestinationUrl(input);
+}
+
 async function handleInstagramTrackedRedirect(
   event: LambdaEvent,
   kind: TrackedFlowKind,
@@ -1309,19 +1334,12 @@ async function handleInstagramTrackedRedirect(
         reasonCode: result,
       }),
     });
-    // 'prompt' é a entrega gratuita prometida no Reel; 'product' é a Biblioteca
-    // paga. Mandar os dois para a mesma página cobra por algo anunciado de graça.
-    // As duas URLs saem das funções de automationFlow para que a campanha e a
-    // assinatura sobrevivam também na entrega gratuita.
-    const destination = {
+    return redirect(resolveTrackedDestination(kind, {
       correlationId,
       intent,
       issuedAt: Math.floor(Date.now() / 1_000),
       secret: credentials.communityLinkSecret,
-    };
-    return redirect(kind === 'product'
-      ? createStorefrontProductDestinationUrl(destination)
-      : createFreePromptDestinationUrl(destination));
+    }));
   }
 
   if (kind === 'example') {
