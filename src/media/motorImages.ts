@@ -33,7 +33,21 @@ export interface MotorImageRequest {
   background?: 'auto' | 'transparent' | 'opaque';
   imageDetail?: 'low' | 'high';
   outputFormat?: MotorImageFormat;
+  /**
+   * Imagem de referência. O modelo mantém rosto, roupa e identidade visual do
+   * que vier aqui — é assim que se gera criativo com a pessoa real da marca.
+   *
+   * /v1/images/edits e /v1/images/variations respondem 500 neste provedor; o
+   * caminho que funciona é este campo dentro do próprio /generations.
+   */
+  referenceImage?: { bytes: Uint8Array; mimeType: 'image/jpeg' | 'image/png' };
 }
+
+/**
+ * O servidor devolve 413 bem antes do que se imagina: 3,3 MB em base64 já
+ * estoura, 142 KB passa. JPEG com ~1024px de lado maior cabe com folga.
+ */
+export const MAX_REFERENCE_BASE64_BYTES = 1.5 * 1024 * 1024;
 
 export interface MotorImageOptions {
   apiKey?: string;
@@ -92,6 +106,7 @@ export async function generateMotorImages(
         background: request.background ?? 'auto',
         image_detail: request.imageDetail ?? 'high',
         output_format: format,
+        ...(request.referenceImage ? { image: toDataUrl(request.referenceImage) } : {}),
       }),
       signal: controller.signal,
     });
@@ -224,6 +239,17 @@ function parseSecret(secret: string): string {
     return '';
   }
   return '';
+}
+
+function toDataUrl(ref: NonNullable<MotorImageRequest['referenceImage']>): string {
+  const base64 = Buffer.from(ref.bytes).toString('base64');
+  if (base64.length > MAX_REFERENCE_BASE64_BYTES) {
+    throw new Error(
+      `motor_image_reference_too_large: ${Math.round(base64.length / 1024)}KB em base64. `
+      + 'Reduza para ~1024px de lado maior em JPEG (ex.: sips -Z 1024 -s format jpeg).',
+    );
+  }
+  return `data:${ref.mimeType};base64,${base64}`;
 }
 
 function normalizeBaseUrl(value: string): string {

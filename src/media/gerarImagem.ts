@@ -1,4 +1,4 @@
-import { mkdir, writeFile } from 'node:fs/promises';
+import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { dirname, resolve } from 'node:path';
 import {
   generateMotorImages,
@@ -25,12 +25,15 @@ Gera imagem pelo Motor (cx/gpt-5.5-image).
   --tamanho <valor>    auto | 1024x1024 | 1024x1536 | 1536x1024   (padrão auto)
   --qualidade <valor>  auto | low | medium | high                  (padrão auto)
   --formato <valor>    png | jpeg | webp                           (padrão png)
+  --referencia <img>   foto de referência: o modelo mantém rosto e roupa dela
 
 Story do Instagram é 9:16 — use --tamanho 1024x1536.
+A referência precisa ser leve (~1024px, JPEG). Para reduzir:
+  sips -Z 1024 -s format jpeg foto.png --out foto-ref.jpg
 A credencial sai do Secrets Manager; nada de chave na linha de comando.
 `.trim();
 
-const COM_VALOR = new Set(['saida', 'n', 'tamanho', 'qualidade', 'formato']);
+const COM_VALOR = new Set(['saida', 'n', 'tamanho', 'qualidade', 'formato', 'referencia']);
 
 /** Separa o prompt (posicional) das opções, sem confundir o valor de uma flag. */
 function parseArgs(argv: string[]): { prompt: string; flags: Map<string, string> } {
@@ -67,7 +70,17 @@ async function main(): Promise<void> {
   const destino = resolve(process.cwd(), arg('saida')
     || `criativos/${new Date().toISOString().replace(/[:.]/g, '-')}.${formato}`);
 
-  console.log(`Gerando ${n} imagem(ns)…`);
+  const refPath = arg('referencia');
+  const referenceImage = refPath
+    ? {
+      bytes: await readFile(resolve(process.cwd(), refPath)),
+      mimeType: refPath.toLowerCase().endsWith('.png')
+        ? 'image/png' as const
+        : 'image/jpeg' as const,
+    }
+    : undefined;
+
+  console.log(`Gerando ${n} imagem(ns)${referenceImage ? ' com referência' : ''}…`);
   const inicio = Date.now();
 
   const imagens = await generateMotorImages({
@@ -76,6 +89,7 @@ async function main(): Promise<void> {
     size: (arg('tamanho') || 'auto') as MotorImageSize,
     quality: (arg('qualidade') || 'auto') as MotorImageQuality,
     outputFormat: formato,
+    referenceImage,
   }, {
     onProgress: (stage) => process.stdout.write(`  ${stage}\r`),
   });
