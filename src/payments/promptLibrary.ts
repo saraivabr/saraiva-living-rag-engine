@@ -6,7 +6,6 @@ import {
 } from 'node:crypto';
 
 export const PROMPT_LIBRARY_VALUE_CENTS = 1_990;
-export const PROMPT_LIBRARY_PRODUCT = 'Biblioteca Secreta de Prompts Prontos';
 export const PROMPT_LIBRARY_PRICE_KEY = 'prompt_library_one_time_brl_1990';
 export const PROMPT_LIBRARY_OFFER_KEY = 'quero_o_prompt_1990';
 export const PROMPT_LIBRARY_CORRELATION_PREFIX = 'ig-prompt-library-';

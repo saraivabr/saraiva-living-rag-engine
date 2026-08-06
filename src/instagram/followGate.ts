@@ -138,14 +138,6 @@ export function buildFollowGateMessage(
   }
 }
 
-/**
- * Verifica se o payload recebido é o botão "JÁ SEGUI".
- * Comparação estrita — não aceita variações.
- */
-export function isFollowConfirmedPayload(payload: string): boolean {
-  return payload === FOLLOW_CONFIRMED_PAYLOAD;
-}
-
 // ---------------------------------------------------------------------------
 // Helpers internos
 // ---------------------------------------------------------------------------

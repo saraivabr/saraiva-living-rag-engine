@@ -65,6 +65,7 @@ import {
   resolvePostPromise,
   websiteCampaignVariantCount,
 } from './socialSelling/flow.js';
+import { BIBLIOTECA, formatarPreco } from './catalogo/campanhas.js';
 import { config } from './config.js';
 import { syncCalendarBio, type CalendarSyncSummary } from './calendarSync.js';
 import { buildSalesSnapshot } from './sales/empresaAgentica.js';
@@ -250,9 +251,6 @@ interface PromptLibraryPaymentRecord {
   accessGrantedAt?: string;
   analyticsSyncedAt?: string;
 }
-
-export const WEBSITE_GUIDE_GENERATION_LIMIT = 10;
-export const WEBSITE_GUIDE_FREE_GENERATION_LIMIT = 1;
 
 interface WebsiteGuideLeadProfile {
   name: string;
@@ -3366,12 +3364,18 @@ export function shouldDeferToZernio(
   return mode === 'live' && isZernioFlowMedia(mediaId);
 }
 
+/**
+ * O tipo declarava 'deterministic' | 'woovi', mas nenhum caminho jamais
+ * devolveu 'woovi' — sobra de quando a Woovi respondia aqui dentro. Tipo que
+ * promete mais do que o código entrega faz quem lê procurar um ramo que não
+ * existe. O produto e o preço saem do catálogo, que é a fonte única.
+ */
 async function resolveCommerceReply(
   _senderId: string,
   inboundText: string,
   turn: ReturnType<typeof buildSocialSellingTurn>,
   fallbackReply: string,
-): Promise<{ reply: string; source: 'deterministic' | 'woovi' }> {
+): Promise<{ reply: string; source: 'deterministic' }> {
   if (
     !['website_guide', 'website_automation'].includes(turn.sales.offer)
     || !isWebsiteGuideCheckoutIntent(inboundText)
@@ -3380,8 +3384,8 @@ async function resolveCommerceReply(
   }
   return {
     reply: [
-      'A oferta antiga foi encerrada. A Biblioteca Secreta tem 24 prompts prontos para Sites, CRMs, Sistemas e Automações por R$ 19,90 no Pix.',
-      'https://app.saraiva.ai/quero-o-prompt',
+      `A oferta antiga foi encerrada. A ${BIBLIOTECA.produto} tem 24 prompts prontos para Sites, CRMs, Sistemas e Automações por ${formatarPreco(BIBLIOTECA.precoCentavos)} no Pix.`,
+      BIBLIOTECA.url,
     ].join('\n\n'),
     source: 'deterministic',
   };

@@ -911,6 +911,17 @@ function mentionsBothWebsiteIntents(value: string): boolean {
   return ownBusiness && clientWork;
 }
 
+/**
+ * NÃO É CÓDIGO MORTO — está estacionado de propósito.
+ *
+ * Uma varredura de símbolos não encontra chamador para esta função e a marca
+ * para remoção. Ela é a peça que preenche o `offerCard` do
+ * buildWebsitePromptFollowUpCandidate, deixado vazio enquanto a oferta da
+ * segunda etapa não tiver página. O encanamento do envio já está ligado no
+ * lambda; falta só o destino existir.
+ *
+ * Apagar aqui obrigaria a reescrever isto quando a oferta nascer.
+ */
 export function createWebsiteProductCard(
   session: InstagramFlowSession,
   options: InstagramFlowOptions = {},

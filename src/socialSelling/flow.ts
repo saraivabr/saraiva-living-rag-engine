@@ -554,10 +554,6 @@ function voiceAiMapWorkshopPromise(): PostPromise {
   };
 }
 
-export function buildDirectContinuation(text: string, context?: PostPromise): string {
-  return buildSocialSellingTurn(text, context).reply;
-}
-
 export function buildSocialSellingTurn(
   text: string,
   context?: PostPromise,
