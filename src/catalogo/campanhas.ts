@@ -67,7 +67,7 @@ export interface Campanha {
 export const BIBLIOTECA: OfertaCampanha = {
   produto: 'Biblioteca Secreta de Prompts',
   precoCentavos: 1_990,
-  url: 'https://app.saraiva.ai/quero-o-prompt',
+  url: 'https://prompt.saraiva.ai/quero-o-prompt',
   entregueEm: 'storefront/app/data/promptLibrary.ts (24 prompts, 4 categorias)',
 };
 
@@ -83,7 +83,10 @@ export const CAMPANHAS: readonly Campanha[] = Object.freeze([
       label: 'prompt usado no vídeo para criar o site',
       entrega: 'texto-no-direct',
       gratuito: true,
-      url: 'https://app.saraiva.ai/prompt-do-video',
+      // Tem de bater com PROMPT_GRATUITO_URL em socialSelling/flow.ts. O QA
+      // compara os dois: catálogo e código divergiam aqui sem ninguém notar,
+      // porque a auditoria só conferia o label da promessa, nunca a URL.
+      url: 'https://prompt.saraiva.ai/prompt-do-video',
     },
     oferta: BIBLIOTECA,
   },

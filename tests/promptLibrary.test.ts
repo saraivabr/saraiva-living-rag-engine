@@ -87,6 +87,47 @@ test('cobrança Woovi da Biblioteca é exatamente R$ 19,90 e idempotente', async
   assert.equal(charge.value, 1990);
 });
 
+test('o checkout aceita os dois domínios da casa e recusa qualquer outro', async () => {
+  // A allowlist só tinha app.saraiva.ai. Como o destino vem de variável de
+  // ambiente e a migração declarada é para prompt.saraiva.ai, apontar a
+  // variável derrubaria a geração de Pix — falha silenciosa no único caminho
+  // de receita. Os dois domínios servem o mesmo origin; ambos precisam passar.
+  const pedido = promptLibraryCorrelationId('store:session-1234567890', 'purchase-dominio');
+  const token = createPromptLibraryAccessToken(pedido, accessSecret);
+  const charge = (correlationID: string) => new Response(JSON.stringify({
+    charge: {
+      correlationID,
+      status: 'ACTIVE',
+      value: PROMPT_LIBRARY_VALUE_CENTS,
+      paymentLinkUrl: 'https://openpix.com.br/pay/test-library',
+    },
+  }), { status: 200 });
+
+  for (const baseUrl of ['https://app.saraiva.ai', 'https://prompt.saraiva.ai']) {
+    const resultado = await createPromptLibraryCharge({
+      appId: 'app-id-test',
+      correlationId: pedido,
+      redirectUrl: promptLibraryAccessUrl({ baseUrl, correlationId: pedido, token }),
+      fetchImpl: async () => charge(pedido),
+    });
+    assert.equal(resultado.value, PROMPT_LIBRARY_VALUE_CENTS, baseUrl);
+  }
+
+  // Fechada continua fechada: domínio de terceiro não vira destino de compra.
+  for (const hostileiro of ['https://saraiva.ai.evil.com', 'https://outro.com']) {
+    await assert.rejects(
+      createPromptLibraryCharge({
+        appId: 'app-id-test',
+        correlationId: pedido,
+        redirectUrl: `${hostileiro}/biblioteca?pedido=${pedido}&token=${token}`,
+        fetchImpl: async () => charge(pedido),
+      }),
+      /prompt_library_redirect_invalid/,
+      hostileiro,
+    );
+  }
+});
+
 test('webhook aceita HMAC-SHA1 Base64 oficial e rejeita SHA1 hexadecimal legado', () => {
   const rawBody = '{"event":"OPENPIX:CHARGE_COMPLETED"}';
   const secret = 'woovi-webhook-hmac-secret';

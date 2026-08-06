@@ -271,11 +271,25 @@ function isSafePaymentUrl(value: string): boolean {
   }
 }
 
+/**
+ * Domínios da casa que podem receber o comprador depois do Pix.
+ *
+ * Os dois servem o mesmo origin. Estavam aqui só como `app.saraiva.ai`, e isso
+ * era uma armadilha: PROMPT_LIBRARY_STOREFRONT_URL é variável de ambiente e a
+ * direção declarada do projeto é migrar para prompt.saraiva.ai. No dia em que
+ * alguém apontasse a variável para lá, createPromptLibraryCharge passaria a
+ * lançar prompt_library_redirect_invalid e o checkout pago pararia de gerar
+ * Pix — com cara de validação defensiva funcionando, não de falha.
+ *
+ * A allowlist continua fechada: só o que é nosso entra.
+ */
+const DOMINIOS_DE_ACESSO = ['app.saraiva.ai', 'prompt.saraiva.ai', 'localhost'] as const;
+
 function isSafeAppUrl(value: string): boolean {
   try {
     const url = new URL(value);
     return url.protocol === 'https:'
-      && (url.hostname === 'app.saraiva.ai' || url.hostname === 'localhost');
+      && DOMINIOS_DE_ACESSO.includes(url.hostname as (typeof DOMINIOS_DE_ACESSO)[number]);
   } catch {
     return false;
   }

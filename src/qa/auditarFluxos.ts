@@ -52,6 +52,21 @@ export interface RelatorioQa {
 
 const URL_REGEX = /(?:https?:\/\/|(?<![\w@.])(?:www\.)?[a-z0-9-]+\.(?:ai|com|br|app)\b)[^\s"')]*/giu;
 
+/** Compara host e caminho, ignorando query, barra final e maiúsculas. */
+function mesmaUrl(esquerda: string, direita: string): boolean {
+  const normaliza = (bruto: string): string | undefined => {
+    try {
+      const url = new URL(bruto.startsWith('http') ? bruto : `https://${bruto}`);
+      return `${url.hostname.toLowerCase()}${url.pathname.replace(/\/+$/, '')}`;
+    } catch {
+      return undefined;
+    }
+  };
+  const a = normaliza(esquerda);
+  const b = normaliza(direita);
+  return Boolean(a && b && a === b);
+}
+
 /** true quando a URL não tem caminho: `https://prompt.saraiva.ai` ou `.../`. */
 function ehRaizNua(bruto: string): boolean {
   try {
@@ -357,6 +372,22 @@ export function auditarCatalogo(): AchadoQa[] {
         problema: 'A promessa do catálogo e a do código estão escritas diferente.',
         evidencia: `catálogo "${campanha.promessa.label}" · código "${promessaNoCodigo.label}"`,
       });
+    }
+
+    // A auditoria comparava só o LABEL. O endereço — que é o que a pessoa
+    // realmente abre — passava sem conferência, e catálogo e código ficaram
+    // apontando para domínios diferentes sem ninguém notar. Um link errado
+    // custa mais caro que um nome escrito diferente.
+    if (promessaNoCodigo && campanha.promessa.url) {
+      const urlNoCodigo = (promessaNoCodigo.privateReply.match(URL_REGEX) || [])[0];
+      if (urlNoCodigo && !mesmaUrl(urlNoCodigo, campanha.promessa.url)) {
+        achados.push({
+          gravidade: 'ALTO',
+          campanha: campanha.id,
+          problema: 'A URL declarada no catálogo não é a que o código entrega.',
+          evidencia: `catálogo "${campanha.promessa.url}" · código "${urlNoCodigo}"`,
+        });
+      }
     }
 
     if (campanha.promessa.gratuito && campanha.promessa.url
