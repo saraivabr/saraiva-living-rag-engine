@@ -2,20 +2,29 @@ import {
   GetSecretValueCommand,
   SecretsManagerClient,
 } from '@aws-sdk/client-secrets-manager';
+import type { BedrockSalesReplyInput } from './bedrockSalesResponder.js';
 import {
+  DEFAULT_MAX_CHARS,
+  DEFAULT_MAX_TOKENS,
+  DEFAULT_TIMEOUT_MS,
+  SalesResponderTimeoutError,
+  boundedFloat,
+  boundedInt,
+  buildSalesPayload,
   detectPromptLeakage,
+  envFloat,
+  envInt,
+  nonEmpty,
+  parseStrictReplyJson,
+  safeFallback,
   validateGeneratedSalesReply,
-  type BedrockSalesReplyInput,
+  withTimeout,
   type SalesReplyValidationIssue,
-} from './bedrockSalesResponder.js';
+} from './salesResponderShared.js';
 
 const DEFAULT_BASE_URL = 'https://motor.empresa.ia.br/v1';
 const DEFAULT_MODEL = 'cx/gpt-5.6-terra';
 const DEFAULT_SECRET_ID = 'respondedor-instagram/production/motor';
-const DEFAULT_TIMEOUT_MS = 8_000;
-const DEFAULT_MAX_TOKENS = 180;
-const DEFAULT_MAX_CHARS = 320;
-const EMERGENCY_FALLBACK = 'Pra eu entender o teu caso: qual parte das suas vendas voce quer melhorar primeiro?';
 
 export type MotorFetch = typeof globalThis.fetch;
 
@@ -103,7 +112,7 @@ export async function generateMotorSalesReply(
       };
     })(), timeoutMs, controller));
   } catch (error) {
-    const reason = error instanceof MotorSalesTimeoutError ? 'timeout' : 'motor_error';
+    const reason = error instanceof SalesResponderTimeoutError ? 'timeout' : 'motor_error';
     warnUnavailable(reason, error);
     return fallback(fallbackReply, reason);
   }
@@ -155,25 +164,11 @@ function buildRequest(
   input: BedrockSalesReplyInput,
   config: { model: string; maxTokens: number; maxChars: number; temperature: number },
 ): Record<string, unknown> {
-  const payload = {
-    inbound_message: truncate(input.message, 2_000),
-    trusted_offer: {
-      kind: truncate(input.promise.kind || '', 80),
-      label: truncate(input.promise.label, 200),
-      context: truncate(input.promise.trustedContext, 5_000),
-      allowed_prices: (input.allowedPrices ?? []).map((item) => truncate(item, 120)).slice(0, 10),
-      allowed_links: (input.allowedLinks ?? []).map((item) => truncate(item, 500)).slice(0, 10),
-    },
-    conversation: {
-      state: sanitizeState(input.state),
-      summary: truncate(input.summary || '', 1_500),
-    },
-  };
   return {
     model: config.model,
     messages: [
       { role: 'system', content: systemPrompt(config.maxChars) },
-      { role: 'user', content: JSON.stringify(payload) },
+      { role: 'user', content: JSON.stringify(buildSalesPayload(input)) },
     ],
     response_format: { type: 'json_object' },
     temperature: config.temperature,
@@ -246,36 +241,6 @@ async function readResponseText(response: Response, maxBytes: number): Promise<s
   }
 }
 
-async function withTimeout<T>(promise: Promise<T>, timeoutMs: number, controller: AbortController): Promise<T> {
-  let timer: NodeJS.Timeout | undefined;
-  const timeout = new Promise<never>((_resolve, reject) => {
-    timer = setTimeout(() => {
-      controller.abort();
-      reject(new MotorSalesTimeoutError());
-    }, timeoutMs);
-  });
-  try {
-    return await Promise.race([promise, timeout]);
-  } finally {
-    if (timer) clearTimeout(timer);
-  }
-}
-
-class MotorSalesTimeoutError extends Error {}
-
-function parseStrictReplyJson(raw: string): string {
-  const parsed = JSON.parse(raw) as unknown;
-  if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) throw new Error('invalid object');
-  const record = parsed as Record<string, unknown>;
-  if (Object.keys(record).length !== 1 || typeof record.reply !== 'string') throw new Error('invalid schema');
-  return record.reply;
-}
-
-function safeFallback(value: string): string {
-  const text = value.trim();
-  return text && !detectPromptLeakage(text).detected ? text : EMERGENCY_FALLBACK;
-}
-
 function fallback(
   reply: string,
   fallbackReason: MotorSalesFallbackReason,
@@ -299,48 +264,8 @@ function sanitizeError(value: string): string {
     .slice(0, 300);
 }
 
-function sanitizeState(value: unknown): unknown {
-  if (!value || typeof value !== 'object' || Array.isArray(value)) return undefined;
-  const source = value as Record<string, unknown>;
-  const sanitized: Record<string, string | number | boolean> = {};
-  for (const key of ['stage', 'score', 'turns', 'useCase', 'segment', 'pain', 'urgency', 'lastIntent']) {
-    const item = source[key];
-    if (typeof item === 'string') sanitized[key] = truncate(item, 800);
-    if (typeof item === 'number' || typeof item === 'boolean') sanitized[key] = item;
-  }
-  return sanitized;
-}
-
 function normalizeBaseUrl(value: string): string {
   const url = new URL(value.trim());
   if (url.protocol !== 'https:') throw new Error('Motor base URL must use HTTPS');
   return url.toString().replace(/\/$/u, '');
-}
-
-function truncate(value: string, max: number): string {
-  return value.trim().slice(0, max);
-}
-
-function nonEmpty(...values: Array<string | undefined>): string {
-  return values.find((value) => value?.trim())?.trim() || '';
-}
-
-function envInt(name: string): number | undefined {
-  const value = Number.parseInt(process.env[name] || '', 10);
-  return Number.isFinite(value) ? value : undefined;
-}
-
-function envFloat(name: string): number | undefined {
-  const value = Number.parseFloat(process.env[name] || '');
-  return Number.isFinite(value) ? value : undefined;
-}
-
-function boundedInt(value: number | undefined, fallbackValue: number, min: number, max: number): number {
-  if (!Number.isFinite(value)) return fallbackValue;
-  return Math.min(max, Math.max(min, Math.trunc(value as number)));
-}
-
-function boundedFloat(value: number | undefined, fallbackValue: number, min: number, max: number): number {
-  if (!Number.isFinite(value)) return fallbackValue;
-  return Math.min(max, Math.max(min, value as number));
 }
