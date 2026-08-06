@@ -11,7 +11,7 @@ import {
   type AttributeValue,
   type QueryCommandInput,
 } from '@aws-sdk/client-dynamodb';
-import { GetObjectCommand, PutObjectCommand, S3Client } from '@aws-sdk/client-s3';
+import { GetObjectCommand, S3Client } from '@aws-sdk/client-s3';
 import { SendMessageCommand, SQSClient } from '@aws-sdk/client-sqs';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import {
@@ -56,7 +56,7 @@ import {
   type InstagramAutomationOutcomeV1,
 } from './instagram/automationCommand.js';
 import { getLeadContext, listLeadContexts, saveLeadContext, type AutomationDecision, type LeadContext, type LeadInteraction } from './store/leadContextStore.js';
-import { loadPublishedMediaContextsById, savePublishedMediaContext } from './store/mediaContextStore.js';
+import { loadPublishedMediaContextsById } from './store/mediaContextStore.js';
 import { loadStore } from './store/repliedStore.js';
 import { exportSalesLeads, saveSalesLead, type SalesLeadExport } from './store/salesLeadStore.js';
 import {
@@ -153,32 +153,6 @@ interface LambdaEvent {
   headers?: Record<string, string | undefined>;
   body?: string | null;
   isBase64Encoded?: boolean;
-}
-
-interface PlannerUploadFile {
-  name?: string;
-  contentType?: string;
-  size?: number;
-}
-
-interface PlannerScheduleRequest {
-  pin?: string;
-  mode?: 'carousel' | 'photos';
-  slug?: string;
-  caption?: string;
-  captions?: string[];
-  urls?: string[];
-  folder?: string;
-  startAfter?: string;
-  slots?: string[];
-}
-
-interface ScheduledQueueItem {
-  pk: { S: string };
-  sk: { S: string };
-  payload?: { S: string };
-  slug?: { S: string };
-  dueAt?: { S: string };
 }
 
 interface LambdaResponse {
@@ -432,11 +406,9 @@ const s3 = new S3Client({});
 const sqs = new SQSClient({});
 const tableName = process.env.DYNAMODB_TABLE?.trim() || '';
 const storeAccount = process.env.STORE_ACCOUNT?.trim() || 'saraiva-os';
-const plannerBucket = process.env.PLANNER_S3_BUCKET?.trim() || 'app-dino-coworking-clinic-880690593918';
-const plannerPrefixBase = process.env.PLANNER_S3_PREFIX?.trim() || 'instagram/saraiva-os';
-const plannerPublicBase = process.env.PLANNER_PUBLIC_BASE?.trim() || `https://${plannerBucket}.s3.amazonaws.com`;
-const plannerDefaultSlots = ['09:00', '12:00', '15:00', '18:00'];
-const websiteGuideBucket = process.env.WEBSITE_GUIDE_S3_BUCKET?.trim() || plannerBucket;
+const websiteGuideBucket = process.env.WEBSITE_GUIDE_S3_BUCKET?.trim()
+  || process.env.PLANNER_S3_BUCKET?.trim()
+  || 'app-dino-coworking-clinic-880690593918';
 const websiteGuideKey = process.env.WEBSITE_GUIDE_S3_KEY?.trim()
   || 'products/sites-chatgpt/apostila-sites-chatgpt-v1.pdf';
 const clientReadyPluginKey = 'instagram/saraiva-os/cliente-pronto-extension-v0.1.0.zip';
@@ -451,18 +423,6 @@ export async function handler(event?: LambdaEvent): Promise<CycleResponse | Sche
   }
   if (event?.requestContext?.http?.method || event?.httpMethod || event?.queryStringParameters) {
     return handleHttp(event);
-  }
-
-  if (event?.action === 'publishCarousel') {
-    return publishScheduledCarousel(event);
-  }
-
-  if (event?.action === 'publishImage') {
-    return publishScheduledImage(event);
-  }
-
-  if (event?.action === 'publishVideo') {
-    return publishScheduledVideo(event);
   }
 
   if (event?.action === 'syncAirtableInsights') {
@@ -604,16 +564,14 @@ export async function handler(event?: LambdaEvent): Promise<CycleResponse | Sche
   }
 
   try {
-    const scheduled = await publishDueScheduledPosts();
     const abandonmentAudioFollowUps = await runZernioAbandonmentAudioFollowUps();
     const abandonmentTextFollowUps = await runWebsitePromptTextFollowUps();
     const websiteGuidePayments = await pollWebsiteGuidePayments();
     await runCycle();
-    const calendarSync = await syncCalendarAfterCycle(scheduled.length > 0);
+    const calendarSync = await syncCalendarAfterCycle(false);
     return {
       ok: true,
       finishedAt: new Date().toISOString(),
-      scheduledPublished: scheduled.length,
       abandonmentAudioFollowUps,
       abandonmentTextFollowUps,
       websiteGuidePayments,
@@ -1237,245 +1195,6 @@ async function syncCalendarAfterCycle(force: boolean): Promise<CalendarSyncSumma
   }
 }
 
-async function publishDueScheduledPosts(): Promise<string[]> {
-  if (!tableName) return [];
-  const now = new Date().toISOString();
-  const response = await dynamo.send(new QueryCommand({
-    TableName: tableName,
-    KeyConditionExpression: 'pk = :pk AND sk <= :max',
-    ExpressionAttributeValues: {
-      ':pk': { S: `${storeAccount}#scheduled` },
-      ':max': { S: `due#${now}~` },
-    },
-    Limit: 5,
-  }));
-
-  const published: string[] = [];
-  for (const item of (response.Items || []) as unknown as ScheduledQueueItem[]) {
-    const payloadRaw = item.payload?.S;
-    const key = item.sk.S;
-    if (!payloadRaw) {
-      await deleteScheduledQueueItem(key);
-      continue;
-    }
-
-    try {
-      const payload = JSON.parse(payloadRaw) as LambdaEvent;
-      if (payload.action === 'publishImage') {
-        const result = await publishScheduledImage(payload);
-        published.push(result.slug);
-      } else if (payload.action === 'publishCarousel') {
-        const result = await publishScheduledCarousel(payload);
-        published.push(result.slug);
-      } else {
-        console.warn('Item agendado ignorado por action invalida', { key, action: payload.action });
-      }
-      await deleteScheduledQueueItem(key);
-    } catch (error) {
-      console.error('Falha ao publicar item agendado', {
-        key,
-        slug: item.slug?.S,
-        dueAt: item.dueAt?.S,
-        error: (error as Error).message,
-      });
-      await notifySystemOnce(
-        `scheduled-publish-${item.slug?.S || key}`,
-        [
-          '🚨 Falha ao publicar post agendado do Instagram',
-          '',
-          `Item: ${item.slug?.S || key}`,
-          `Erro: ${(error as Error).message}`,
-        ].join('\n'),
-      );
-    }
-  }
-
-  if (published.length) {
-    console.info('Posts agendados publicados pela fila', { count: published.length, slugs: published });
-  }
-  return published;
-}
-
-async function deleteScheduledQueueItem(sk: string): Promise<void> {
-  if (!tableName) return;
-  await dynamo.send(new DeleteItemCommand({
-    TableName: tableName,
-    Key: {
-      pk: { S: `${storeAccount}#scheduled` },
-      sk: { S: sk },
-    },
-  }));
-}
-
-async function publishScheduledImage(event: LambdaEvent): Promise<{ ok: boolean; slug: string; mediaId: string }> {
-  const slug = event.slug?.trim() || 'image';
-  if (!event.imageUrl?.trim()) {
-    throw new Error('publishImage precisa de imageUrl.');
-  }
-  if (!event.caption?.trim()) {
-    throw new Error('publishImage precisa de caption.');
-  }
-  if (!(await markOnce(`publish#${slug}`))) {
-    console.info('Publicacao agendada ignorada por idempotencia', { slug });
-    return { ok: true, slug, mediaId: 'already-processed' };
-  }
-
-  try {
-    console.info('Publicando imagem agendada', { slug });
-    const container = await graphPost<{ id: string }>(`${config.ig.userId}/media`, {
-      image_url: event.imageUrl,
-      caption: event.caption,
-    });
-    await waitMediaContainer(container.id, slug);
-    const published = await graphPost<{ id: string }>(`${config.ig.userId}/media_publish`, {
-      creation_id: container.id,
-    });
-    console.info('Imagem publicada', { slug, mediaId: published.id });
-    await recordPublishedPost(slug, published.id, event.caption);
-    await notifyOwner(
-      `post-agendado:${slug}`,
-      `Imagem ${slug}`,
-      `Publicado no Instagram com mediaId ${published.id}.`,
-    );
-    return { ok: true, slug, mediaId: published.id };
-  } catch (error) {
-    await clearOnce(`publish#${slug}`);
-    await notifyOwner(
-      `post-agendado:${slug}`,
-      `Imagem ${slug}`,
-      `Falhou antes de confirmar publicacao. Retry liberado. Erro: ${(error as Error).message}`,
-    );
-    throw error;
-  }
-}
-
-async function publishScheduledVideo(event: LambdaEvent): Promise<{ ok: boolean; slug: string; mediaId: string }> {
-  const slug = event.slug?.trim() || 'reel';
-  if (!event.videoUrl?.trim()) {
-    throw new Error('publishVideo precisa de videoUrl.');
-  }
-  if (!event.caption?.trim()) {
-    throw new Error('publishVideo precisa de caption.');
-  }
-  if (!(await markOnce(`publish#${slug}`))) {
-    console.info('Publicacao de Reel ignorada por idempotencia', { slug });
-    return { ok: true, slug, mediaId: 'already-processed' };
-  }
-
-  try {
-    console.info('Publicando Reel', { slug });
-    const container = await graphPost<{ id: string }>(`${config.ig.userId}/media`, {
-      media_type: 'REELS',
-      video_url: event.videoUrl,
-      caption: event.caption,
-      share_to_feed: 'true',
-    });
-    await waitMediaContainer(container.id, slug);
-    const published = await graphPost<{ id: string }>(`${config.ig.userId}/media_publish`, {
-      creation_id: container.id,
-    });
-    console.info('Reel publicado', { slug, mediaId: published.id });
-    await recordPublishedPost(slug, published.id, event.caption);
-    await notifyOwner(
-      `post-reel:${slug}`,
-      `Reel ${slug}`,
-      `Publicado no Instagram com mediaId ${published.id}.`,
-    );
-    return { ok: true, slug, mediaId: published.id };
-  } catch (error) {
-    await clearOnce(`publish#${slug}`);
-    await notifyOwner(
-      `post-reel:${slug}`,
-      `Reel ${slug}`,
-      `Falhou antes de confirmar publicacao. Retry liberado. Erro: ${(error as Error).message}`,
-    );
-    throw error;
-  }
-}
-
-async function publishScheduledCarousel(event: LambdaEvent): Promise<{ ok: boolean; slug: string; mediaId: string }> {
-  const slug = event.slug?.trim() || 'carousel';
-  if (!event.urls?.length || event.urls.length < 2) {
-    throw new Error('publishCarousel precisa de ao menos 2 URLs.');
-  }
-  if (!event.caption?.trim()) {
-    throw new Error('publishCarousel precisa de caption.');
-  }
-  if (!(await markOnce(`publish#${slug}`))) {
-    console.info('Publicacao agendada ignorada por idempotencia', { slug });
-    return { ok: true, slug, mediaId: 'already-processed' };
-  }
-
-  try {
-    console.info('Publicando carrossel agendado', { slug, images: event.urls.length });
-    const children: string[] = [];
-    for (const [index, imageUrl] of event.urls.entries()) {
-      const child = await graphPost<{ id: string }>(`${config.ig.userId}/media`, {
-        image_url: imageUrl,
-        is_carousel_item: 'true',
-      });
-      children.push(child.id);
-      console.info('Item de carrossel criado', { slug, index: index + 1, id: child.id });
-    }
-
-    const parent = await graphPost<{ id: string }>(`${config.ig.userId}/media`, {
-      media_type: 'CAROUSEL',
-      children: children.join(','),
-      caption: event.caption,
-    });
-    await waitMediaContainer(parent.id, slug);
-    const published = await graphPost<{ id: string }>(`${config.ig.userId}/media_publish`, {
-      creation_id: parent.id,
-    });
-    console.info('Carrossel publicado', { slug, mediaId: published.id });
-    await recordPublishedPost(slug, published.id, event.caption);
-    await notifyOwner(
-      `post-agendado:${slug}`,
-      `Carrossel ${slug}`,
-      `Publicado no Instagram com mediaId ${published.id}.`,
-    );
-    return { ok: true, slug, mediaId: published.id };
-  } catch (error) {
-    await clearOnce(`publish#${slug}`);
-    await notifyOwner(
-      `post-agendado:${slug}`,
-      `Carrossel ${slug}`,
-      `Falhou antes de confirmar publicacao. Retry liberado. Erro: ${(error as Error).message}`,
-    );
-    throw error;
-  }
-}
-
-async function waitMediaContainer(id: string, slug: string): Promise<void> {
-  for (let attempt = 0; attempt < 36; attempt++) {
-    const status = await graphGet<{ status_code?: string; status?: string }>(
-      id,
-      { fields: 'status_code,status' },
-    );
-    if (status.status_code === 'FINISHED' || status.status_code === 'PUBLISHED') return;
-    if (status.status_code === 'ERROR') {
-      throw new Error(`Container ${slug} falhou: ${JSON.stringify(status)}`);
-    }
-    await new Promise((resolve) => setTimeout(resolve, 2500));
-  }
-  throw new Error(`Container ${slug} nao ficou pronto dentro do tempo esperado.`);
-}
-
-async function graphPost<T>(path: string, body: Record<string, string>): Promise<T> {
-  const proof = graphProof();
-  const res = await fetch(graphUrl(path), {
-    method: 'POST',
-    headers: { 'content-type': 'application/x-www-form-urlencoded' },
-    body: new URLSearchParams({
-      ...body,
-      access_token: config.ig.accessToken,
-      ...(proof ? { appsecret_proof: proof } : {}),
-    }),
-  });
-  if (!res.ok) throw new Error(`Graph API: ${JSON.stringify(await res.json())}`);
-  return (await res.json()) as T;
-}
-
 async function graphGet<T>(path: string, params: Record<string, string>): Promise<T> {
   const url = new URL(graphUrl(path));
   url.searchParams.set('access_token', config.ig.accessToken);
@@ -1509,10 +1228,6 @@ async function handleHttp(event: LambdaEvent): Promise<LambdaResponse> {
 
   if (method === 'OPTIONS') {
     return path.startsWith('/checkout/') ? storefrontEmpty(204) : empty(204);
-  }
-
-  if (path.startsWith('/api/planner')) {
-    return handlePlannerHttp(event);
   }
 
   if (path.startsWith('/checkout/prompt-library')) {
@@ -2884,256 +2599,12 @@ function anonymizeForLog(value: string): string {
   return createHash('sha256').update(value).digest('hex').slice(0, 12);
 }
 
-async function handlePlannerHttp(event: LambdaEvent): Promise<LambdaResponse> {
-  const method = event.requestContext?.http?.method || event.httpMethod || 'GET';
-  const path = event.rawPath || event.path || event.requestContext?.http?.path || '';
-  const rawBody = event.isBase64Encoded && event.body
-    ? Buffer.from(event.body, 'base64').toString('utf8')
-    : event.body || '';
-  const payload = rawBody.trim() ? parseJsonBody(rawBody) : {};
-
-  if (!verifyPlannerPin(event, payload)) {
-    return json(403, { ok: false, error: 'invalid planner pin' });
-  }
-
-  if (method === 'GET' && path.endsWith('/state')) {
-    const queue = await listPlannerQueue();
-    return json(200, {
-      ok: true,
-      queue,
-      nextSlots: nextFreePlannerSlots(8, queue.map((item) => item.dueAt)),
-    });
-  }
-
-  if (method === 'POST' && path.endsWith('/prepare')) {
-    const body = payload as { slug?: string; files?: PlannerUploadFile[]; mode?: string; startAfter?: string; slots?: string[] };
-    const slug = slugify(body.slug || `upload-${new Date().toISOString().slice(0, 10)}`);
-    const files = Array.isArray(body.files) ? body.files.slice(0, 40) : [];
-    if (!files.length) return json(400, { ok: false, error: 'files required' });
-
-    const queue = await listPlannerQueue();
-    const upload = await Promise.all(files.map((file, index) => createPlannerUpload(slug, file, index + 1)));
-    return json(200, {
-      ok: true,
-      slug,
-      mode: body.mode || 'carousel',
-      upload,
-      nextSlots: nextFreePlannerSlots(body.mode === 'photos' ? files.length : 1, queue.map((item) => item.dueAt), {
-        startAfter: body.startAfter,
-        slots: body.slots,
-      }),
-      draftCaption: draftPlannerCaption(slug),
-    });
-  }
-
-  if (method === 'POST' && path.endsWith('/schedule')) {
-    const result = await schedulePlannerPayload(payload as PlannerScheduleRequest);
-    return json(200, { ok: true, ...result });
-  }
-
-  return json(404, { ok: false, error: 'planner route not found' });
-}
-
 function parseJsonBody(rawBody: string): unknown {
   try {
     return JSON.parse(rawBody);
   } catch {
     return {};
   }
-}
-
-function verifyPlannerPin(event: LambdaEvent, payload: unknown): boolean {
-  const expected = process.env.PLANNER_PIN?.trim();
-  if (!expected) return false;
-  const received = header(event.headers || {}, 'x-saraiva-planner-pin')
-    || event.queryStringParameters?.pin
-    || firstString(valueAt(payload, ['pin']));
-  return received === expected;
-}
-
-async function listPlannerQueue(): Promise<Array<{ slug: string; dueAt: string; localTime: string; action: string; urlCount: number }>> {
-  if (!tableName) return [];
-  const response = await dynamo.send(new QueryCommand({
-    TableName: tableName,
-    KeyConditionExpression: 'pk = :pk',
-    ExpressionAttributeValues: {
-      ':pk': { S: `${storeAccount}#scheduled` },
-    },
-  }));
-
-  return (response.Items || []).map((item) => {
-    let parsed: { action?: string; urls?: string[]; imageUrl?: string } = {};
-    try {
-      parsed = JSON.parse(item.payload?.S || '{}') as typeof parsed;
-    } catch {
-      parsed = {};
-    }
-    return {
-      slug: item.slug?.S || '',
-      dueAt: item.dueAt?.S || '',
-      localTime: item.localTime?.S || '',
-      action: parsed.action || '',
-      urlCount: Array.isArray(parsed.urls) ? parsed.urls.length : (parsed.imageUrl ? 1 : 0),
-    };
-  }).filter((item) => item.slug && item.dueAt).sort((a, b) => a.dueAt.localeCompare(b.dueAt));
-}
-
-async function createPlannerUpload(slug: string, file: PlannerUploadFile, index: number): Promise<{ name: string; key: string; url: string; uploadUrl: string; contentType: string }> {
-  const contentType = normalizeImageContentType(file.contentType || file.name || '');
-  const extension = contentType === 'image/png' ? 'png' : 'jpg';
-  const key = `${plannerPrefixBase}/${slug}/upload-${String(index).padStart(2, '0')}.${extension}`;
-  const command = new PutObjectCommand({
-    Bucket: plannerBucket,
-    Key: key,
-    ContentType: contentType,
-  });
-  return {
-    name: file.name || `upload-${index}.${extension}`,
-    key,
-    url: `${plannerPublicBase}/${key}`,
-    uploadUrl: await getSignedUrl(s3, command, { expiresIn: 900 }),
-    contentType,
-  };
-}
-
-function normalizeImageContentType(value: string): string {
-  const lower = value.toLowerCase();
-  if (lower.includes('png') || lower.endsWith('.png')) return 'image/png';
-  return 'image/jpeg';
-}
-
-async function schedulePlannerPayload(request: PlannerScheduleRequest): Promise<{ scheduled: Array<{ slug: string; localTime: string; dueAt: string; action: string }> }> {
-  if (!tableName) throw new Error('DYNAMODB_TABLE ausente.');
-  const mode = request.mode || 'carousel';
-  const slug = slugify(request.slug || `post-${Date.now()}`);
-  const urls = Array.isArray(request.urls) ? request.urls.filter(Boolean) : [];
-  if (mode === 'carousel' && (urls.length < 2 || urls.length > 10)) {
-    throw new Error('Carrossel precisa de 2 a 10 URLs.');
-  }
-  if (mode === 'photos' && !urls.length) {
-    throw new Error('Photos precisa de pelo menos 1 URL.');
-  }
-
-  const queue = await listPlannerQueue();
-  const slots = nextFreePlannerSlots(mode === 'photos' ? urls.length : 1, queue.map((item) => item.dueAt), {
-    startAfter: request.startAfter,
-    slots: request.slots,
-  });
-
-  const captions = Array.isArray(request.captions) ? request.captions : [];
-  const jobs = mode === 'photos'
-    ? urls.map((url, index) => {
-      const postSlug = `${slug}-foto-${String(index + 1).padStart(2, '0')}`;
-      return {
-        slug: postSlug,
-        dueAt: slots[index].dueAt,
-        localTime: slots[index].localTime,
-        payload: {
-          action: 'publishImage',
-          slug: postSlug,
-          imageUrl: url,
-          caption: captions[index] || request.caption || draftPlannerCaption(postSlug),
-        },
-      };
-    })
-    : [{
-      slug,
-      dueAt: slots[0].dueAt,
-      localTime: slots[0].localTime,
-      payload: {
-        action: 'publishCarousel',
-        slug,
-        urls,
-        caption: request.caption || captions[0] || draftPlannerCaption(slug),
-      },
-    }];
-
-  for (const job of jobs) {
-    await dynamo.send(new PutItemCommand({
-      TableName: tableName,
-      Item: {
-        pk: { S: `${storeAccount}#scheduled` },
-        sk: { S: `due#${job.dueAt}~${job.slug}` },
-        dueAt: { S: job.dueAt },
-        slug: { S: job.slug },
-        localTime: { S: job.localTime },
-        ...(request.folder ? { folder: { S: request.folder } } : {}),
-        payload: { S: JSON.stringify(job.payload) },
-        createdAt: { S: new Date().toISOString() },
-      },
-      ConditionExpression: 'attribute_not_exists(pk) AND attribute_not_exists(sk)',
-    }));
-  }
-
-  return {
-    scheduled: jobs.map((job) => ({
-      slug: job.slug,
-      localTime: job.localTime,
-      dueAt: job.dueAt,
-      action: job.payload.action,
-    })),
-  };
-}
-
-function nextFreePlannerSlots(
-  count: number,
-  existingDueAts: string[],
-  options: { startAfter?: string; slots?: string[] } = {},
-): Array<{ dueAt: string; localTime: string }> {
-  const selected: Array<{ dueAt: string; localTime: string }> = [];
-  const occupied = new Set(existingDueAts);
-  const startAfter = options.startAfter ? new Date(options.startAfter) : new Date();
-  const slots = options.slots?.length ? options.slots : plannerDefaultSlots;
-  const startYmd = localDateYmd(startAfter);
-
-  for (let dayOffset = 0; dayOffset < 60 && selected.length < count; dayOffset++) {
-    const ymd = addUtcDays(startYmd, dayOffset);
-    for (const slot of slots) {
-      const dueAt = localSaoPauloSlotToUtc(ymd, slot);
-      if (new Date(dueAt) <= startAfter) continue;
-      if (occupied.has(dueAt)) continue;
-      occupied.add(dueAt);
-      selected.push({ dueAt, localTime: `${ymd} ${slot} -03` });
-      if (selected.length >= count) break;
-    }
-  }
-  return selected;
-}
-
-function localDateYmd(date: Date): string {
-  const parts = Object.fromEntries(new Intl.DateTimeFormat('en-CA', {
-    timeZone: 'America/Sao_Paulo',
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit',
-  }).formatToParts(date).map((part) => [part.type, part.value]));
-  return `${parts.year}-${parts.month}-${parts.day}`;
-}
-
-function addUtcDays(ymd: string, days: number): string {
-  const [year, month, day] = ymd.split('-').map(Number);
-  return new Date(Date.UTC(year, month - 1, day + days, 12, 0, 0)).toISOString().slice(0, 10);
-}
-
-function localSaoPauloSlotToUtc(ymd: string, slot: string): string {
-  const [year, month, day] = ymd.split('-').map(Number);
-  const [hour, minute] = slot.split(':').map(Number);
-  return new Date(Date.UTC(year, month - 1, day, hour + 3, minute, 0)).toISOString();
-}
-
-function draftPlannerCaption(slug: string): string {
-  const title = slug.replace(/-/g, ' ');
-  return `${title}\n\nA ideia aqui e transformar conteudo em direcao clara: menos ruido, mais contexto e uma proxima acao simples.\n\nMe chama no direct.`;
-}
-
-function slugify(value: string): string {
-  return value
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-+|-+$/g, '')
-    .slice(0, 80) || `post-${Date.now()}`;
 }
 
 async function generateSocialSalesReply(
@@ -4955,16 +4426,6 @@ async function clearOnce(id: string): Promise<void> {
   }));
 }
 
-async function recordPublishedPost(slug: string, mediaId: string, caption?: string): Promise<void> {
-  if (!tableName) return;
-  await savePublishedMediaContext({
-    slug,
-    mediaId,
-    caption,
-    promise: resolvePostPromise({ postCaption: caption }),
-  });
-}
-
 function appendLeadInteractions(context: LeadContext | undefined, inbound: string, outbound: string): LeadInteraction[] {
   const now = new Date().toISOString();
   return [
@@ -5062,13 +4523,6 @@ async function forwardLegacyWebhook(
   }
 }
 
-function valueAt(value: unknown, path: string[]): unknown {
-  return path.reduce<unknown>((current, key) => {
-    if (!current || typeof current !== 'object') return undefined;
-    return (current as Record<string, unknown>)[key];
-  }, value);
-}
-
 function firstString(...values: unknown[]): string {
   for (const value of values) {
     if (typeof value === 'string' && value.trim()) return value.trim();
@@ -5154,7 +4608,6 @@ function corsHeaders(contentType: string): Record<string, string> {
     'access-control-allow-methods': 'GET,POST,OPTIONS',
     'access-control-allow-headers': [
       'content-type',
-      'x-saraiva-planner-pin',
       'x-saraiva-webhook-secret',
       'x-saraiva-validation-mode',
       'x-saraiva-validation-token',

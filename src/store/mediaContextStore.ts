@@ -1,4 +1,4 @@
-import { DynamoDBClient, PutItemCommand, QueryCommand } from '@aws-sdk/client-dynamodb';
+import { DynamoDBClient, QueryCommand } from '@aws-sdk/client-dynamodb';
 import type { AttributeValue } from '@aws-sdk/client-dynamodb';
 import { normalizePostPromise, type PostPromise } from '../socialSelling/flow.js';
 
@@ -38,29 +38,6 @@ export async function loadPublishedMediaContextsById(): Promise<Map<string, Publ
   } while (ExclusiveStartKey);
 
   return map;
-}
-
-export async function savePublishedMediaContext(context: PublishedMediaContext): Promise<void> {
-  if (!tableName || !context.slug || !context.mediaId) return;
-
-  await dynamo.send(new PutItemCommand({
-    TableName: tableName,
-    Item: {
-      pk: { S: `${storeAccount}#published` },
-      sk: { S: context.slug },
-      mediaId: { S: context.mediaId },
-      ...(context.caption ? { caption: { S: context.caption } } : {}),
-      ...(context.permalink ? { permalink: { S: context.permalink } } : {}),
-      ...(context.promise ? {
-        promiseKind: { S: context.promise.kind },
-        promiseLabel: { S: context.promise.label },
-        promisePublicReply: { S: context.promise.publicReply },
-        promisePrivateReply: { S: context.promise.privateReply },
-        promiseJson: { S: JSON.stringify(context.promise) },
-      } : {}),
-      updatedAt: { S: new Date().toISOString() },
-    },
-  }));
 }
 
 function parsePublishedMediaContext(item: Record<string, AttributeValue>): PublishedMediaContext | undefined {
