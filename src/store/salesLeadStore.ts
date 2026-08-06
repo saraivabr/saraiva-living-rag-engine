@@ -1,4 +1,5 @@
 import { DynamoDBClient, PutItemCommand, QueryCommand, type AttributeValue } from '@aws-sdk/client-dynamodb';
+import { mirrorInBackground, mirrorLeadToAirtable } from '../crm/airtableMirror.js';
 import type { SalesSnapshot } from '../sales/empresaAgentica.js';
 import type { LeadInteraction } from './leadContextStore.js';
 
@@ -73,6 +74,22 @@ export async function saveSalesLead(record: SalesLeadRecord): Promise<void> {
       crmNote: { S: record.snapshot.crmNote },
       data: { S: JSON.stringify({ ...record, updatedAt }) },
     },
+  }));
+
+  // O DynamoDB acabou de registrar a verdade; o Airtable é só a visão humana.
+  mirrorInBackground('lead', () => mirrorLeadToAirtable({
+    senderId: record.senderId,
+    username: record.username,
+    stage: record.snapshot.stage,
+    score: record.snapshot.score,
+    temperature: record.snapshot.temperature,
+    offer: record.snapshot.offer,
+    promiseLabel: record.promiseLabel,
+    nextAction: record.snapshot.nextAction,
+    lastInbound: record.lastInbound,
+    lastOutbound: record.lastOutbound,
+    postPermalink: record.postPermalink,
+    updatedAt,
   }));
 }
 

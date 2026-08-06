@@ -1,4 +1,5 @@
 import { runAirtableInsightsSync, logInteractionToAirtableAsync } from './crm/syncInsightsRunner.js';
+import { mirrorInBackground, mirrorSaleToAirtable } from './crm/airtableMirror.js';
 
 import { runCycle } from './responder.js';
 import { createHash, createHmac, randomUUID, timingSafeEqual } from 'node:crypto';
@@ -3600,6 +3601,19 @@ async function completePromptLibraryPayment(
     accessGrantedAt,
   };
   await putPromptLibraryPayment(completed);
+  mirrorInBackground('venda', () => mirrorSaleToAirtable({
+    correlationId: completed.correlationId,
+    product: 'Biblioteca de Prompts',
+    valueCents: completed.value,
+    status: completed.status,
+    senderId: completed.senderId,
+    name: completed.lead?.name,
+    email: completed.lead?.email,
+    whatsapp: completed.lead?.whatsapp,
+    transactionId: completed.transactionId,
+    paidAt: completed.paidAt,
+    createdAt: completed.createdAt,
+  }));
   await syncPromptLibraryFunnelEvent({
     eventKey: `purchase_completed:${record.correlationId}`,
     eventName: 'purchase_completed',
