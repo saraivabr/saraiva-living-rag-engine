@@ -8,7 +8,10 @@
     "imagem": "tsx src/media/gerarImagem.ts",
     "qa:fluxos": "tsx src/qa/rodarQa.ts",
     "test": "tsx --test tests/**/*.test.ts",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "memoria:sync": "tsx src/memoria/rodarSincronia.ts",
+    "memoria:perguntar": "tsx src/memoria/rodarPergunta.ts",
+    "boca": "tsx src/boca/rodarBoca.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.39.0",

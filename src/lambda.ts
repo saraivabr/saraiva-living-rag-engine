@@ -1,4 +1,5 @@
 import { runAirtableInsightsSync, logInteractionToAirtableAsync } from './crm/syncInsightsRunner.js';
+import { rodarCicloDaMemoria } from './memoria/cicloDaMemoria.js';
 import { mirrorInBackground, mirrorSaleToAirtable } from './crm/airtableMirror.js';
 
 import { runCycle } from './responder.js';
@@ -130,6 +131,7 @@ interface LambdaEvent {
   caption?: string;
   mediaId?: string;
   rawPath?: string;
+  forcar?: boolean;
   path?: string;
   requestContext?: { http?: { method?: string; path?: string; sourceIp?: string } };
   httpMethod?: string;
@@ -362,6 +364,13 @@ export async function handler(event?: LambdaEvent): Promise<CycleResponse | Sche
   }
   if (event?.requestContext?.http?.method || event?.httpMethod || event?.queryStringParameters) {
     return handleHttp(event);
+  }
+
+  // O ciclo da memória: alimenta o Cognee com as conversas e pergunta a ele o
+  // que postar, o que vender e onde o funil vaza. Ele mesmo se limita a uma
+  // rodada a cada 6 horas, então pode vir pendurado no tique de 1 minuto.
+  if (event?.action === 'cicloDaMemoria') {
+    return rodarCicloDaMemoria({ forcar: event.forcar === true });
   }
 
   if (event?.action === 'syncAirtableInsights') {
@@ -2042,8 +2051,18 @@ async function processZernioMessage(
         });
         generativeSource = conversational.source;
         generativeFallbackReason = conversational.fallbackReason;
+        const agora = new Date().toISOString();
+        // Resposta ao follow-up é mão levantada para a segunda etapa. Marcar
+        // aqui é o que transforma "alguém escreveu algo" em lista de quem tem
+        // a dor — sem isso a resposta se dilui na conversa.
+        const respondeuFollowUp = Boolean(currentSession.followUpSentAt)
+          && !currentSession.followUpRepliedAt;
         return {
-          session: { ...currentSession, updatedAt: new Date().toISOString() },
+          session: {
+            ...currentSession,
+            ...(respondeuFollowUp ? { followUpRepliedAt: agora } : {}),
+            updatedAt: agora,
+          },
           message: conversational.message,
           event: 'conversation_recovered',
           reasonCode: conversational.source !== 'fallback'
