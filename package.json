@@ -6,6 +6,7 @@
   "scripts": {
     "build": "tsc",
     "imagem": "tsx src/media/gerarImagem.ts",
+    "qa:fluxos": "tsx src/qa/rodarQa.ts",
     "test": "tsx --test tests/**/*.test.ts",
     "typecheck": "tsc --noEmit"
   },
