@@ -46,17 +46,40 @@ export async function generateEmbedding(text: string): Promise<number[]> {
   }
 }
 
-function fallbackSimpleVector(text: string): number[] {
+const PT_STOPWORDS = new Set([
+  'a', 'o', 'as', 'os', 'um', 'uma', 'uns', 'umas', 'de', 'da', 'do', 'das', 'dos',
+  'em', 'no', 'na', 'nos', 'nas', 'com', 'para', 'por', 'que', 'e', 'ou', 'como',
+  'se', 'ao', 'aos', 'sao', 'foi', 'ser', 'ter', 'mas', 'tambem', 'muito',
+  'mais', 'menos', 'sem', 'sob', 'sobre', 'entre', 'ate', 'pelo', 'pela', 'pelos',
+  'pelas', 'este', 'esta', 'isso', 'isto', 'aquele', 'aquela', 'seu', 'sua', 'seus',
+  'suas', 'eu', 'tu', 'ele', 'ela', 'voce', 'voces', 'eles', 'elas', 'minha', 'meu',
+  'nosso', 'nossa', 'ha', 'ja', 'so', 'entao', 'assim', 'nao',
+]);
+
+function stemPortuguesePlural(word: string): string {
+  return word.length > 4 && word.endsWith('s') ? word.slice(0, -1) : word;
+}
+
+// Espa\u00e7o de buckets grande o bastante para manter colis\u00f5es de hash raras entre
+// palavras n\u00e3o relacionadas; com poucos buckets (ex: 64) at\u00e9 frases curtas e sem
+// nenhuma palavra em comum colidem e rankeiam conte\u00fado irrelevante como mais similar.
+const FALLBACK_VECTOR_SIZE = 512;
+
+export function fallbackSimpleVector(text: string): number[] {
   const normalized = text.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
-  const words = normalized.split(/\W+/).filter(Boolean);
-  const vector = new Array(64).fill(0);
+  const words = normalized
+    .split(/\W+/)
+    .filter(Boolean)
+    .filter((word) => !PT_STOPWORDS.has(word))
+    .map(stemPortuguesePlural);
+  const vector = new Array(FALLBACK_VECTOR_SIZE).fill(0);
   for (const word of words) {
     let hash = 0;
     for (let i = 0; i < word.length; i++) {
       hash = (hash << 5) - hash + word.charCodeAt(i);
       hash |= 0;
     }
-    const idx = Math.abs(hash) % 64;
+    const idx = Math.abs(hash) % FALLBACK_VECTOR_SIZE;
     vector[idx] += 1;
   }
   return vector;

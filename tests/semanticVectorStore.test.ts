@@ -4,6 +4,7 @@ import {
   SemanticVectorStore,
   cosineSimilarity,
   generateEmbedding,
+  fallbackSimpleVector,
 } from '../src/ai/semanticVectorStore.js';
 
 test('Banco de Dados Semântico: vetoriza e recupera conteúdo por similaridade', async () => {
@@ -46,4 +47,18 @@ test('Cálculo de Similaridade de Cosseno: calcula corretamente', () => {
 
   assert.equal(cosineSimilarity(vecA, vecB), 1.0);
   assert.equal(cosineSimilarity(vecA, vecC), 0.0);
+});
+
+test('Fallback sem Bedrock: ignora stopwords, une singular/plural e rankeia o conteúdo relevante acima do irrelevante', () => {
+  const chunk1 = fallbackSimpleVector('Aprenda a criar sites profissionais utilizando ChatGPT e prompts-base.');
+  const chunk2 = fallbackSimpleVector('Como buscar clientes qualificados no Google Maps e automatizar a prospecção.');
+  const query = fallbackSimpleVector('Como fazer um site com inteligência artificial?');
+
+  const simChunk1 = cosineSimilarity(query, chunk1);
+  const simChunk2 = cosineSimilarity(query, chunk2);
+
+  assert.ok(
+    simChunk1 > simChunk2,
+    `esperava chunk sobre sites (${simChunk1}) mais similar que chunk sobre prospecção (${simChunk2})`,
+  );
 });
