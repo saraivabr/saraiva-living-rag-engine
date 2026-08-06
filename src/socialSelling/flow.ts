@@ -443,14 +443,24 @@ export function websiteCampaignVariantCount(): number {
   return WEBSITE_PUBLIC_REPLY_VARIANTS.length;
 }
 
+/**
+ * Onde o prompt anunciado como gratuito no Reel realmente mora.
+ *
+ * A raiz do domínio é a LP do Laboratório, com CTA da Biblioteca paga — mandar
+ * alguém para lá cobra pelo que foi anunciado de graça. Já aconteceu: 22
+ * pessoas clicaram num link "gratuito" que abria a página de R$ 19,90.
+ *
+ * Esta constante existe porque o endereço estava escrito em dois lugares e um
+ * deles voltou a apontar para a raiz. Um endereço, um lugar.
+ */
+export const PROMPT_GRATUITO_URL = 'https://prompt.saraiva.ai/prompt-do-video';
+
 function websitePromptPromise(): PostPromise {
   return {
     kind: 'website_prompt',
     label: 'prompt usado no vídeo para criar o site',
     publicReply: 'Te chamei no Direct para entregar o prompt 👀',
-    // A raiz do domínio é a LP do Laboratório, com CTA da Biblioteca paga.
-    // O prompt anunciado como gratuito no Reel mora em /prompt-do-video.
-    privateReply: 'Aqui está o prompt que usei no vídeo, liberado gratuitamente para copiar: https://prompt.saraiva.ai/prompt-do-video',
+    privateReply: `Aqui está o prompt que usei no vídeo, liberado gratuitamente para copiar: ${PROMPT_GRATUITO_URL}`,
   };
 }
 
@@ -575,7 +585,7 @@ export function buildSocialSellingTurn(
   if (promise.kind === 'website_prompt') {
     const reply = [
       'o prompt gratuito mostrado no vídeo está liberado aqui:',
-      'https://prompt.saraiva.ai',
+      PROMPT_GRATUITO_URL,
       '',
       'você pode abrir, copiar e usar sem pagar.',
     ].join('\n');

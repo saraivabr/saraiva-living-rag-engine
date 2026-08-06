@@ -52,6 +52,16 @@ export interface RelatorioQa {
 
 const URL_REGEX = /(?:https?:\/\/|(?<![\w@.])(?:www\.)?[a-z0-9-]+\.(?:ai|com|br|app)\b)[^\s"')]*/giu;
 
+/** true quando a URL não tem caminho: `https://prompt.saraiva.ai` ou `.../`. */
+function ehRaizNua(bruto: string): boolean {
+  try {
+    const url = new URL(bruto.startsWith('http') ? bruto : `https://${bruto}`);
+    return url.pathname === '/' && !url.search;
+  } catch {
+    return false;
+  }
+}
+
 function textoDe(mensagem: InstagramInteractiveMessage): string {
   if (mensagem.kind === 'text') return mensagem.text;
   if (mensagem.kind === 'quick_replies') {
@@ -242,6 +252,17 @@ export function auditarCampanha(
         evidencia: linkDaPromessa,
       });
     }
+    // Raiz nua é onde mora a landing comercial, em qualquer domínio da casa.
+    // O filtro por nome de página não pega isso: "prompt.saraiva.ai" passa
+    // limpo por /quero-o-prompt|checkout|comprar/ e abre a página de R$ 19,90.
+    if (prometeuGratis && linkDaPromessa && ehRaizNua(linkDaPromessa)) {
+      achados.push({
+        gravidade: 'ALTO',
+        campanha,
+        problema: 'Entrega gratuita aponta para a raiz do domínio, onde fica a landing paga.',
+        evidencia: linkDaPromessa,
+      });
+    }
   }
 
   return {
@@ -344,6 +365,19 @@ export function auditarCatalogo(): AchadoQa[] {
         gravidade: 'ALTO',
         campanha: campanha.id,
         problema: 'Entrega declarada como gratuita aponta para uma página de venda.',
+        evidencia: campanha.promessa.url,
+      });
+    }
+
+    // 'comunidade' é a única entrega em que a raiz é o destino legítimo: o
+    // convite abre a home. Link e texto-no-direct precisam de caminho próprio.
+    if (campanha.promessa.gratuito && campanha.promessa.url
+      && campanha.promessa.entrega !== 'comunidade'
+      && ehRaizNua(campanha.promessa.url)) {
+      achados.push({
+        gravidade: 'ALTO',
+        campanha: campanha.id,
+        problema: 'Entrega gratuita declarada na raiz do domínio, onde fica a landing paga.',
         evidencia: campanha.promessa.url,
       });
     }

@@ -3,6 +3,7 @@ import test from 'node:test';
 import { resolveSalesOffer } from '../src/sales/empresaAgentica.js';
 import {
   buildSocialSellingTurn,
+  PROMPT_GRATUITO_URL,
   resolveCommentCampaignCopy,
   resolvePostPromise,
   resolveKnownMediaPromise,
@@ -108,7 +109,11 @@ test('mensagens antigas de APOSTILA e PRONTO não reabrem checkout no reel de si
   assert.equal(guide.sales.offer, 'diagnostic');
   assert.equal(guide.sales.priceCents, undefined);
   assert.equal(guide.sales.checkoutUrl, undefined);
-  assert.match(guide.reply, /prompt\.saraiva\.ai/i);
+  // O caminho é o que importa, não o domínio. A raiz de prompt.saraiva.ai é a
+  // LP do Laboratório, com CTA da Biblioteca paga: afirmar só o domínio deixou
+  // passar uma resposta "gratuita" que abria a página de R$ 19,90.
+  assert.match(guide.reply, /prompt\.saraiva\.ai\/prompt-do-video/i);
+  assert.doesNotMatch(guide.reply, /prompt\.saraiva\.ai(?![/\w-])/i);
   assert.equal((guide.reply.match(/\?/g) || []).length, 0);
 
   const ready = buildSocialSellingTurn('PRONTO', promise);
@@ -119,6 +124,23 @@ test('mensagens antigas de APOSTILA e PRONTO não reabrem checkout no reel de si
     JSON.stringify([guide.reply, guide.sales, ready.reply, ready.sales]),
     /loja\.saraiva\.ai|R\$19,90|Cliente Pronto/i,
   );
+});
+
+test('a promessa do post e a resposta do Direct entregam a MESMA URL gratuita', () => {
+  // O endereço vivia em dois lugares e um deles voltou para a raiz — a LP paga.
+  // Este teste não checa qual é a URL: checa que as duas bocas dizem a mesma
+  // coisa. Se alguém mudar uma e esquecer a outra, quebra aqui.
+  const promise = resolveKnownMediaPromise(WEBSITE_PROMPT_MEDIA_ID)!;
+  const urlNaPromessa = promise.privateReply.match(/https?:\/\/\S+/)?.[0];
+  const urlNaResposta = buildSocialSellingTurn('APOSTILA', promise)
+    .reply.match(/https?:\/\/\S+/)?.[0];
+
+  assert.equal(urlNaPromessa, PROMPT_GRATUITO_URL);
+  assert.equal(urlNaResposta, PROMPT_GRATUITO_URL);
+
+  // Uma entrega gratuita nunca pode ser a raiz nua de um domínio: é lá que mora
+  // a landing comercial.
+  assert.notEqual(new URL(PROMPT_GRATUITO_URL).pathname, '/');
 });
 
 test('todos os contextos de voz vendem somente o Workshop Ligacoes com IA atual', () => {
