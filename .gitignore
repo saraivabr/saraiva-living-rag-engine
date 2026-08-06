@@ -10,3 +10,6 @@ response.json
 *.log
 .DS_Store
 scratch/
+
+# Criativos gerados: binários pesados, o valor está no prompt e no módulo.
+criativos/
