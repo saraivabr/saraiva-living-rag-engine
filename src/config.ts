@@ -123,7 +123,6 @@ export const config = {
       optional('WEBHOOK_RESPONDER_ENABLED', optional('RESPONDER_ENABLED', 'false')),
     ).toLowerCase() === 'true',
     standbyMessagingEnabled: optional('WEBHOOK_STANDBY_ENABLED', 'false').toLowerCase() === 'true',
-    chatraceEnabled: optional('CHATRACE_RESPONDER_ENABLED', 'false').toLowerCase() === 'true',
   },
 } as const;
 

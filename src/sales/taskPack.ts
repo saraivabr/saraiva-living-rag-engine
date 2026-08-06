@@ -10,8 +10,6 @@ export interface SocialSellingTaskPack {
     publicCommentRule: string;
     suggestedMessagesWithBio: number;
     primaryAutomation: string;
-    chatraceValidation: string;
-    currentChatraceProfile: string;
     targetPostProfile: string;
     blocker: string;
     byOffer: Record<string, number>;
@@ -54,10 +52,8 @@ export function buildSocialSellingTaskPack(leads: SalesLeadExport[], limit = 100
       publicCommentRule,
       suggestedMessagesWithBio: rows.filter((row) => hasBioCta(row.suggestedMessage)).length,
       primaryAutomation: 'Posts do @saraiva.ai usam Lambda Meta: comentario publico direcionando para DM + private reply + historico interno.',
-      chatraceValidation: 'O canal dedicado do Chatrace precisa estar conectado ao @saraiva.ai para continuar as conversas no Direct.',
-      currentChatraceProfile: '@saraiva.ai conectado; fluxo saraiva-ai-direct-lambda ainda desligado',
       targetPostProfile: '@saraiva.ai',
-      blocker: 'Salvar o segredo no fluxo dedicado, executar teste sintetico e publicar somente depois da validacao.',
+      blocker: 'Responder manualmente os leads sem resposta priorizados abaixo.',
       byOffer: countByOffer(rows),
     },
     rows,

@@ -8,10 +8,8 @@ import {
   GetItemCommand,
   PutItemCommand,
   QueryCommand,
-  TransactWriteItemsCommand,
   type AttributeValue,
   type QueryCommandInput,
-  type TransactWriteItemsCommandInput,
 } from '@aws-sdk/client-dynamodb';
 import { GetObjectCommand, PutObjectCommand, S3Client } from '@aws-sdk/client-s3';
 import { SendMessageCommand, SQSClient } from '@aws-sdk/client-sqs';
@@ -75,9 +73,7 @@ import { findUnansweredLeads, type ReengagementCandidate } from './sales/reengag
 import { buildSocialSellingTaskPack, type SocialSellingTaskPack } from './sales/taskPack.js';
 import { isMediaDisabled } from './disabledMedia.js';
 import { isTargetWebhookEntry } from './webhookTarget.js';
-import { chatraceContextCandidates, chatraceFallbackSenderId } from './chatraceIdentity.js';
 import { generateBedrockSalesReply, type BedrockSalesReplyResult } from './ai/bedrockSalesResponder.js';
-import { isAuthorizedSyntheticValidation } from './chatraceSecurity.js';
 import {
   matchesCampaignTrigger,
   matchesMediaCampaignTrigger,
@@ -108,15 +104,10 @@ import {
   verifyPromptLibraryWebhook,
   type CompletedPromptLibraryPayment,
 } from './payments/promptLibrary.js';
-import {
-  buildClientReadyKit,
-  buildReadySitePrompt,
-  businessPromptData,
-  lookupBusinessWithApify,
-  type BusinessPromptData,
-  type ClientReadyKit,
+import type {
+  BusinessPromptData,
+  ClientReadyKit,
 } from './automation/sitePromptAutomation.js';
-import { getApifyToken } from './automation/apifyToken.js';
 import { getZernioCredentials } from './zernio/credentials.js';
 import { handleZernioWebhook } from './zernio/handler.js';
 import {
@@ -353,47 +344,6 @@ interface WebsiteGuideLeadProfile {
   referrer?: string;
 }
 
-interface WebsiteGuideAdminOrder {
-  correlationId: string;
-  value: number;
-  status: string;
-  accessType: 'free' | 'paid' | 'subscription';
-  createdAt: string;
-  accessGrantedAt?: string;
-  paidAt?: string;
-  deliveredAt?: string;
-  lead?: WebsiteGuideLeadProfile;
-  upgradedFrom?: string;
-  automationStatus: 'NOT_STARTED' | 'RUNNING' | 'COMPLETED' | 'FAILED';
-  businessName?: string;
-  businessInput?: string;
-  locationInput?: string;
-  generatedAt?: string;
-  error?: string;
-  resetCount: number;
-  generationCount: number;
-  generationLimit: number;
-  generationRemaining: number;
-}
-
-interface AgencySubscriptionRecord {
-  correlationId: string;
-  sessionId: string;
-  globalId: string;
-  value: number;
-  status: string;
-  pixRecurringStatus: string;
-  paymentLinkUrl: string;
-  createdAt: string;
-  approvedAt?: string;
-}
-
-interface WebsiteGuideCheckoutIntent {
-  senderId: string;
-  orderId: string;
-  correlationId: string;
-  updatedAt: string;
-}
 
 interface WebsiteGuidePaymentPollSummary {
   checked: number;
@@ -475,66 +425,6 @@ interface InstagramMessagingAccess {
     type?: string;
     fbtraceId?: string;
   };
-}
-
-interface ChatraceReplyResponse {
-  ok: boolean;
-  reply: string;
-  message: string;
-  text: string;
-  resposta_comentario_gpt: string;
-  'respostacomentário_gpt': string;
-  lead: {
-    senderId: string;
-    username?: string;
-    stage: string;
-    score: number;
-    temperature: string;
-    nextAction: string;
-    shouldEscalate: boolean;
-  };
-  customFields: Record<string, string | number | boolean>;
-  ownerSummary: string;
-}
-
-interface ChatraceInbound {
-  senderId: string;
-  username?: string;
-  text: string;
-  postId?: string;
-  commentId?: string;
-  postPermalink?: string;
-  requestId: string;
-  accountUsername: string;
-  flowId: string;
-}
-
-interface ChatraceCommit {
-  senderId: string;
-  commentId?: string;
-  username?: string;
-  postId?: string;
-  postPermalink?: string;
-  promise: ReturnType<typeof resolvePostPromise>;
-  socialSelling: ReturnType<typeof buildSocialSellingTurn>['state'];
-  interactions: LeadInteraction[];
-  sales: ReturnType<typeof buildSocialSellingTurn>['sales'];
-  promiseLabel: string;
-  lastInbound: string;
-  lastOutbound: string;
-  shouldNotifyOwner: boolean;
-  ownerSummary: string;
-}
-
-interface ChatracePreparedReply {
-  response: ChatraceReplyResponse;
-  commit: ChatraceCommit;
-  expectedContextUpdatedAt?: string;
-}
-
-interface ChatraceClaimResult {
-  claimed: boolean;
-  cached?: ChatracePreparedReply;
 }
 
 const dynamo = new DynamoDBClient({});
@@ -684,20 +574,17 @@ export async function handler(event?: LambdaEvent): Promise<CycleResponse | Sche
 
   if (event?.action === 'followUpUnansweredLeads') {
     const requestedLive = (event as LambdaEvent & { dryRun?: boolean }).dryRun === false;
-    const blockedBySingleResponder = requestedLive
-      && (config.behavior.dryRun || config.behavior.chatraceEnabled);
+    const blockedByDryRun = requestedLive && config.behavior.dryRun;
     const reengagement = await buildReengagementSummary({
-      preview: !requestedLive || blockedBySingleResponder,
+      preview: !requestedLive || blockedByDryRun,
       limit: Math.min(Number((event as LambdaEvent & { limit?: number }).limit || 5), 10),
     });
     return {
       ok: true,
       finishedAt: new Date().toISOString(),
-      reengagement: blockedBySingleResponder ? {
+      reengagement: blockedByDryRun ? {
         ...reengagement,
-        blockedReason: config.behavior.dryRun
-          ? 'DRY_RUN=true bloqueia follow-up proativo.'
-          : 'Chatrace ativo e configurado como unico emissor do Direct.',
+        blockedReason: 'DRY_RUN=true bloqueia follow-up proativo.',
       } : reengagement,
     };
   }
@@ -1667,10 +1554,6 @@ async function handleHttp(event: LambdaEvent): Promise<LambdaResponse> {
     headerKeys: Object.keys(event.headers || {}).sort(),
   });
 
-  if (isChatraceRequest(event)) {
-    return handleChatraceHttp(event, rawBody);
-  }
-
   if (path.toLowerCase().includes('/woovi')) {
     return handleWooviHttp(event, rawBody);
   }
@@ -1692,13 +1575,10 @@ async function handleHttp(event: LambdaEvent): Promise<LambdaResponse> {
   }
 
   const handled = await handleWebhookPayload(payload);
-  if (!config.behavior.dryRun && !config.behavior.chatraceEnabled) {
+  if (!config.behavior.dryRun) {
     await forwardLegacyWebhook(payload, rawBody, event.headers || {});
   } else if (process.env.LEGACY_PAGE_WEBHOOK_FORWARD_URL?.trim()) {
-    console.info('Encaminhamento legado bloqueado pela trava de respondente unico', {
-      dryRun: config.behavior.dryRun,
-      chatraceEnabled: config.behavior.chatraceEnabled,
-    });
+    console.info('Encaminhamento legado bloqueado por DRY_RUN=true');
   }
   console.info('Webhook processado', { handled });
   return json(200, { ok: true, handled });
@@ -3256,525 +3136,6 @@ function slugify(value: string): string {
     .slice(0, 80) || `post-${Date.now()}`;
 }
 
-async function handleChatraceHttp(event: LambdaEvent, rawBody: string): Promise<LambdaResponse> {
-  if (!config.behavior.chatraceEnabled) {
-    console.info('Webhook Chatrace desativado');
-    return text(503, 'chatrace responder disabled');
-  }
-
-  if (!tableName) {
-    console.warn('Webhook Chatrace recusado: DYNAMODB_TABLE ausente para idempotencia');
-    return text(503, 'chatrace idempotency unavailable');
-  }
-
-  if (!verifyChatraceSecret(event.headers || {})) {
-    console.warn('Webhook Chatrace recusado: segredo invalido ou ausente');
-    return text(403, 'invalid chatrace secret');
-  }
-
-  const payload = parseRequestPayload(rawBody, event.headers || {});
-
-  const inbound = parseChatraceInbound(payload);
-  if (!inbound.senderId || !inbound.text || !inbound.requestId) {
-    return json(400, {
-      ok: false,
-      error: 'missing senderId, text or requestId',
-      expected: ['subscriber_id', 'last_input', 'request_id'],
-    });
-  }
-
-  const syntheticValidation = verifyChatraceValidation(event.headers || {});
-  if (config.behavior.dryRun && !syntheticValidation) {
-    console.info('Webhook Chatrace bloqueado por DRY_RUN=true', {
-      senderId: inbound.senderId,
-      flowId: inbound.flowId,
-    });
-    return text(503, 'chatrace dry-run');
-  }
-
-  const expectedAccount = process.env.CHATRACE_ACCOUNT_USERNAME?.trim().replace(/^@/, '').toLowerCase();
-  const expectedFlowId = process.env.CHATRACE_FLOW_ID?.trim();
-  if (!expectedAccount || !expectedFlowId) {
-    console.warn('Webhook Chatrace recusado: alvo nao configurado');
-    return text(503, 'chatrace target unavailable');
-  }
-  if (inbound.accountUsername.replace(/^@/, '').toLowerCase() !== expectedAccount || inbound.flowId !== expectedFlowId) {
-    console.warn('Webhook Chatrace recusado: conta ou fluxo fora do alvo', {
-      accountUsername: inbound.accountUsername,
-      flowId: inbound.flowId,
-    });
-    return text(403, 'chatrace account or flow mismatch');
-  }
-
-  const requestKey = chatraceRequestKey(inbound);
-  const cached = await loadChatracePreparedReply(requestKey);
-  if (cached) {
-    console.info('Chatrace retry atendido pelo cache idempotente', {
-      senderId: cached.commit.senderId,
-      requestKey,
-      stage: cached.response.lead.stage,
-    });
-    return json(200, cached.response);
-  }
-
-  const leaseOwner = randomUUID();
-  const claim = await waitForChatraceRequestClaim(requestKey, leaseOwner);
-  if (claim.cached) return json(200, claim.cached.response);
-  if (!claim.claimed) {
-    console.info('Chatrace request permaneceu em processamento apos espera', { requestKey });
-    return temporaryChatraceBusy('request already processing', inbound.requestId);
-  }
-
-  const senderLockKey = chatraceSenderLockKey(inbound);
-  if (!(await waitForChatraceSenderLock(senderLockKey, leaseOwner))) {
-    await clearChatraceRequest(requestKey, leaseOwner);
-    console.info('Chatrace sender permaneceu em processamento apos espera', {
-      senderId: inbound.senderId,
-      requestKey,
-    });
-    return temporaryChatraceBusy('sender already processing', inbound.requestId);
-  }
-
-  try {
-    const prepared = await prepareChatraceReply(inbound, requestKey, syntheticValidation);
-    await completeChatraceRequestAtomically(
-      requestKey,
-      senderLockKey,
-      leaseOwner,
-      prepared,
-      syntheticValidation,
-    );
-    console.info('Chatrace reply gerado', {
-      senderId: inbound.senderId,
-      username: inbound.username,
-      requestKey,
-      stage: prepared.response.lead.stage,
-      score: prepared.response.lead.score,
-      shouldEscalate: prepared.response.lead.shouldEscalate,
-    });
-
-    if (prepared.commit.shouldNotifyOwner) {
-      try {
-        if (await markOnce(`chatrace-owner#${requestKey}`)) {
-          await notifyOwnerSafely(
-            prepared.commit.senderId,
-            prepared.commit.lastInbound,
-            prepared.commit.lastOutbound,
-            prepared.commit.ownerSummary,
-          );
-        }
-      } catch (notificationError) {
-        console.warn('Resposta Chatrace concluida, mas a notificacao do dono falhou', {
-          senderId: prepared.commit.senderId,
-          requestKey,
-          error: (notificationError as Error).message,
-        });
-      }
-    }
-
-    return json(200, prepared.response);
-  } catch (error) {
-    await Promise.allSettled([
-      clearChatraceRequest(requestKey, leaseOwner),
-      releaseChatraceSenderLock(senderLockKey, leaseOwner),
-    ]);
-    console.warn('Falha temporaria no respondedor Chatrace', {
-      senderId: inbound.senderId,
-      requestKey,
-      error: (error as Error).message,
-    });
-    return json(503, { ok: false, error: 'temporary chatrace responder failure' });
-  }
-}
-
-async function prepareChatraceReply(
-  inbound: ChatraceInbound,
-  requestKey: string,
-  syntheticValidation: boolean,
-): Promise<ChatracePreparedReply> {
-  const senderCandidates = chatraceContextCandidates(inbound.senderId);
-  let senderId = chatraceFallbackSenderId(inbound.senderId);
-  let context: LeadContext | undefined;
-  for (const candidate of senderCandidates) {
-    context = await getLeadContext(candidate);
-    if (context) {
-      senderId = candidate;
-      break;
-    }
-  }
-  const promise = resolveKnownMediaPromise(context?.postId || '')
-    ?? context?.promise
-    ?? resolvePostPromise({ commentText: inbound.text });
-  const turn = buildSocialSellingTurn(inbound.text, promise, context?.socialSelling);
-  const generated = await generateSocialSalesReply(inbound.text, promise, turn, context);
-  const commerce = await resolveCommerceReply(
-    senderId,
-    inbound.text,
-    turn,
-    generated.reply,
-  );
-  const reply = commerce.reply;
-  const interactions = appendLeadInteractions(context, inbound.text, reply);
-  const response: ChatraceReplyResponse = {
-    ok: true,
-    reply,
-    message: reply,
-    text: reply,
-    resposta_comentario_gpt: reply,
-    'respostacomentário_gpt': reply,
-    lead: {
-      senderId,
-      username: inbound.username,
-      stage: turn.state.stage,
-      score: turn.state.score,
-      temperature: turn.sales.temperature,
-      nextAction: turn.sales.nextAction,
-      shouldEscalate: turn.shouldEscalate,
-    },
-    customFields: {
-      saraiva_sender_id: senderId,
-      saraiva_stage: turn.state.stage,
-      saraiva_score: turn.state.score,
-      saraiva_temperature: turn.sales.temperature,
-      saraiva_next_action: turn.sales.nextAction,
-      saraiva_should_escalate: turn.shouldEscalate,
-      saraiva_offer: turn.sales.offerLabel,
-      saraiva_promise: promise.label,
-      saraiva_comment_linked: Boolean(context?.commentId),
-      saraiva_post_linked: Boolean(context?.postId),
-      saraiva_validation_only: syntheticValidation,
-      saraiva_reply_source: commerce.source,
-      saraiva_reply_fallback_reason: generated.fallbackReason || '',
-      saraiva_reply_validation_issue: generated.validationIssue || '',
-      saraiva_request_id: inbound.requestId,
-      saraiva_request_key: requestKey,
-      saraiva_delivery_status: 'delegated_to_chatrace',
-    },
-    ownerSummary: turn.ownerSummary,
-  };
-
-  return {
-    response,
-    expectedContextUpdatedAt: context?.updatedAt,
-    commit: {
-      senderId,
-      commentId: inbound.commentId || context?.commentId,
-      username: inbound.username || context?.username,
-      postId: inbound.postId || context?.postId,
-      postPermalink: inbound.postPermalink || context?.postPermalink,
-      promise,
-      socialSelling: turn.state,
-      interactions,
-      sales: turn.sales,
-      promiseLabel: promise.label,
-      lastInbound: inbound.text,
-      lastOutbound: reply,
-      shouldNotifyOwner: !syntheticValidation && (turn.shouldNotifyOwner || turn.shouldEscalate),
-      ownerSummary: turn.ownerSummary,
-    },
-  };
-}
-
-function chatraceRequestKey(inbound: ChatraceInbound): string {
-  const digest = createHash('sha256')
-    .update([
-      inbound.accountUsername.replace(/^@/, '').toLowerCase(),
-      inbound.flowId,
-      inbound.senderId,
-      inbound.requestId,
-    ].join('|'))
-    .digest('hex');
-  return `request#${digest}`;
-}
-
-function chatraceSenderLockKey(inbound: ChatraceInbound): string {
-  const digest = createHash('sha256')
-    .update([
-      inbound.accountUsername.replace(/^@/, '').toLowerCase(),
-      inbound.flowId,
-      inbound.senderId,
-    ].join('|'))
-    .digest('hex');
-  return `sender#${digest}`;
-}
-
-async function claimChatraceRequest(requestKey: string, leaseOwner: string): Promise<boolean> {
-  const now = Math.floor(Date.now() / 1_000);
-  try {
-    await dynamo.send(new PutItemCommand({
-      TableName: tableName,
-      Item: {
-        pk: { S: `${storeAccount}#chatrace-requests` },
-        sk: { S: requestKey },
-        status: { S: 'processing' },
-        leaseOwner: { S: leaseOwner },
-        leaseUntil: { N: String(now + 15) },
-        updatedAt: { S: new Date().toISOString() },
-        expiresAt: { N: String(now + 48 * 60 * 60) },
-      },
-      ConditionExpression: [
-        'attribute_not_exists(pk)',
-        'OR (#status = :processing AND (attribute_not_exists(#leaseUntil) OR #leaseUntil < :now))',
-      ].join(' '),
-      ExpressionAttributeNames: {
-        '#status': 'status',
-        '#leaseUntil': 'leaseUntil',
-      },
-      ExpressionAttributeValues: {
-        ':processing': { S: 'processing' },
-        ':now': { N: String(now) },
-      },
-    }));
-    return true;
-  } catch (error) {
-    if (isConditionalFailure(error)) return false;
-    throw error;
-  }
-}
-
-async function waitForChatraceRequestClaim(
-  requestKey: string,
-  leaseOwner: string,
-): Promise<ChatraceClaimResult> {
-  const deadline = Date.now() + 18_000;
-  do {
-    const cached = await loadChatracePreparedReply(requestKey);
-    if (cached) return { claimed: false, cached };
-    if (await claimChatraceRequest(requestKey, leaseOwner)) return { claimed: true };
-    await waitForChatraceLease(300);
-  } while (Date.now() < deadline);
-  return { claimed: false };
-}
-
-async function acquireChatraceSenderLock(senderLockKey: string, leaseOwner: string): Promise<boolean> {
-  const now = Math.floor(Date.now() / 1_000);
-  try {
-    await dynamo.send(new PutItemCommand({
-      TableName: tableName,
-      Item: {
-        pk: { S: `${storeAccount}#chatrace-sender-locks` },
-        sk: { S: senderLockKey },
-        leaseOwner: { S: leaseOwner },
-        leaseUntil: { N: String(now + 15) },
-        updatedAt: { S: new Date().toISOString() },
-        expiresAt: { N: String(now + 5 * 60) },
-      },
-      ConditionExpression: [
-        'attribute_not_exists(pk)',
-        'OR attribute_not_exists(#leaseUntil)',
-        'OR #leaseUntil < :now',
-      ].join(' '),
-      ExpressionAttributeNames: { '#leaseUntil': 'leaseUntil' },
-      ExpressionAttributeValues: { ':now': { N: String(now) } },
-    }));
-    return true;
-  } catch (error) {
-    if (isConditionalFailure(error)) return false;
-    throw error;
-  }
-}
-
-async function waitForChatraceSenderLock(senderLockKey: string, leaseOwner: string): Promise<boolean> {
-  const deadline = Date.now() + 18_000;
-  do {
-    if (await acquireChatraceSenderLock(senderLockKey, leaseOwner)) return true;
-    await waitForChatraceLease(300);
-  } while (Date.now() < deadline);
-  return false;
-}
-
-function waitForChatraceLease(milliseconds: number): Promise<void> {
-  return new Promise((resolve) => setTimeout(resolve, milliseconds));
-}
-
-async function loadChatracePreparedReply(requestKey: string): Promise<ChatracePreparedReply | undefined> {
-  const result = await dynamo.send(new GetItemCommand({
-    TableName: tableName,
-    Key: {
-      pk: { S: `${storeAccount}#chatrace-requests` },
-      sk: { S: requestKey },
-    },
-    ConsistentRead: true,
-  }));
-  if (result.Item?.status?.S !== 'complete' || !result.Item.data?.S) return undefined;
-  try {
-    const parsed = JSON.parse(result.Item.data.S) as ChatracePreparedReply;
-    if (!parsed?.response?.reply || !parsed?.commit?.senderId) return undefined;
-    return parsed;
-  } catch {
-    return undefined;
-  }
-}
-
-async function completeChatraceRequestAtomically(
-  requestKey: string,
-  senderLockKey: string,
-  leaseOwner: string,
-  prepared: ChatracePreparedReply,
-  syntheticValidation: boolean,
-): Promise<void> {
-  const now = new Date().toISOString();
-  const nowEpoch = Math.floor(Date.now() / 1_000);
-  const commit = prepared.commit;
-  const transactItems: NonNullable<TransactWriteItemsCommandInput['TransactItems']> = [{
-    Put: {
-      TableName: tableName,
-      Item: {
-        pk: { S: `${storeAccount}#chatrace-requests` },
-        sk: { S: requestKey },
-        status: { S: 'complete' },
-        leaseOwner: { S: leaseOwner },
-        updatedAt: { S: now },
-        expiresAt: { N: String(nowEpoch + 48 * 60 * 60) },
-        data: { S: JSON.stringify(prepared) },
-      },
-      ConditionExpression: '#status = :processing AND #leaseOwner = :leaseOwner',
-      ExpressionAttributeNames: {
-        '#status': 'status',
-        '#leaseOwner': 'leaseOwner',
-      },
-      ExpressionAttributeValues: {
-        ':processing': { S: 'processing' },
-        ':leaseOwner': { S: leaseOwner },
-      },
-    },
-  }];
-
-  if (!syntheticValidation) {
-    const contextData = {
-      senderId: commit.senderId,
-      commentId: commit.commentId,
-      username: commit.username,
-      postId: commit.postId,
-      postPermalink: commit.postPermalink,
-      promise: commit.promise,
-      socialSelling: commit.socialSelling,
-      interactions: commit.interactions,
-    };
-    const salesRecord = {
-      senderId: commit.senderId,
-      commentId: commit.commentId,
-      username: commit.username,
-      postId: commit.postId,
-      postPermalink: commit.postPermalink,
-      promiseLabel: commit.promiseLabel,
-      snapshot: commit.sales,
-      lastInbound: commit.lastInbound,
-      lastOutbound: commit.lastOutbound,
-      interactions: commit.interactions,
-      updatedAt: now,
-    };
-    const contextPut: NonNullable<TransactWriteItemsCommandInput['TransactItems']>[number] = {
-      Put: {
-        TableName: tableName,
-        Item: {
-          pk: { S: `${storeAccount}#lead-context` },
-          sk: { S: commit.senderId },
-          updatedAt: { S: now },
-          data: { S: JSON.stringify(contextData) },
-        },
-        ConditionExpression: prepared.expectedContextUpdatedAt
-          ? '#updatedAt = :expectedUpdatedAt'
-          : 'attribute_not_exists(pk)',
-        ...(prepared.expectedContextUpdatedAt ? {
-          ExpressionAttributeNames: { '#updatedAt': 'updatedAt' },
-          ExpressionAttributeValues: {
-            ':expectedUpdatedAt': { S: prepared.expectedContextUpdatedAt },
-          },
-        } : {}),
-      },
-    };
-    transactItems.push(contextPut, {
-      Put: {
-        TableName: tableName,
-        Item: {
-          pk: { S: `${storeAccount}#sales-leads` },
-          sk: { S: commit.senderId },
-          updatedAt: { S: now },
-          score: { N: String(commit.sales.score) },
-          stage: { S: commit.sales.stage },
-          temperature: { S: commit.sales.temperature },
-          icpFit: { S: commit.sales.icpFit },
-          offer: { S: commit.sales.offer },
-          promiseLabel: { S: commit.promiseLabel },
-          nextAction: { S: commit.sales.nextAction },
-          crmTitle: { S: commit.sales.crmTitle },
-          crmNote: { S: commit.sales.crmNote },
-          data: { S: JSON.stringify(salesRecord) },
-        },
-      },
-    });
-  }
-
-  transactItems.push({
-    Delete: {
-      TableName: tableName,
-      Key: {
-        pk: { S: `${storeAccount}#chatrace-sender-locks` },
-        sk: { S: senderLockKey },
-      },
-      ConditionExpression: '#leaseOwner = :leaseOwner',
-      ExpressionAttributeNames: { '#leaseOwner': 'leaseOwner' },
-      ExpressionAttributeValues: { ':leaseOwner': { S: leaseOwner } },
-    },
-  });
-
-  await dynamo.send(new TransactWriteItemsCommand({
-    ClientRequestToken: leaseOwner,
-    TransactItems: transactItems,
-  }));
-}
-
-async function clearChatraceRequest(requestKey: string, leaseOwner: string): Promise<void> {
-  try {
-    await dynamo.send(new DeleteItemCommand({
-      TableName: tableName,
-      Key: {
-        pk: { S: `${storeAccount}#chatrace-requests` },
-        sk: { S: requestKey },
-      },
-      ConditionExpression: '#status = :processing AND #leaseOwner = :leaseOwner',
-      ExpressionAttributeNames: {
-        '#status': 'status',
-        '#leaseOwner': 'leaseOwner',
-      },
-      ExpressionAttributeValues: {
-        ':processing': { S: 'processing' },
-        ':leaseOwner': { S: leaseOwner },
-      },
-    }));
-  } catch (error) {
-    if (!isConditionalFailure(error)) throw error;
-  }
-}
-
-async function releaseChatraceSenderLock(senderLockKey: string, leaseOwner: string): Promise<void> {
-  try {
-    await dynamo.send(new DeleteItemCommand({
-      TableName: tableName,
-      Key: {
-        pk: { S: `${storeAccount}#chatrace-sender-locks` },
-        sk: { S: senderLockKey },
-      },
-      ConditionExpression: '#leaseOwner = :leaseOwner',
-      ExpressionAttributeNames: { '#leaseOwner': 'leaseOwner' },
-      ExpressionAttributeValues: { ':leaseOwner': { S: leaseOwner } },
-    }));
-  } catch (error) {
-    if (!isConditionalFailure(error)) throw error;
-  }
-}
-
-function isConditionalFailure(error: unknown): boolean {
-  return (error as { name?: string }).name === 'ConditionalCheckFailedException';
-}
-
-function temporaryChatraceBusy(error: string, requestId: string): LambdaResponse {
-  const response = json(503, { ok: false, error, requestId });
-  response.headers = { ...(response.headers || {}), 'retry-after': '1' };
-  return response;
-}
-
 async function generateSocialSalesReply(
   inboundText: string,
   promise: ReturnType<typeof resolvePostPromise>,
@@ -3900,7 +3261,7 @@ async function handleWebhookPayload(
 
     const primaryMessaging = asArray((entry as { messaging?: unknown })?.messaging);
     const standbyMessaging = asArray((entry as { standby?: unknown })?.standby);
-    const nativeDmActive = config.behavior.dmWebhookEnabled && !config.behavior.chatraceEnabled;
+    const nativeDmActive = config.behavior.dmWebhookEnabled;
     const messaging = nativeDmActive
       ? [
           ...primaryMessaging,
@@ -3911,11 +3272,9 @@ async function handleWebhookPayload(
     const changes = config.behavior.commentWebhookEnabled ? rawChanges : [];
 
     if (!nativeDmActive && (primaryMessaging.length > 0 || standbyMessaging.length > 0)) {
-      console.info('Mensagens Direct ignoradas pela trava de respondente unico', {
+      console.info('Mensagens Direct ignoradas: DM_WEBHOOK_ENABLED=false', {
         primary: primaryMessaging.length,
         standby: standbyMessaging.length,
-        dmWebhookEnabled: config.behavior.dmWebhookEnabled,
-        chatraceEnabled: config.behavior.chatraceEnabled,
       });
     }
     if (!config.behavior.standbyMessagingEnabled && standbyMessaging.length > 0) {
@@ -5703,115 +5062,6 @@ async function forwardLegacyWebhook(
   }
 }
 
-function isChatraceRequest(event: LambdaEvent): boolean {
-  const path = event.rawPath || event.path || event.requestContext?.http?.path || '';
-  return path.toLowerCase().includes('/chatrace');
-}
-
-function verifyChatraceSecret(
-  headers: Record<string, string | undefined>,
-): boolean {
-  const expected = process.env.CHATRACE_WEBHOOK_SECRET?.trim();
-  const received = header(headers, 'x-saraiva-webhook-secret')
-    || header(headers, 'x-chatrace-secret');
-  return secureStringEquals(received, expected);
-}
-
-function verifyChatraceValidation(
-  headers: Record<string, string | undefined>,
-): boolean {
-  return isAuthorizedSyntheticValidation(headers, process.env.CHATRACE_VALIDATION_SECRET);
-}
-
-function secureStringEquals(received?: string, expected?: string): boolean {
-  if (!received || !expected) return false;
-  const a = Buffer.from(received);
-  const b = Buffer.from(expected);
-  return a.length === b.length && timingSafeEqual(a, b);
-}
-
-function parseRequestPayload(rawBody: string, headers: Record<string, string | undefined>): unknown {
-  if (!rawBody.trim()) return {};
-  const contentType = (header(headers, 'content-type') || '').toLowerCase();
-  if (contentType.includes('application/x-www-form-urlencoded')) {
-    return Object.fromEntries(new URLSearchParams(rawBody));
-  }
-  if (contentType.includes('multipart/form-data')) {
-    return { text: rawBody };
-  }
-  try {
-    return JSON.parse(rawBody);
-  } catch {
-    return Object.fromEntries(new URLSearchParams(rawBody));
-  }
-}
-
-function parseChatraceInbound(payload: unknown): ChatraceInbound {
-  return {
-    senderId: firstString(
-      valueAt(payload, ['sender', 'id']),
-      valueAt(payload, ['senderId']),
-      valueAt(payload, ['subscriber_id']),
-      valueAt(payload, ['subscriberId']),
-      valueAt(payload, ['user_id']),
-      valueAt(payload, ['userId']),
-      valueAt(payload, ['contact', 'id']),
-      valueAt(payload, ['id']),
-    ),
-    username: firstString(
-      valueAt(payload, ['sender', 'username']),
-      valueAt(payload, ['username']),
-      valueAt(payload, ['ig_username']),
-      valueAt(payload, ['contact', 'username']),
-      valueAt(payload, ['contact', 'name']),
-      valueAt(payload, ['first_name']),
-    ),
-    text: firstString(
-      valueAt(payload, ['message', 'text']),
-      valueAt(payload, ['message']),
-      valueAt(payload, ['text']),
-      valueAt(payload, ['input']),
-      valueAt(payload, ['last_input']),
-      valueAt(payload, ['custom_fields', 'message']),
-    ),
-    postId: firstString(
-      valueAt(payload, ['post_id']),
-      valueAt(payload, ['postId']),
-      valueAt(payload, ['media', 'id']),
-      valueAt(payload, ['custom_fields', 'post_id']),
-    ),
-    commentId: firstString(
-      valueAt(payload, ['comment_id']),
-      valueAt(payload, ['commentId']),
-      valueAt(payload, ['custom_fields', 'comment_id']),
-    ),
-    postPermalink: firstString(
-      valueAt(payload, ['post_permalink']),
-      valueAt(payload, ['postPermalink']),
-      valueAt(payload, ['custom_fields', 'post_permalink']),
-    ),
-    requestId: firstString(
-      valueAt(payload, ['request_id']),
-      valueAt(payload, ['requestId']),
-      valueAt(payload, ['message_id']),
-      valueAt(payload, ['messageId']),
-      valueAt(payload, ['event_id']),
-      valueAt(payload, ['eventId']),
-      valueAt(payload, ['last_interaction']),
-    ),
-    accountUsername: firstString(
-      valueAt(payload, ['account_username']),
-      valueAt(payload, ['accountUsername']),
-      valueAt(payload, ['custom_fields', 'account_username']),
-    ),
-    flowId: firstString(
-      valueAt(payload, ['flow_id']),
-      valueAt(payload, ['flowId']),
-      valueAt(payload, ['custom_fields', 'flow_id']),
-    ),
-  };
-}
-
 function valueAt(value: unknown, path: string[]): unknown {
   return path.reduce<unknown>((current, key) => {
     if (!current || typeof current !== 'object') return undefined;
@@ -5906,7 +5156,6 @@ function corsHeaders(contentType: string): Record<string, string> {
       'content-type',
       'x-saraiva-planner-pin',
       'x-saraiva-webhook-secret',
-      'x-chatrace-secret',
       'x-saraiva-validation-mode',
       'x-saraiva-validation-token',
     ].join(','),
