@@ -44,7 +44,10 @@ test('reel de sites registra a promessa exata do prompt gratuito', () => {
   assert.equal(promise?.kind, 'website_prompt');
   assert.match(promise?.label || '', /prompt usado no vídeo/i);
   assert.match(promise?.privateReply || '', /liberado gratuitamente/i);
-  assert.match(promise?.privateReply || '', /prompt\.saraiva\.ai/i);
+  // O caminho importa: a raiz do domínio é a LP do Laboratório, que vende a
+  // Biblioteca por R$19,90. Prometer "gratuito" e mandar para lá cobra pelo
+  // que foi anunciado de graça.
+  assert.match(promise?.privateReply || '', /prompt\.saraiva\.ai\/prompt-do-video/i);
   assert.match(promise?.publicReply || '', /Direct|inbox/i);
   assert.doesNotMatch(
     JSON.stringify(promise),
@@ -70,7 +73,7 @@ test('reel do prompt mantém a mesma entrega gratuita em retries', () => {
   assert.deepEqual(retry, first);
   assert.equal(first.variant, 'default');
   assert.match(first.publicReply, /Direct/i);
-  assert.match(first.privateReply, /prompt\.saraiva\.ai/i);
+  assert.match(first.privateReply, /prompt\.saraiva\.ai\/prompt-do-video/i);
   assert.doesNotMatch(first.privateReply, /WhatsApp|Laboratório|comunidade|checkout/i);
   assert.ok(Buffer.byteLength(first.privateReply, 'utf8') <= 500);
 });

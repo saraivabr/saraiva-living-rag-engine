@@ -619,6 +619,23 @@ async function repairLatestZernioAudio(): Promise<CycleResponse> {
   };
 }
 
+/**
+ * O ARN esperado da fila é comparado com o de cada mensagem. Um valor
+ * malformado nunca casa, então toda automação falharia 5 vezes e cairia na DLQ
+ * sem sinal claro — foi assim que 26h de atendimento se perderam em 05/08/2026,
+ * com um ARN mascarado ('...:***.fifo') colado na configuração.
+ *
+ * Falhar aqui, alto e cedo, é melhor do que descobrir pela DLQ dias depois.
+ */
+export function assertValidQueueArn(value?: string): string {
+  const arn = value?.trim();
+  if (!arn) throw new Error('instagram_automation_queue_arn_missing');
+  if (!/^arn:aws:sqs:[a-z0-9-]+:\d{12}:[A-Za-z0-9_-]+(\.fifo)?$/.test(arn)) {
+    throw new Error('instagram_automation_queue_arn_malformed');
+  }
+  return arn;
+}
+
 async function handleInstagramAutomationRecords(
   records: NonNullable<LambdaEvent['Records']>,
 ): Promise<SqsBatchResponse> {
@@ -631,8 +648,7 @@ async function handleInstagramAutomationRecords(
     };
   }
   if (!tableName) throw new Error('instagram_automation_dynamodb_table_missing');
-  const expectedQueueArn = process.env.INSTAGRAM_AUTOMATION_QUEUE_ARN?.trim();
-  if (!expectedQueueArn) throw new Error('instagram_automation_queue_arn_missing');
+  const expectedQueueArn = assertValidQueueArn(process.env.INSTAGRAM_AUTOMATION_QUEUE_ARN);
   const batchItemFailures: Array<{ itemIdentifier: string }> = [];
   for (const record of records) {
     const itemIdentifier = record.messageId || 'missing-message-id';
@@ -1280,7 +1296,11 @@ async function handleInstagramTrackedRedirect(
         reasonCode: result,
       }),
     });
-    const destinationUrl = new URL('https://app.saraiva.ai/quero-o-prompt');
+    // 'prompt' é a entrega gratuita prometida no Reel; 'product' é a Biblioteca
+    // paga. Mandar os dois para a mesma página cobra por algo anunciado de graça.
+    const destinationUrl = new URL(kind === 'prompt'
+      ? 'https://app.saraiva.ai/prompt-do-video'
+      : 'https://app.saraiva.ai/quero-o-prompt');
     destinationUrl.searchParams.set('correlationId', correlationId);
     destinationUrl.searchParams.set('intent', intent);
     if (kind === 'product') {

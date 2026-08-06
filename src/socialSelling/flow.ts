@@ -442,7 +442,9 @@ function websitePromptPromise(): PostPromise {
     kind: 'website_prompt',
     label: 'prompt usado no vídeo para criar o site',
     publicReply: 'Te chamei no Direct para entregar o prompt 👀',
-    privateReply: 'Aqui está o prompt que usei no vídeo, liberado gratuitamente para copiar: https://prompt.saraiva.ai',
+    // A raiz do domínio é a LP do Laboratório, com CTA da Biblioteca paga.
+    // O prompt anunciado como gratuito no Reel mora em /prompt-do-video.
+    privateReply: 'Aqui está o prompt que usei no vídeo, liberado gratuitamente para copiar: https://prompt.saraiva.ai/prompt-do-video',
   };
 }
 
