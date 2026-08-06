@@ -68,7 +68,7 @@ import { findUnansweredLeads, type ReengagementCandidate } from './sales/reengag
 import { buildSocialSellingTaskPack, type SocialSellingTaskPack } from './sales/taskPack.js';
 import { isMediaDisabled } from './disabledMedia.js';
 import { isTargetWebhookEntry } from './webhookTarget.js';
-import { generateBedrockSalesReply, type BedrockSalesReplyResult } from './ai/bedrockSalesResponder.js';
+import { safeFallback } from './ai/salesResponderShared.js';
 import {
   matchesCampaignTrigger,
   matchesMediaCampaignTrigger,
@@ -2009,7 +2009,7 @@ async function processZernioMessage(
       profileFacts: profileBrief.facts,
       followStatus: input.followStatus,
   };
-  let generativeSource: 'motor' | 'bedrock' | 'fallback' | undefined;
+  let generativeSource: 'motor' | 'fallback' | undefined;
   let generativeFallbackReason: string | undefined;
   const flowStep: InstagramFlowStep | undefined = shouldAdvanceInstagramFlow(currentSession, flowInput)
     ? advanceInstagramFlow(currentSession, flowInput, flowOptions)
@@ -2535,61 +2535,25 @@ function parseJsonBody(rawBody: string): unknown {
   }
 }
 
-async function generateSocialSalesReply(
-  inboundText: string,
-  promise: ReturnType<typeof resolvePostPromise>,
+/**
+ * Resposta do Direct de social selling. Este caminho e deterministico: quem
+ * escreve o texto e o buildSocialSellingTurn. safeFallback so entra em acao
+ * quando esse texto traz placeholder ou tentativa de vazar prompt.
+ */
+function generateSocialSalesReply(
   turn: ReturnType<typeof buildSocialSellingTurn>,
-  context?: LeadContext,
-): Promise<BedrockSalesReplyResult> {
+): { reply: string } {
   const optedOut = turn.state.stage === 'disqualified' || turn.state.lastIntent === 'disqualify';
   const requiresHuman = turn.shouldEscalate || turn.sales.humanApprovalRequired;
-  const requiresDeterministicReply = optedOut || requiresHuman;
-  const officialPrice = turn.sales.priceCents
-    ? `R$${(turn.sales.priceCents / 100).toFixed(2).replace('.', ',')}`
-    : undefined;
-  const trustedOfferFacts = [
-    `Oferta vinculada ao post: ${turn.sales.offerLabel}.`,
-    officialPrice ? `Preco oficial: ${officialPrice}.` : undefined,
-    turn.sales.checkoutUrl ? `Checkout oficial: ${turn.sales.checkoutUrl}` : undefined,
-  ].filter(Boolean);
-  const result = await generateBedrockSalesReply({
-    message: inboundText,
-    promise: {
-      kind: promise.kind,
-      label: promise.label,
-      trustedContext: [
-        ...trustedOfferFacts,
-        promise.publicReply,
-        promise.privateReply,
-      ].join('\n'),
-    },
-    state: turn.state,
-    summary: summarizeLeadInteractions(context?.interactions),
-    fallbackReply: turn.reply,
-    allowedPrices: officialPrice ? [officialPrice] : [],
-    allowedLinks: turn.sales.checkoutUrl ? [turn.sales.checkoutUrl] : [],
-  }, {
-    enabled: requiresDeterministicReply ? false : undefined,
-  });
 
   console.info('Resposta comercial preparada', {
-    source: result.source,
-    fallbackReason: result.fallbackReason,
-    validationIssue: result.validationIssue,
+    source: 'deterministic',
     stage: turn.state.stage,
     score: turn.state.score,
     requiresHuman,
     optedOut,
   });
-  return result;
-}
-
-function summarizeLeadInteractions(interactions?: LeadInteraction[]): string {
-  return (interactions || [])
-    .slice(-6)
-    .map((item) => `${item.direction === 'in' ? 'seguidor' : 'saraiva.ai'}: ${item.text}`)
-    .join('\n')
-    .slice(0, 1_500);
+  return { reply: safeFallback(turn.reply) };
 }
 
 function appendAutomationDecision(
@@ -2938,13 +2902,12 @@ async function handleWebhookPayload(
           ?? resolvePostPromise({ commentText: inboundText });
         const turn = buildSocialSellingTurn(inboundText, promise, context?.socialSelling);
         let reply: string;
-        let replySource: 'bedrock_or_fallback' | 'woovi' | 'prompt_correction';
-        let fallbackReason: string | undefined;
+        let replySource: 'deterministic' | 'woovi' | 'prompt_correction';
         if (needsWebsitePromptCorrection(context)) {
           reply = promise.privateReply;
           replySource = 'prompt_correction';
         } else {
-          const generated = await generateSocialSalesReply(inboundText, promise, turn, context);
+          const generated = generateSocialSalesReply(turn);
           const commerce = await resolveCommerceReply(
             senderId,
             inboundText,
@@ -2953,7 +2916,6 @@ async function handleWebhookPayload(
           );
           reply = commerce.reply;
           replySource = commerce.source;
-          fallbackReason = generated.fallbackReason;
         }
         const interactions = appendLeadInteractions(context, inboundText, reply);
 
@@ -3013,7 +2975,6 @@ async function handleWebhookPayload(
           score: turn.state.score,
           escalate: turn.shouldEscalate,
           replySource,
-          fallbackReason,
         });
       } catch (error) {
         const reason = (error as Error).message;
@@ -3348,19 +3309,19 @@ async function resolveCommerceReply(
   inboundText: string,
   turn: ReturnType<typeof buildSocialSellingTurn>,
   fallbackReply: string,
-): Promise<{ reply: string; source: 'bedrock_or_fallback' | 'woovi' }> {
+): Promise<{ reply: string; source: 'deterministic' | 'woovi' }> {
   if (
     !['website_guide', 'website_automation'].includes(turn.sales.offer)
     || !isWebsiteGuideCheckoutIntent(inboundText)
   ) {
-    return { reply: fallbackReply, source: 'bedrock_or_fallback' };
+    return { reply: fallbackReply, source: 'deterministic' };
   }
   return {
     reply: [
       'A oferta antiga foi encerrada. A Biblioteca Secreta tem 24 prompts prontos para Sites, CRMs, Sistemas e Automações por R$ 19,90 no Pix.',
       'https://app.saraiva.ai/quero-o-prompt',
     ].join('\n\n'),
-    source: 'bedrock_or_fallback',
+    source: 'deterministic',
   };
 }
 

@@ -1,15 +1,14 @@
 import {
-  generateBedrockSalesReply,
-  type BedrockSalesReplyInput,
-  type BedrockSalesResponderOptions,
+  safeFallback,
+  type SalesReplyInput,
   type SalesReplyValidationIssue,
-} from './bedrockSalesResponder.js';
+} from './salesResponderShared.js';
 import {
   generateMotorSalesReply,
   type MotorSalesResponderOptions,
 } from './motorSalesResponder.js';
 
-export type ConversationalSalesSource = 'motor' | 'bedrock' | 'fallback';
+export type ConversationalSalesSource = 'motor' | 'fallback';
 
 export interface ConversationalSalesReplyResult {
   reply: string;
@@ -19,54 +18,48 @@ export interface ConversationalSalesReplyResult {
 }
 
 export type ConversationalSalesGenerator = (
-  input: BedrockSalesReplyInput,
+  input: SalesReplyInput,
   options?: ConversationalSalesResponderOptions,
 ) => Promise<ConversationalSalesReplyResult>;
 
 export interface ConversationalSalesResponderOptions {
-  provider?: 'motor' | 'bedrock';
   enabled?: boolean;
   temperature?: number;
   maxChars?: number;
   motor?: MotorSalesResponderOptions;
-  bedrock?: BedrockSalesResponderOptions;
   generateMotor?: typeof generateMotorSalesReply;
-  generateBedrock?: typeof generateBedrockSalesReply;
 }
 
+/**
+ * Motor e o unico provedor conversacional. Qualquer falha, saida insegura ou
+ * indisponibilidade cai no texto deterministico que o chamador ja trouxe.
+ */
 export async function generateConversationalSalesReply(
-  input: BedrockSalesReplyInput,
+  input: SalesReplyInput,
   options: ConversationalSalesResponderOptions = {},
 ): Promise<ConversationalSalesReplyResult> {
-  const provider = options.provider || providerFromEnvironment();
-  const sharedOptions = {
-    enabled: options.enabled ?? true,
-    temperature: options.temperature,
-    maxChars: options.maxChars,
-  };
-
-  if (provider === 'motor') {
-    try {
-      const motor = await (options.generateMotor || generateMotorSalesReply)(input, {
-        ...sharedOptions,
-        ...options.motor,
-      });
-      if (motor.source === 'motor') return motor;
-    } catch (error) {
-      console.warn('Adapter Motor falhou antes de responder; seguindo contingencia', {
-        errorName: error instanceof Error ? error.name : 'UnknownError',
-      });
-    }
+  try {
+    const motor = await (options.generateMotor || generateMotorSalesReply)(input, {
+      enabled: options.enabled ?? true,
+      temperature: options.temperature,
+      maxChars: options.maxChars,
+      ...options.motor,
+    });
+    if (motor.source === 'motor') return motor;
+    return {
+      reply: safeFallback(motor.reply),
+      source: 'fallback',
+      fallbackReason: motor.fallbackReason,
+      ...(motor.validationIssue ? { validationIssue: motor.validationIssue } : {}),
+    };
+  } catch (error) {
+    console.warn('Adapter Motor falhou antes de responder; seguindo contingencia', {
+      errorName: error instanceof Error ? error.name : 'UnknownError',
+    });
+    return {
+      reply: safeFallback(input.fallbackReply),
+      source: 'fallback',
+      fallbackReason: 'motor_error',
+    };
   }
-
-  return (options.generateBedrock || generateBedrockSalesReply)(input, {
-    ...sharedOptions,
-    ...options.bedrock,
-  });
-}
-
-function providerFromEnvironment(): 'motor' | 'bedrock' {
-  return process.env.INSTAGRAM_CONVERSATIONAL_PROVIDER?.trim().toLowerCase() === 'motor'
-    ? 'motor'
-    : 'bedrock';
 }

@@ -166,7 +166,7 @@ test('pergunta livre antes da escolha responde e reapresenta somente as duas int
       trustedContext = salesInput.promise.trustedContext;
       return {
         reply: 'Não. O @Sites transforma sua descrição em um site que você pode revisar e refinar.',
-        source: 'bedrock',
+        source: 'motor',
       };
     },
   });
@@ -248,7 +248,7 @@ test('resposta longa preserva inteira a pergunta obrigatória da etapa', async (
     session: entry.session,
     generateReply: async () => ({
       reply: `${'Você consegue adaptar o projeto aos dados reais do negócio com tranquilidade. '.repeat(5)}Quer continuar?`,
-      source: 'bedrock',
+      source: 'motor',
     }),
   });
   assert.equal(reply.message.kind, 'quick_replies');
@@ -270,7 +270,7 @@ test('após a entrega o assistente responde a adaptação sem repetir prompt, bo
     session: delivery.session,
     generateReply: async () => ({
       reply: 'Troque o segmento, os serviços e a chamada para agendamento pelos dados reais da clínica. Qual tratamento você quer destacar primeiro?',
-      source: 'bedrock',
+      source: 'motor',
     }),
   });
   assert.equal(reply.message.kind, 'text');
@@ -291,7 +291,7 @@ test('após a entrega bloqueia Gerador e usa ajuda conversacional segura', async
     session: delivery.session,
     generateReply: async () => ({
       reply: 'É um Gerador de Prompts para novos projetos. Quer testar?',
-      source: 'bedrock',
+      source: 'motor',
     }),
   });
   assert.equal(reply.message.kind, 'text');
@@ -311,7 +311,7 @@ test('fallback pós-entrega orienta prova social ausente sem inventar depoimento
     session: delivery.session,
     generateReply: async () => ({
       reply: 'Use o depoimento: “O melhor site que já contratamos”. Quer colocar essa frase?',
-      source: 'bedrock',
+      source: 'motor',
     }),
   });
   assert.equal(reply.message.kind, 'text');
@@ -335,7 +335,7 @@ test('bloqueia depoimento ditado mesmo sem a palavra depoimento na saída', asyn
       session: delivery.session,
       generateReply: async () => ({
         reply: 'Coloque: “O melhor site que já contratamos”.',
-        source: 'bedrock',
+        source: 'motor',
       }),
     });
     assert.equal(reply.message.kind, 'text');
@@ -361,7 +361,7 @@ test('recusa pedido direto para fabricar prova social sem consultar o modelo', a
       session: delivery.session,
       generateReply: async () => {
         called = true;
-        return { reply: 'Coloque: “O melhor site que já contratamos”.', source: 'bedrock' };
+        return { reply: 'Coloque: “O melhor site que já contratamos”.', source: 'motor' };
       },
     });
     assert.equal(called, false);
@@ -385,7 +385,7 @@ test('fallback pós-entrega responde prazo sem inventar duração', async () => 
       trustedContext = input.promise.trustedContext;
       return {
         reply: 'Você consegue em duas horas. Quer começar?',
-        source: 'bedrock',
+        source: 'motor',
       };
     },
   });
@@ -406,7 +406,7 @@ test('bloqueia durações escritas em formas não enumeráveis', async () => {
     const reply = await generateConversationalFlowReply({
       inboundText: 'Quanto tempo leva para fazer no Lovable?',
       session: delivery.session,
-      generateReply: async () => ({ reply: generated, source: 'bedrock' }),
+      generateReply: async () => ({ reply: generated, source: 'motor' }),
     });
     assert.equal(reply.message.kind, 'text');
     if (reply.message.kind !== 'text') continue;
@@ -428,7 +428,7 @@ test('pergunta sobre a Biblioteca usa fatos canônicos sem consultar o modelo', 
       called = true;
       return {
         reply: 'A Biblioteca custa R$ 97, inclui 80 prompts e acesso vitalício. Quer comprar?',
-        source: 'bedrock',
+        source: 'motor',
       };
     },
   });
@@ -454,7 +454,7 @@ test('domínio nu gerado após a entrega é bloqueado como segundo link', async 
     const reply = await generateConversationalFlowReply({
       inboundText: 'Como adapto para um restaurante?',
       session: delivery.session,
-      generateReply: async () => ({ reply: generated, source: 'bedrock' }),
+      generateReply: async () => ({ reply: generated, source: 'motor' }),
     });
     assert.equal(reply.message.kind, 'text');
     if (reply.message.kind !== 'text') continue;
@@ -473,7 +473,7 @@ test('fallback pós-entrega orienta preço pelo escopo sem validar valor inventa
     session: delivery.session,
     generateReply: async () => ({
       reply: 'Cobre R$ 2.000. Quer fechar?',
-      source: 'bedrock',
+      source: 'motor',
     }),
   });
   assert.equal(reply.message.kind, 'text');
@@ -495,7 +495,7 @@ test('bloqueia preço por extenso sem depender de enumerar o número', async () 
       session: delivery.session,
       generateReply: async () => {
         called = true;
-        return { reply: generated, source: 'bedrock' };
+        return { reply: generated, source: 'motor' };
       },
     });
     assert.equal(called, false);
@@ -522,7 +522,7 @@ test('reconhece paráfrases de preço de serviço e nunca consulta o modelo', as
       session: delivery.session,
       generateReply: async () => {
         called = true;
-        return { reply: 'Em média, 500.', source: 'bedrock' };
+        return { reply: 'Em média, 500.', source: 'motor' };
       },
     });
     assert.equal(called, false);
@@ -543,7 +543,7 @@ test('não repete oferta comercial após a entrega quando a pessoa pede ajuda pr
     session: delivery.session,
     generateReply: async () => ({
       reply: 'A Biblioteca tem 24 prompts e custa R$ 19,90. Quer conhecer melhor?',
-      source: 'bedrock',
+      source: 'motor',
     }),
   });
   assert.equal(reply.message.kind, 'text');
@@ -559,7 +559,7 @@ test('bloqueia oferta precoce e repetida mesmo quando o modelo usa paráfrases',
     session: entry.session,
     generateReply: async () => ({
       reply: 'Tenho um produto pago para continuar depois. Quer conhecer?',
-      source: 'bedrock',
+      source: 'motor',
     }),
   });
   assert.equal(beforeDelivery.message.kind, 'quick_replies');
@@ -576,7 +576,7 @@ test('bloqueia oferta precoce e repetida mesmo quando o modelo usa paráfrases',
     session: delivery.session,
     generateReply: async () => ({
       reply: 'O produto pago continua disponível. Quer conhecer?',
-      source: 'bedrock',
+      source: 'motor',
     }),
   });
   assert.equal(afterDelivery.message.kind, 'text');
@@ -602,7 +602,7 @@ test('pergunta técnica com quanto ou valor não autoriza repetir oferta', async
       session: delivery.session,
       generateReply: async () => ({
         reply: 'O produto pago continua disponível. Quer conhecer?',
-        source: 'bedrock',
+        source: 'motor',
       }),
     });
     assert.equal(reply.message.kind, 'text');
@@ -624,7 +624,7 @@ test('pedido pelo local do conteúdo aponta para a mensagem anterior sem duplica
     session: delivery.session,
     generateReply: async () => {
       called = true;
-      return { reply: 'Resposta indevida. Quer continuar?', source: 'bedrock' };
+      return { reply: 'Resposta indevida. Quer continuar?', source: 'motor' };
     },
   });
   assert.equal(called, false);
@@ -940,7 +940,7 @@ test('dúvida livre recebe resposta e retoma a mesma etapa sem perder os botões
     session: pathSession,
     generateReply: async () => ({
       reply: 'Sim, você pode adaptar a busca e a abordagem ao seu nicho. Quer escolher um caminho?',
-      source: 'bedrock',
+      source: 'motor',
     }),
   });
   assert.equal(reply.message.kind, 'quick_replies');

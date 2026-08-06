@@ -2,7 +2,6 @@ import {
   GetSecretValueCommand,
   SecretsManagerClient,
 } from '@aws-sdk/client-secrets-manager';
-import type { BedrockSalesReplyInput } from './bedrockSalesResponder.js';
 import {
   DEFAULT_MAX_CHARS,
   DEFAULT_MAX_TOKENS,
@@ -19,6 +18,7 @@ import {
   safeFallback,
   validateGeneratedSalesReply,
   withTimeout,
+  type SalesReplyInput,
   type SalesReplyValidationIssue,
 } from './salesResponderShared.js';
 
@@ -63,7 +63,7 @@ export interface MotorSalesResponderOptions {
 let cachedApiKey: string | undefined;
 
 export async function generateMotorSalesReply(
-  input: BedrockSalesReplyInput,
+  input: SalesReplyInput,
   options: MotorSalesResponderOptions = {},
 ): Promise<MotorSalesReplyResult> {
   const fallbackReply = safeFallback(input.fallbackReply);
@@ -161,7 +161,7 @@ export async function loadMotorApiKey(options: { secretId?: string; region?: str
 }
 
 function buildRequest(
-  input: BedrockSalesReplyInput,
+  input: SalesReplyInput,
   config: { model: string; maxTokens: number; maxChars: number; temperature: number },
 ): Record<string, unknown> {
   return {

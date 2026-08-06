@@ -118,69 +118,41 @@ test('Motor aplica o timeout também quando o servidor envia headers e trava o c
   assert.ok(Date.now() - startedAt < 1_500);
 });
 
-test('responder conversacional usa Motor quando ele responde com segurança', async () => {
+test('responder conversacional usa Motor quando ele responde com seguranca', async () => {
   const result = await generateConversationalSalesReply(input, {
-    provider: 'motor',
     generateMotor: async () => ({
-      reply: 'Entendi a clínica. Qual serviço você quer destacar primeiro?',
+      reply: 'Entendi a clinica. Qual servico voce quer destacar primeiro?',
       source: 'motor',
     }),
-    generateBedrock: async () => {
-      throw new Error('Bedrock não deveria ser chamado');
-    },
   });
 
   assert.equal(result.source, 'motor');
 });
 
-test('responder conversacional cai do Motor para o Bedrock', async () => {
+test('responder conversacional cai para a contingencia quando o Motor recusa a saida', async () => {
   const result = await generateConversationalSalesReply(input, {
-    provider: 'motor',
     generateMotor: async () => ({
       reply: input.fallbackReply,
       source: 'fallback',
-      fallbackReason: 'motor_error',
-    }),
-    generateBedrock: async () => ({
-      reply: 'Vamos adaptar ao seu cenário. Qual é o serviço principal da clínica?',
-      source: 'bedrock',
-    }),
-  });
-
-  assert.equal(result.source, 'bedrock');
-});
-
-test('responder conversacional mantém a contingência quando o adapter Motor lança erro inesperado', async () => {
-  const result = await generateConversationalSalesReply(input, {
-    provider: 'motor',
-    generateMotor: async () => {
-      throw new Error('unexpected adapter failure');
-    },
-    generateBedrock: async () => ({
-      reply: 'Vamos seguir com segurança. Qual serviço você quer destacar?',
-      source: 'bedrock',
-    }),
-  });
-
-  assert.equal(result.source, 'bedrock');
-});
-
-test('responder conversacional preserva fallback determinístico se ambos falharem', async () => {
-  const result = await generateConversationalSalesReply(input, {
-    provider: 'motor',
-    generateMotor: async () => ({
-      reply: input.fallbackReply,
-      source: 'fallback',
-      fallbackReason: 'motor_error',
-    }),
-    generateBedrock: async () => ({
-      reply: input.fallbackReply,
-      source: 'fallback',
-      fallbackReason: 'bedrock_error',
+      fallbackReason: 'unsafe_output',
+      validationIssue: 'invented_price',
     }),
   });
 
   assert.equal(result.source, 'fallback');
   assert.equal(result.reply, input.fallbackReply);
-  assert.equal(result.fallbackReason, 'bedrock_error');
+  assert.equal(result.fallbackReason, 'unsafe_output');
+  assert.equal(result.validationIssue, 'invented_price');
+});
+
+test('responder conversacional mantem a contingencia quando o adapter Motor lanca erro inesperado', async () => {
+  const result = await generateConversationalSalesReply(input, {
+    generateMotor: async () => {
+      throw new Error('unexpected adapter failure');
+    },
+  });
+
+  assert.equal(result.source, 'fallback');
+  assert.equal(result.reply, input.fallbackReply);
+  assert.equal(result.fallbackReason, 'motor_error');
 });

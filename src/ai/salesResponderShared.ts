@@ -1,5 +1,3 @@
-import type { BedrockSalesReplyInput } from './bedrockSalesResponder.js';
-
 export const DEFAULT_TIMEOUT_MS = 8_000;
 export const DEFAULT_MAX_TOKENS = 180;
 export const DEFAULT_MAX_CHARS = 320;
@@ -37,6 +35,26 @@ const ALLOWED_STATE_KEYS = [
   'stage', 'score', 'turns', 'useCase', 'segment', 'pain', 'urgency',
   'budgetIntent', 'authority', 'lastIntent', 'lastQuestion', 'summary', 'needsHuman',
 ] as const;
+
+export interface SalesPromiseContext {
+  kind?: string;
+  label: string;
+  /** Somente fatos comerciais confiaveis, vindos do post/oferta versionada. */
+  trustedContext: string;
+}
+
+export interface SalesReplyInput {
+  message: string;
+  promise: SalesPromiseContext;
+  /** Estado calculado pelo fluxo deterministico. Nunca e tratado como instrucao. */
+  state?: unknown;
+  summary?: string;
+  /** Resposta produzida pelo buildSocialSellingTurn; usada sem depender do modelo. */
+  fallbackReply: string;
+  /** Fatos adicionais versionados, nunca extraidos da mensagem do seguidor. */
+  allowedPrices?: string[];
+  allowedLinks?: string[];
+}
 
 export type SalesReplyValidationIssue =
   | 'empty'
@@ -165,7 +183,7 @@ export function sanitizeState(value: unknown): unknown {
 }
 
 /** Corpo comum enviado a qualquer provedor: mensagem, oferta confiável e estado da conversa. */
-export function buildSalesPayload(input: BedrockSalesReplyInput): Record<string, unknown> {
+export function buildSalesPayload(input: SalesReplyInput): Record<string, unknown> {
   return {
     inbound_message: truncate(input.message, 2_000),
     trusted_offer: {
