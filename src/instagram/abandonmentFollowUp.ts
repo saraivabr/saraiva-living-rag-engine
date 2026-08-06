@@ -82,11 +82,17 @@ export function buildWebsitePromptFollowUpCandidate(
     context,
     // A versão anterior fazia a pergunta e emendava o pitch na mesma mensagem.
     // Ninguém responde pergunta retórica: de 1.279 conversas, só 18 tinham
-    // texto escrito à mão. Aqui a mensagem pergunta e PARA — a resposta da
-    // pessoa é que revela a objeção e abre a oferta certa.
+    // texto escrito à mão. Aqui a mensagem pergunta e PARA.
+    //
+    // A pergunta é sobre o PRÓXIMO PROJETO de propósito. O único produto que
+    // existe e entrega hoje é a Biblioteca — 24 prompts de Sites, CRMs,
+    // Sistemas e Automações. Quem responde "um CRM" ou "um sistema" acabou de
+    // descrever o que ela resolve, e o assistente pode conectar sem empurrar.
+    // Perguntar sobre a dificuldade de ENTREGA levaria a um produto que ainda
+    // não foi escrito.
     message: session.path === 'build'
-      ? 'Conseguiu gerar o site com o prompt? Me conta uma coisa: o que o cliente te perguntou que você não soube responder?'
-      : 'Conseguiu gerar o site com o prompt? Me conta uma coisa: o que travou na hora de colocar no ar?',
+      ? 'Conseguiu gerar o site com o prompt? Qual é o próximo projeto que o teu cliente vai te pedir?'
+      : 'Conseguiu gerar o site com o prompt? Qual é a próxima coisa que você quer montar na sua empresa?',
   };
 }
 

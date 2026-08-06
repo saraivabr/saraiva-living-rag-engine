@@ -136,9 +136,10 @@ test('follow-up de Vender Sites é adaptado, único e não sai após clique na o
     promptDeliveredAt: '2026-07-31T11:00:00.000Z',
   };
   const candidate = buildWebsitePromptFollowUpCandidate(sites, { now, waitMs: 5 * 60 * 1_000 });
-  // Quem escolheu VENDER SITES trava no cliente; quem escolheu MINHA EMPRESA
-  // trava em colocar no ar. A pergunta muda com o caminho.
-  assert.match(candidate?.message || '', /o que o cliente te perguntou/i);
+  // A pergunta puxa o PRÓXIMO PROJETO, não a dificuldade de entrega: quem
+  // responde "um CRM" descreve o que a Biblioteca resolve. Perguntar sobre
+  // entrega levaria a um produto que ainda não existe.
+  assert.match(candidate?.message || '', /próximo projeto/i);
   assert.doesNotMatch(candidate?.message || '', /R\$|Biblioteca/i);
   sites.instagramFlow = { ...sites.instagramFlow, productOpenedAt: '2026-07-31T12:05:00.000Z' };
   assert.equal(buildWebsitePromptFollowUpCandidate(sites, { now, waitMs: 5 * 60 * 1_000 }), undefined);
