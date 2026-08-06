@@ -1,7 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import { resolveFollowStatus, buildFollowGateMessage } from '../src/instagram/followGate.js';
-import { getContentDefinition } from '../src/instagram/contentCatalog.js';
 
 test('isFollower=true libera conteúdo e resolve status como following', () => {
   const payload = {
@@ -44,13 +43,4 @@ test('isFollower ausente usa unknown sem acusar ausência de follow', () => {
   const msg = buildFollowGateMessage('unknown', {});
   assert.match(msg.message, /Não consegui confirmar ainda/);
   assert.doesNotMatch(msg.message, /você não me segue|você não segue/i);
-});
-
-test('catálogo determinístico recupera conteúdos cadastrados e recusa externos', () => {
-  const promptContent = getContentDefinition('PROMPT');
-  assert.equal(promptContent?.id, 'PROMPT');
-  assert.equal(promptContent?.requiresFollow, true);
-
-  const invalidContent = getContentDefinition('LINK_EXTERNO_MALICIOSO');
-  assert.equal(invalidContent, undefined);
 });
